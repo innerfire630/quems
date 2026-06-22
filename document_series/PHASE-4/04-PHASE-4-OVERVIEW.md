@@ -1,4 +1,5 @@
 # Smart Queue Management System
+
 ## Phase 4 Overview — Mobile Notification & Counter Management
 
 **Version:** 1.0.0
@@ -37,6 +38,7 @@ The strategic goal is to **make the queue operationally complete for officers an
 - The Android app (future) has a complete API surface to integrate against, even though no app is built in this phase.
 
 Phase 4 also completes the **end-to-end event consumption chain**. The SSE infrastructure from Phase 3 is now consumed by:
+
 - The officer dashboard (on the `counter:[counterId]` channel).
 - The security officer screen (on the `security` channel).
 - The display board's broadcast overlay (via the `global` channel, receiving `BROADCAST_MESSAGE` events).
@@ -86,7 +88,7 @@ The following are **deferred** to later phases or are explicitly out of scope:
 - **OAuth or social login for mobile.** The mobile login is username/password (the endpoint from Phase 1.2.2, finalized in 4.1.2 for mobile use).
 - **The display board implementation.** The display board was built in Phase 3.2. Phase 4.3.2 only wires up the broadcast message injection into the existing display board's reserved overlay slot.
 - **The SSE manager implementation.** The manager was built in Phase 3.1. Phase 4 only consumes it.
-- **The reports / analytics / charts.** Phase 5. The `Notification`, `NotificationReply`, `BroadcastMessage`, and `CounterStatusEvent` tables are *populated* in Phase 4, but no reporting UI exists yet.
+- **The reports / analytics / charts.** Phase 5. The `Notification`, `NotificationReply`, `BroadcastMessage`, and `CounterStatusEvent` tables are _populated_ in Phase 4, but no reporting UI exists yet.
 - **Rate limiting and security hardening.** Phase 5.
 - **PostgreSQL migration.** Phase 5.
 
@@ -109,11 +111,11 @@ Phase 4 is complete when:
 
 Phase 4 is decomposed into **3 sub-phases**, each containing **3 task plan documents**, for a total of **9 implementation documents**.
 
-| Sub-Phase | Theme | Documents | Primary Outputs |
-|---|---|---|---|
-| 4.1 | Push Notification Infrastructure | 4.1.1, 4.1.2, 4.1.3 | FCM integration, device registration, dispatch system |
-| 4.2 | Counter Status & Notification Controls | 4.2.1, 4.2.2, 4.2.3 | Counter closure, notification toggle, officer dashboard |
-| 4.3 | Notification Reply & Broadcasting | 4.3.1, 4.3.2, 4.3.3 | Officer reply, display broadcast injection, security screen |
+| Sub-Phase | Theme                                  | Documents           | Primary Outputs                                             |
+| --------- | -------------------------------------- | ------------------- | ----------------------------------------------------------- |
+| 4.1       | Push Notification Infrastructure       | 4.1.1, 4.1.2, 4.1.3 | FCM integration, device registration, dispatch system       |
+| 4.2       | Counter Status & Notification Controls | 4.2.1, 4.2.2, 4.2.3 | Counter closure, notification toggle, officer dashboard     |
+| 4.3       | Notification Reply & Broadcasting      | 4.3.1, 4.3.2, 4.3.3 | Officer reply, display broadcast injection, security screen |
 
 The single most important property of Phase 4 is that **the system becomes operationally complete for officers and the API is fully ready for a future Android app**, even though no mobile app is built.
 
@@ -579,11 +581,13 @@ Sub-Phase 4.3 (Notification Reply & Broadcasting)
 **Critical Path:** `4.1.1 → 4.1.2 → 4.1.3 → 4.2.1 → 4.2.3 → 4.3.1 → 4.3.2 → 4.3.3`
 
 **Parallel Opportunities:**
+
 - `4.1.1` and `4.2.1` can be developed in parallel after Phase 2 and Phase 3 are complete. The FCM integration and the counter closure feature are largely independent.
 - `4.1.2` and `4.1.3` are tightly coupled (the device registration enables the dispatch) and must be developed in sequence.
 - `4.2.2` and `4.3.1` can be developed in parallel after `4.1.3` is complete.
 
 **Composition with Earlier Phases:**
+
 - The `TicketActionPanel` from **2.3.2** is reused in the officer dashboard (4.2.3) — no duplication.
 - The `useSSE()` hook from **3.1.2** is used by the officer dashboard (4.2.3) on the `counter:[counterId]` channel and by the security screen (4.3.3) on the `security` channel.
 - The `broadcastEvent()` function from **3.1.3** is used by 4.2.1 (counter closure) and 4.3.2 (broadcast creation).
@@ -625,6 +629,7 @@ The two toggleable states on a `CounterOfficer` profile are **strictly independe
 - `notificationsEnabled` (boolean) — controlled by 4.2.2, reflects the officer's personal notification preference.
 
 The rules:
+
 - An officer can have `currentStatus = AVAILABLE` and `notificationsEnabled = false` (counter is open, but no push notifications).
 - An officer can have `currentStatus = CLOSED` and `notificationsEnabled = true` (counter is closed, but they still get notifications — perhaps because they're on a break and want to know what's happening).
 - The dispatch system checks `notificationsEnabled` before sending, regardless of `currentStatus`.
@@ -699,6 +704,7 @@ The channel authorization logic is implemented in `lib/sse-manager.ts` (or a ded
 Phase 4 is complete when **all** of the following are true:
 
 #### Push Notifications
+
 - [ ] The `NotificationService` module is implemented with FCM HTTP v1 API integration.
 - [ ] In local development without FCM credentials, notifications are logged to the console.
 - [ ] Device tokens can be registered and removed via the API.
@@ -709,6 +715,7 @@ Phase 4 is complete when **all** of the following are true:
 - [ ] Failed dispatches are retried with exponential backoff.
 
 #### Counter Status & Notification Controls
+
 - [ ] An officer can mark their counter as temporarily closed with a reason.
 - [ ] The closure is reflected on the display board within a second.
 - [ ] A `CounterStatusEvent` is created for every status change.
@@ -718,6 +725,7 @@ Phase 4 is complete when **all** of the following are true:
 - [ ] The dashboard updates in real time via SSE.
 
 #### Notification Reply & Broadcasting
+
 - [ ] An officer can reply to a notification via the API.
 - [ ] The reply is converted to a `BroadcastMessage` with the correct fields.
 - [ ] A `BROADCAST_MESSAGE` event is emitted to the `global` and `security` channels.
@@ -727,6 +735,7 @@ Phase 4 is complete when **all** of the following are true:
 - [ ] Expired broadcasts are not displayed.
 
 #### Code Quality
+
 - [ ] No business logic is duplicated from earlier phases.
 - [ ] All Phase 4 API endpoints are guarded with the correct permissions.
 - [ ] `yarn lint`, `yarn type-check`, and `yarn build` all pass.
@@ -760,20 +769,20 @@ If a Phase 4 task plan document finds itself needing any of the above, it is a s
 
 ## 10. Phase 4 Document Map (Quick Reference)
 
-| Doc ID | Title | Master Plan Sections Implemented |
-|---|---|---|
-| **4.1.1** | FCM Integration Architecture | 3.3, 14.1, 14.4, 17 |
-| **4.1.2** | Device Registration & Token Management API | 4.5, 9.3, 10.3, 14.4 |
-| **4.1.3** | Notification Dispatch & Delivery System | 14.2, 14.3, 14.4, 9.3 |
-| **4.2.1** | Temporary Counter Closure System | 6.5, 8.2 (CounterStatusEvent), 9.3, 11.2 |
-| **4.2.2** | Notification Toggle Feature | 6.5, 8.2 (CounterOfficer), 9.3, 11.2 |
-| **4.2.3** | Counter Officer Dashboard | 4.2, 6.4, 6.5, 8.2, 11.1 |
-| **4.3.1** | Officer Reply API & Message Flow | 8.2 (NotificationReply), 9.3 |
-| **4.3.2** | Display Board Message Injection | 6.5, 8.2 (BroadcastMessage), 11.4, 6.4 |
-| **4.3.3** | Security Officer Screen & Broadcast Receiver | 2.2, 6.4, 8.2, 10.4, 11.1 |
+| Doc ID    | Title                                        | Master Plan Sections Implemented         |
+| --------- | -------------------------------------------- | ---------------------------------------- |
+| **4.1.1** | FCM Integration Architecture                 | 3.3, 14.1, 14.4, 17                      |
+| **4.1.2** | Device Registration & Token Management API   | 4.5, 9.3, 10.3, 14.4                     |
+| **4.1.3** | Notification Dispatch & Delivery System      | 14.2, 14.3, 14.4, 9.3                    |
+| **4.2.1** | Temporary Counter Closure System             | 6.5, 8.2 (CounterStatusEvent), 9.3, 11.2 |
+| **4.2.2** | Notification Toggle Feature                  | 6.5, 8.2 (CounterOfficer), 9.3, 11.2     |
+| **4.2.3** | Counter Officer Dashboard                    | 4.2, 6.4, 6.5, 8.2, 11.1                 |
+| **4.3.1** | Officer Reply API & Message Flow             | 8.2 (NotificationReply), 9.3             |
+| **4.3.2** | Display Board Message Injection              | 6.5, 8.2 (BroadcastMessage), 11.4, 6.4   |
+| **4.3.3** | Security Officer Screen & Broadcast Receiver | 2.2, 6.4, 8.2, 10.4, 11.1                |
 
 ---
 
-*End of Phase 4 Overview Document — Version 1.0.0*
+_End of Phase 4 Overview Document — Version 1.0.0_
 
-*This document is the authoritative overview for Phase 4 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 4 task plan documents must be derived from and remain consistent with this overview and the master plan.*
+_This document is the authoritative overview for Phase 4 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 4 task plan documents must be derived from and remain consistent with this overview and the master plan._

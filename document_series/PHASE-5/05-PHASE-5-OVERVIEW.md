@@ -1,4 +1,5 @@
 # Smart Queue Management System
+
 ## Phase 5 Overview — Analytics, Hardening & Production Readiness
 
 **Version:** 1.0.0
@@ -112,11 +113,11 @@ Phase 5 is complete when:
 
 Phase 5 is decomposed into **3 sub-phases**, each containing **3 task plan documents**, for a total of **9 implementation documents**.
 
-| Sub-Phase | Theme | Documents | Primary Outputs |
-|---|---|---|---|
-| 5.1 | Analytics & Reporting | 5.1.1, 5.1.2, 5.1.3 | Metrics collection, reports dashboard, CSV export |
-| 5.2 | System Hardening & Optimization | 5.2.1, 5.2.2, 5.2.3 | Rate limiting, performance, audit log, health check |
-| 5.3 | Deployment & Migration | 5.3.1, 5.3.2, 5.3.3 | PostgreSQL migration, CI/CD, production checklist |
+| Sub-Phase | Theme                           | Documents           | Primary Outputs                                     |
+| --------- | ------------------------------- | ------------------- | --------------------------------------------------- |
+| 5.1       | Analytics & Reporting           | 5.1.1, 5.1.2, 5.1.3 | Metrics collection, reports dashboard, CSV export   |
+| 5.2       | System Hardening & Optimization | 5.2.1, 5.2.2, 5.2.3 | Rate limiting, performance, audit log, health check |
+| 5.3       | Deployment & Migration          | 5.3.1, 5.3.2, 5.3.3 | PostgreSQL migration, CI/CD, production checklist   |
 
 The single most important property of Phase 5 is that **the system is production-ready**: secure, observable, performant, and deployable with confidence.
 
@@ -640,12 +641,14 @@ Sub-Phase 5.3 (Deployment & Migration)
 **Critical Path:** `5.1.1 → 5.1.2 → 5.2.2 → 5.3.1 → 5.3.2 → 5.3.3`
 
 **Parallel Opportunities:**
+
 - `5.1.2` and `5.1.3` can be developed in parallel after `5.1.1` is complete.
 - `5.2.1` and `5.2.3` can be developed in parallel (security headers and audit log are independent).
 - `5.2.1`, `5.2.2`, and `5.2.3` can be developed in parallel after `5.1.1` is complete.
 - `5.3.1` can be developed in parallel with `5.2.x` (the PostgreSQL migration is independent of hardening).
 
 **Composition with Earlier Phases:**
+
 - The `AuditLog` model from **1.1.3** is the target for 5.2.3's write points.
 - The `withPermission()` guard from **1.3.2** is what 5.2.1's rate limiting wraps.
 - The middleware from **1.2.3** is what 5.2.1 updates.
@@ -718,6 +721,7 @@ The security headers from the master plan's Section 15.5 are set in `next.config
 The production environment variables are validated at application startup. The `lib/env.ts` module (or similar) reads every required variable and throws a clear error if any are missing or malformed. The validation runs once on boot and is the first thing the application does.
 
 The validation rules:
+
 - `DATABASE_URL` must be a valid PostgreSQL connection string (in production).
 - `NEXTAUTH_SECRET` must be at least 32 characters.
 - `NEXTAUTH_URL` must be a valid URL.
@@ -764,6 +768,7 @@ The post-deployment smoke test is a manual verification (no automation). The rul
 Phase 5 is complete when **all** of the following are true:
 
 #### Analytics & Reporting
+
 - [ ] The reports dashboard at `/reports` shows KPIs, charts, and tables for the current day.
 - [ ] The CSV export endpoint returns a properly formatted CSV.
 - [ ] The date range picker, service filter, and counter filter work correctly.
@@ -771,6 +776,7 @@ Phase 5 is complete when **all** of the following are true:
 - [ ] Non-admin users cannot access the reports (403).
 
 #### System Hardening
+
 - [ ] All API endpoints are rate-limited per the master plan's Section 15.3.
 - [ ] All responses carry the security headers from Section 15.5.
 - [ ] CORS is configured for the web app (same-origin) and the Android app (`ALLOWED_MOBILE_ORIGINS`).
@@ -782,6 +788,7 @@ Phase 5 is complete when **all** of the following are true:
 - [ ] A non-super-admin user cannot access the audit log (403).
 
 #### Deployment & Migration
+
 - [ ] The Prisma schema can be swapped to PostgreSQL with a single line change.
 - [ ] `prisma migrate deploy` against a fresh PostgreSQL produces the correct schema.
 - [ ] The data migration from SQLite to PostgreSQL is documented.
@@ -793,6 +800,7 @@ Phase 5 is complete when **all** of the following are true:
 - [ ] The final security review checklist is complete.
 
 #### Code Quality
+
 - [ ] `yarn lint`, `yarn type-check`, and `yarn build` all pass.
 - [ ] All Phase 5 endpoints are guarded with the correct permissions.
 - [ ] The README.md is updated with setup, deployment, and troubleshooting information.
@@ -830,17 +838,17 @@ If a Phase 5 task plan document finds itself needing any of the above, it is a s
 
 ## 10. Phase 5 Document Map (Quick Reference)
 
-| Doc ID | Title | Master Plan Sections Implemented |
-|---|---|---|
-| **5.1.1** | Queue Analytics Data Collection | 8.2 (`QueueDailySnapshot` full population), 9.3 (reports endpoint) |
-| **5.1.2** | Reports Dashboard & Visualization | 6.4, 6.5, 9.3 (reports endpoint consumption) |
-| **5.1.3** | Data Export & Scheduled Reports | 8.2 (`SystemSetting` for future schedule), 9.3 (export endpoint), 17 (deferred scheduling) |
-| **5.2.1** | API Security & Rate Limiting | 15 (entire Security Architecture — rate limits, CORS, security headers) |
-| **5.2.2** | Performance Optimization & Caching | 3.2 (Prisma), 4.1 (architecture), 11 (SSE performance), 8 (data model) |
-| **5.2.3** | Audit Logging & System Monitoring | 8.2 (AuditLog), 9.3 (audit-log, health), 6.5 (ErrorBoundary, AuditLogTable), 15 (security) |
-| **5.3.1** | PostgreSQL Migration Strategy | 3.2 (database production), 17 (decisions log — PostgreSQL) |
-| **5.3.2** | Environment Configuration & CI/CD | 3.4 (tooling), 9.3 (deployment), 15 (security in deployment), 17 |
-| **5.3.3** | Final Integration & Production Checklist | 4.1, 13, 14, 11, 15 (full system verification) |
+| Doc ID    | Title                                    | Master Plan Sections Implemented                                                           |
+| --------- | ---------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **5.1.1** | Queue Analytics Data Collection          | 8.2 (`QueueDailySnapshot` full population), 9.3 (reports endpoint)                         |
+| **5.1.2** | Reports Dashboard & Visualization        | 6.4, 6.5, 9.3 (reports endpoint consumption)                                               |
+| **5.1.3** | Data Export & Scheduled Reports          | 8.2 (`SystemSetting` for future schedule), 9.3 (export endpoint), 17 (deferred scheduling) |
+| **5.2.1** | API Security & Rate Limiting             | 15 (entire Security Architecture — rate limits, CORS, security headers)                    |
+| **5.2.2** | Performance Optimization & Caching       | 3.2 (Prisma), 4.1 (architecture), 11 (SSE performance), 8 (data model)                     |
+| **5.2.3** | Audit Logging & System Monitoring        | 8.2 (AuditLog), 9.3 (audit-log, health), 6.5 (ErrorBoundary, AuditLogTable), 15 (security) |
+| **5.3.1** | PostgreSQL Migration Strategy            | 3.2 (database production), 17 (decisions log — PostgreSQL)                                 |
+| **5.3.2** | Environment Configuration & CI/CD        | 3.4 (tooling), 9.3 (deployment), 15 (security in deployment), 17                           |
+| **5.3.3** | Final Integration & Production Checklist | 4.1, 13, 14, 11, 15 (full system verification)                                             |
 
 ---
 
@@ -848,21 +856,21 @@ If a Phase 5 task plan document finds itself needing any of the above, it is a s
 
 The Smart Queue Management System DDD document series is now complete:
 
-| Phase | Overview | Status |
-|---|---|---|
-| 0 | Master Plan | ✅ Authoritative Reference |
-| 1 | Foundation & Infrastructure | ✅ Phase 1 Overview |
-| 2 | Core Queue Domain | ✅ Phase 2 Overview |
-| 3 | Real-Time Display & Audio System | ✅ Phase 3 Overview |
-| 4 | Mobile Notification & Counter Management | ✅ Phase 4 Overview |
-| 5 | Analytics, Hardening & Production Readiness | ✅ Phase 5 Overview |
+| Phase | Overview                                    | Status                     |
+| ----- | ------------------------------------------- | -------------------------- |
+| 0     | Master Plan                                 | ✅ Authoritative Reference |
+| 1     | Foundation & Infrastructure                 | ✅ Phase 1 Overview        |
+| 2     | Core Queue Domain                           | ✅ Phase 2 Overview        |
+| 3     | Real-Time Display & Audio System            | ✅ Phase 3 Overview        |
+| 4     | Mobile Notification & Counter Management    | ✅ Phase 4 Overview        |
+| 5     | Analytics, Hardening & Production Readiness | ✅ Phase 5 Overview        |
 
 When all 45 task plan documents (1.1.1 through 5.3.3) are derived from these six overviews and implemented, the system is production-ready.
 
 ---
 
-*End of Phase 5 Overview Document — Version 1.0.0*
+_End of Phase 5 Overview Document — Version 1.0.0_
 
-*This document is the authoritative overview for Phase 5 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 5 task plan documents must be derived from and remain consistent with this overview and the master plan.*
+_This document is the authoritative overview for Phase 5 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 5 task plan documents must be derived from and remain consistent with this overview and the master plan._
 
-*With this document, the full 6-document series (1 master plan + 5 phase overviews) is complete. The 45 task plan documents can now be generated from these overviews, one per inner subphase task.*
+_With this document, the full 6-document series (1 master plan + 5 phase overviews) is complete. The 45 task plan documents can now be generated from these overviews, one per inner subphase task._

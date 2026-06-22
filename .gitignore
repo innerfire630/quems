@@ -1,0 +1,62 @@
+# =============================================================================
+# .gitignore — Smart Queue Management System
+# =============================================================================
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc
+*.pem
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files (allow committing the example template)
+.env*
+!.env.example
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Husky internal
+.husky/_
+
+# Prisma local SQLite database
+/prisma/dev.db
+/prisma/dev.db-journal
+/prisma/*.db
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

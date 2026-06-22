@@ -1,4 +1,5 @@
 # Smart Queue Management System
+
 ## Phase 3 Overview — Real-Time Display & Audio System
 
 **Version:** 1.0.0
@@ -94,11 +95,11 @@ Phase 3 is complete when:
 
 Phase 3 is decomposed into **3 sub-phases**, each containing **3 task plan documents**, for a total of **9 implementation documents**.
 
-| Sub-Phase | Theme | Documents | Primary Outputs |
-|---|---|---|---|
-| 3.1 | Real-Time Infrastructure | 3.1.1, 3.1.2, 3.1.3 | SSE manager, useSSE hook, broadcastEvent implementation |
-| 3.2 | Main Display Board | 3.2.1, 3.2.2, 3.2.3 | Display UI, multi-counter rendering, board configuration |
-| 3.3 | Audio Announcement System | 3.3.1, 3.3.2, 3.3.3 | Bell playback, TTS integration, announcement queue |
+| Sub-Phase | Theme                     | Documents           | Primary Outputs                                          |
+| --------- | ------------------------- | ------------------- | -------------------------------------------------------- |
+| 3.1       | Real-Time Infrastructure  | 3.1.1, 3.1.2, 3.1.3 | SSE manager, useSSE hook, broadcastEvent implementation  |
+| 3.2       | Main Display Board        | 3.2.1, 3.2.2, 3.2.3 | Display UI, multi-counter rendering, board configuration |
+| 3.3       | Audio Announcement System | 3.3.1, 3.3.2, 3.3.3 | Bell playback, TTS integration, announcement queue       |
 
 The single most important property of Phase 3 is that **real-time events flow end-to-end**: from the ticket action API in Phase 2, through the `broadcastEvent()` function in 3.1.3, over the SSE channel, into the `useSSE()` hook in 3.1.2, and rendered in the display board (3.2) and played through the audio system (3.3).
 
@@ -540,6 +541,7 @@ Sub-Phase 3.3 (Audio Announcement System)
 **Critical Path:** `3.1.1 → 3.1.2 → 3.1.3 → 3.2.1 → 3.2.2 → 3.3.1 → 3.3.2 → 3.3.3`
 
 **Parallel Opportunities:**
+
 - `3.1.2` and `3.1.3` can be developed in parallel after `3.1.1` is complete (the hook and the broadcast function are different concerns, though they share the SSE manager).
 - `3.2.2` and `3.2.3` can be developed in parallel after `3.2.1` is complete.
 - `3.3.1` and `3.2.3` can be developed in parallel after `3.2.1` is complete.
@@ -547,6 +549,7 @@ Sub-Phase 3.3 (Audio Announcement System)
 **Critical Seam Realization:** Documents `3.1.3` provides the real implementation of the `broadcastEvent()` function whose signature was locked in Phase 2.1.1. The Phase 2 call sites in `lib/ticket-service.ts` are not modified; they simply become functional because the function they call is no longer a no-op.
 
 **Forward Seam with Phase 4:** The SSE manager and `useSSE()` hook built in 3.1 are reused by:
+
 - The officer dashboard (4.2.3) on the `counter:[counterId]` channel.
 - The security officer screen (4.3.3) on the `security` channel.
 - The broadcast message injection (4.3.2) calls `broadcastEvent()` to push messages to the `global` and `security` channels.
@@ -590,6 +593,7 @@ These rules are non-negotiable. They are browser security policy, not design pre
 The display board is a **read-only consumer** of SSE events. It does not call any mutating API. It does not log in. It does not authenticate. The only data it sends is the audio context unlock click (which is purely local, not a network call).
 
 This discipline means:
+
 - The `/display` route is in the public allow-list in the Phase 1.2.3 middleware.
 - No `withPermission()` guard is needed on any display-board-related code.
 - The display board cannot accidentally trigger business actions (e.g., it cannot call a ticket).
@@ -639,6 +643,7 @@ The TTS voice list (`speechSynthesis.getVoices()`) is cached at the module level
 Phase 3 is complete when **all** of the following are true:
 
 #### Real-Time Infrastructure
+
 - [ ] The SSE manager correctly tracks all active connections per channel.
 - [ ] Heartbeat pings are sent every 30 seconds.
 - [ ] Client disconnects are cleaned up in the manager.
@@ -648,6 +653,7 @@ Phase 3 is complete when **all** of the following are true:
 - [ ] The routing rules (which event types go to which channels) are implemented.
 
 #### Display Board
+
 - [ ] A super-admin can create, edit, list, and delete display board configurations.
 - [ ] The `/display` and `/display?boardId=xxx` routes load the correct board configuration.
 - [ ] The display board shows a full-screen dark-themed layout.
@@ -659,6 +665,7 @@ Phase 3 is complete when **all** of the following are true:
 - [ ] Only one display board can be marked as the default at a time.
 
 #### Audio System
+
 - [ ] The bell sound file is preloaded and pre-decoded.
 - [ ] After audio unlock, ticket calls trigger bell playback within 500ms.
 - [ ] After the bell, the TTS announcement plays with the correct text.
@@ -669,6 +676,7 @@ Phase 3 is complete when **all** of the following are true:
 - [ ] Disabling bell, TTS, or all announcements via the configuration correctly skips the corresponding audio.
 
 #### Code Quality
+
 - [ ] All events are typed using the discriminated union in `types/sse.types.ts`.
 - [ ] The SSE manager and `useSSE()` hook are reusable by Phase 4.
 - [ ] `yarn lint`, `yarn type-check`, and `yarn build` all pass.
@@ -706,20 +714,20 @@ If a Phase 3 task plan document finds itself needing any of the above, it is a s
 
 ## 10. Phase 3 Document Map (Quick Reference)
 
-| Doc ID | Title | Master Plan Sections Implemented |
-|---|---|---|
-| **3.1.1** | Server-Sent Events (SSE) Architecture | 4.4, 9.3, 11 (entire), 17 |
-| **3.1.2** | Real-Time State Management on Client | 11.2, 11.5, client half of 11.1 |
-| **3.1.3** | Event Broadcasting System | 4.4 (broadcast part), 11.1, 11.2, 11.3, 11.4 |
-| **3.2.1** | Display Board UI & Layout | 6.2, 6.3, 6.4, 6.5 |
-| **3.2.2** | Multi-Counter Ticket Display Logic | 6.4, 6.5, 8.2 (DisplayBoard config usage), 11 |
+| Doc ID    | Title                                 | Master Plan Sections Implemented                    |
+| --------- | ------------------------------------- | --------------------------------------------------- |
+| **3.1.1** | Server-Sent Events (SSE) Architecture | 4.4, 9.3, 11 (entire), 17                           |
+| **3.1.2** | Real-Time State Management on Client  | 11.2, 11.5, client half of 11.1                     |
+| **3.1.3** | Event Broadcasting System             | 4.4 (broadcast part), 11.1, 11.2, 11.3, 11.4        |
+| **3.2.1** | Display Board UI & Layout             | 6.2, 6.3, 6.4, 6.5                                  |
+| **3.2.2** | Multi-Counter Ticket Display Logic    | 6.4, 6.5, 8.2 (DisplayBoard config usage), 11       |
 | **3.2.3** | Display Configuration & Customization | 6.4, 8.2 (DisplayBoard model), 9.3, 11 (URL scheme) |
-| **3.3.1** | Bell/Chime Audio Integration | 12.1 (bell part), 12.2 |
-| **3.3.2** | Browser TTS API Integration | 8.2 (TTS settings), 12.1 (TTS part), 12.3 |
-| **3.3.3** | Announcement Queue & Sequencing Logic | 6.5 (useAnnouncement hook), 12.1 (full sequence) |
+| **3.3.1** | Bell/Chime Audio Integration          | 12.1 (bell part), 12.2                              |
+| **3.3.2** | Browser TTS API Integration           | 8.2 (TTS settings), 12.1 (TTS part), 12.3           |
+| **3.3.3** | Announcement Queue & Sequencing Logic | 6.5 (useAnnouncement hook), 12.1 (full sequence)    |
 
 ---
 
-*End of Phase 3 Overview Document — Version 1.0.0*
+_End of Phase 3 Overview Document — Version 1.0.0_
 
-*This document is the authoritative overview for Phase 3 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 3 task plan documents must be derived from and remain consistent with this overview and the master plan.*
+_This document is the authoritative overview for Phase 3 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 3 task plan documents must be derived from and remain consistent with this overview and the master plan._

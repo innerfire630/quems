@@ -1,4 +1,5 @@
 # Smart Queue Management System
+
 ## Phase 2 Overview — Core Queue Domain
 
 **Version:** 1.0.0
@@ -68,10 +69,10 @@ This overview document **does not redefine** the system-wide specifications. Eve
 
 The following are **deferred** to later phases and must not be implemented during Phase 2:
 
-- Any real-time / SSE / display board / audio announcement features (Phase 3). Phase 2 *produces* events; Phase 3 *delivers* them. The broadcast mechanism itself (the SSE manager) is Phase 3.1.3.
+- Any real-time / SSE / display board / audio announcement features (Phase 3). Phase 2 _produces_ events; Phase 3 _delivers_ them. The broadcast mechanism itself (the SSE manager) is Phase 3.1.3.
 - Any push notification / FCM / mobile / counter-status-toggle UI (Phase 4). Counter temporary closure from the officer side (the "I'm going on a break" button) is Phase 4.2.1.
 - The full officer dashboard layout with all surrounding context (sidebar, notification toggle, counter status toggle, recent activity feed) — this is Phase 4.2.3. Phase 2 only builds the ticket action panel component.
-- Any reporting / analytics / charts (Phase 5). The `QueueDailySnapshot` table is *populated* in Phase 2 (as part of the daily reset), but the reporting dashboard is Phase 5.
+- Any reporting / analytics / charts (Phase 5). The `QueueDailySnapshot` table is _populated_ in Phase 2 (as part of the daily reset), but the reporting dashboard is Phase 5.
 - Any rate limiting, security headers, or production hardening (Phase 5).
 - Any PostgreSQL migration (Phase 5).
 - OAuth / social login.
@@ -94,11 +95,11 @@ Phase 2 is complete when:
 
 Phase 2 is decomposed into **3 sub-phases**, each containing **3 task plan documents**, for a total of **9 implementation documents**.
 
-| Sub-Phase | Theme | Documents | Primary Outputs |
-|---|---|---|---|
-| 2.1 | Service & Counter Management | 2.1.1, 2.1.2, 2.1.3 | Service/counter CRUD, many-to-many assignment, admin pages |
-| 2.2 | Ticket Issuance & Self-Service Kiosk | 2.2.1, 2.2.2, 2.2.3 | Ticket generation engine, kiosk UI, silent printing |
-| 2.3 | Queue Processing Operations | 2.3.1, 2.3.2, 2.3.3 | Call/recall, no-show, daily reset |
+| Sub-Phase | Theme                                | Documents           | Primary Outputs                                            |
+| --------- | ------------------------------------ | ------------------- | ---------------------------------------------------------- |
+| 2.1       | Service & Counter Management         | 2.1.1, 2.1.2, 2.1.3 | Service/counter CRUD, many-to-many assignment, admin pages |
+| 2.2       | Ticket Issuance & Self-Service Kiosk | 2.2.1, 2.2.2, 2.2.3 | Ticket generation engine, kiosk UI, silent printing        |
+| 2.3       | Queue Processing Operations          | 2.3.1, 2.3.2, 2.3.3 | Call/recall, no-show, daily reset                          |
 
 The single most important property of Phase 2 is that the **ticket lifecycle is fully working** at the API and database level by the end of Sub-Phase 2.3 — even though no client (display, officer dashboard, mobile app) is yet subscribed to its events.
 
@@ -466,6 +467,7 @@ Sub-Phase 2.3 (Queue Processing Operations)
 **Critical Path:** `2.1.1 → 2.1.3 → 2.2.1 → 2.2.2 → 2.3.1 → 2.3.2 → 2.3.3`
 
 **Parallel Opportunities:**
+
 - `2.1.1` and `2.1.2` can be developed in parallel (different entities, no shared code).
 - `2.2.2` and `2.3.1` can be developed in parallel after `2.2.1` is complete. The kiosk UI (2.2.2) and the officer ticket actions (2.3.1) are independent surfaces.
 - `2.2.3` and `2.3.2` can be developed in parallel after their respective prerequisites.
@@ -556,6 +558,7 @@ The implementation stores `businessDate` as a `DateTime` representing midnight (
 Phase 2 is complete when **all** of the following are true:
 
 #### Service & Counter Management
+
 - [ ] A super-admin can create, edit, list, and deactivate services and counters.
 - [ ] The service-to-counter assignment is functional in both directions.
 - [ ] Service code and prefix uniqueness is enforced.
@@ -564,6 +567,7 @@ Phase 2 is complete when **all** of the following are true:
 - [ ] Non-admin users cannot access service or counter management (403).
 
 #### Ticket Issuance & Kiosk
+
 - [ ] The kiosk displays the active services as a tappable grid.
 - [ ] Tapping a service results in a successful ticket issuance via the API.
 - [ ] The ticket number is correctly formatted and unique within the service for the day.
@@ -574,6 +578,7 @@ Phase 2 is complete when **all** of the following are true:
 - [ ] Print failure shows a clear fallback message.
 
 #### Queue Processing
+
 - [ ] An officer can call a waiting ticket for their counter's services.
 - [ ] The same officer can recall the ticket.
 - [ ] The same officer can mark the ticket as no-show after the grace period.
@@ -582,6 +587,7 @@ Phase 2 is complete when **all** of the following are true:
 - [ ] The temporary officer ticket action panel functions correctly.
 
 #### Daily Reset
+
 - [ ] At the configured time, the system resets per-service ticket counters.
 - [ ] A `QueueDailySnapshot` is created per service for the previous business date.
 - [ ] Daily statistics are correctly calculated.
@@ -590,6 +596,7 @@ Phase 2 is complete when **all** of the following are true:
 - [ ] Running the reset twice in the same business date does not create duplicate snapshots.
 
 #### Event Emission (for Phase 3 hand-off)
+
 - [ ] `TICKET_ISSUED` event is emitted on ticket issuance with the documented payload.
 - [ ] `TICKET_CALLED` event is emitted on ticket call with the documented payload.
 - [ ] `TICKET_RECALLED` event is emitted on ticket recall with the documented payload.
@@ -599,6 +606,7 @@ Phase 2 is complete when **all** of the following are true:
 - [ ] The `broadcastEvent()` function exists with the correct signature (even if no-op).
 
 #### Code Quality
+
 - [ ] All multi-write operations are inside transactions.
 - [ ] No illegal ticket state transitions are possible.
 - [ ] `yarn lint`, `yarn type-check`, and `yarn build` all pass.
@@ -641,20 +649,20 @@ If a Phase 2 task plan document finds itself needing any of the above, it is a s
 
 ## 10. Phase 2 Document Map (Quick Reference)
 
-| Doc ID | Title | Master Plan Sections Implemented |
-|---|---|---|
-| **2.1.1** | Service Entity & Management API | 6.4, 6.5, 8.2 (`Service`), 9.3 (services API) |
-| **2.1.2** | Counter Entity & Management API | 6.4, 6.5, 8.2 (`Counter`), 9.3 (counters API) |
-| **2.1.3** | Service-Counter Assignment Logic | 6.5, 8.2 (`CounterService`), 9.3 (assignment API) |
+| Doc ID    | Title                                  | Master Plan Sections Implemented                         |
+| --------- | -------------------------------------- | -------------------------------------------------------- |
+| **2.1.1** | Service Entity & Management API        | 6.4, 6.5, 8.2 (`Service`), 9.3 (services API)            |
+| **2.1.2** | Counter Entity & Management API        | 6.4, 6.5, 8.2 (`Counter`), 9.3 (counters API)            |
+| **2.1.3** | Service-Counter Assignment Logic       | 6.5, 8.2 (`CounterService`), 9.3 (assignment API)        |
 | **2.2.1** | Ticket Generation Engine & Queue Logic | 6.5, 8.2 (`Ticket`, `TicketEvent`), 9.3 (issue endpoint) |
-| **2.2.2** | Kiosk UI & Service Selection Flow | 6.4, 6.5, 8.2 (`KioskConfig`), 9.3 |
-| **2.2.3** | Silent Ticket Printing Implementation | 6.5, 8.2 (`KioskConfig`), 12, 13 |
-| **2.3.1** | Call & Recall Ticket Operations | 6.5, 8.2 (`Ticket`, `TicketEvent`), 9.3, 11.3, 11.4 |
-| **2.3.2** | No-Show Handling & Queue Advancement | 6.5, 8.2, 9.3, 11.2 |
-| **2.3.3** | Daily Queue Reset & State Management | 8.2 (`QueueDailySnapshot`), 9.3, 11.1, 11.2 |
+| **2.2.2** | Kiosk UI & Service Selection Flow      | 6.4, 6.5, 8.2 (`KioskConfig`), 9.3                       |
+| **2.2.3** | Silent Ticket Printing Implementation  | 6.5, 8.2 (`KioskConfig`), 12, 13                         |
+| **2.3.1** | Call & Recall Ticket Operations        | 6.5, 8.2 (`Ticket`, `TicketEvent`), 9.3, 11.3, 11.4      |
+| **2.3.2** | No-Show Handling & Queue Advancement   | 6.5, 8.2, 9.3, 11.2                                      |
+| **2.3.3** | Daily Queue Reset & State Management   | 8.2 (`QueueDailySnapshot`), 9.3, 11.1, 11.2              |
 
 ---
 
-*End of Phase 2 Overview Document — Version 1.0.0*
+_End of Phase 2 Overview Document — Version 1.0.0_
 
-*This document is the authoritative overview for Phase 2 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 2 task plan documents must be derived from and remain consistent with this overview and the master plan.*
+_This document is the authoritative overview for Phase 2 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 2 task plan documents must be derived from and remain consistent with this overview and the master plan._

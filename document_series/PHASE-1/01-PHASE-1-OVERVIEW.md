@@ -1,4 +1,5 @@
 # Smart Queue Management System
+
 ## Phase 1 Overview — Foundation & Infrastructure
 
 **Version:** 1.0.0
@@ -85,11 +86,11 @@ Phase 1 is complete when a fresh developer can:
 
 Phase 1 is decomposed into **3 sub-phases**, each containing **3 task plan documents**, for a total of **9 implementation documents**. Each task plan document is a self-contained unit of work that an AI agent can pick up and execute.
 
-| Sub-Phase | Theme | Documents | Primary Outputs |
-|---|---|---|---|
-| 1.1 | Project Initialization & Environment | 1.1.1, 1.1.2, 1.1.3 | Running app, folder structure, complete database |
-| 1.2 | Authentication & Session Management | 1.2.1, 1.2.2, 1.2.3 | Login flow, dual-token system, protected routes |
-| 1.3 | Role-Based Access Control (RBAC) | 1.3.1, 1.3.2, 1.3.3 | Seeded roles/permissions, guards, user management UI |
+| Sub-Phase | Theme                                | Documents           | Primary Outputs                                      |
+| --------- | ------------------------------------ | ------------------- | ---------------------------------------------------- |
+| 1.1       | Project Initialization & Environment | 1.1.1, 1.1.2, 1.1.3 | Running app, folder structure, complete database     |
+| 1.2       | Authentication & Session Management  | 1.2.1, 1.2.2, 1.2.3 | Login flow, dual-token system, protected routes      |
+| 1.3       | Role-Based Access Control (RBAC)     | 1.3.1, 1.3.2, 1.3.3 | Seeded roles/permissions, guards, user management UI |
 
 The single most important property of Phase 1 is that **all three sub-phases are required to be complete before Phase 2 can begin**. In particular:
 
@@ -205,7 +206,7 @@ Sub-Phase 1.1 is complete when:
 
 Sub-Phase 1.2 takes the application from **"any visitor can access any page"** to **"only authenticated users with valid tokens can access protected pages, and tokens are issued, validated, and rotated correctly"**.
 
-It does not (yet) decide what an authenticated user is *allowed* to do — that is Sub-Phase 1.3. Sub-Phase 1.2 establishes identity and session continuity.
+It does not (yet) decide what an authenticated user is _allowed_ to do — that is Sub-Phase 1.3. Sub-Phase 1.2 establishes identity and session continuity.
 
 ### 5.2 Why This Sub-Phase Comes Before RBAC
 
@@ -525,6 +526,7 @@ The following standards apply to **every** Phase 1 task plan document. They are 
 Phase 1 is complete when **all** of the following are true:
 
 #### Environment & Build
+
 - [ ] `yarn install` succeeds on a clean clone.
 - [ ] `yarn lint` passes with zero errors and zero warnings.
 - [ ] `yarn type-check` passes with zero errors.
@@ -532,12 +534,14 @@ Phase 1 is complete when **all** of the following are true:
 - [ ] `yarn dev` starts the application on the configured port and all placeholder pages are reachable.
 
 #### Database
+
 - [ ] `yarn prisma:migrate` applies the initial migration cleanly.
 - [ ] `yarn prisma:seed` populates all roles, all permissions, all role-permission mappings, and the super-admin user.
 - [ ] Every model from the master plan's Section 8 exists in the database with the correct columns and relations.
 - [ ] All foreign-key constraints are in place.
 
 #### Authentication
+
 - [ ] The seeded super-admin can log in via the login page.
 - [ ] The session received by the client contains `userId`, `roles`, and `permissions`.
 - [ ] Unauthenticated access to any protected route redirects to `/login`.
@@ -547,6 +551,7 @@ Phase 1 is complete when **all** of the following are true:
 - [ ] Logout clears the session.
 
 #### RBAC
+
 - [ ] All roles and permissions from the master plan's Section 10.4 are present in the database.
 - [ ] A counter officer cannot access `/users` (denied with 403).
 - [ ] A counter officer cannot call user management API endpoints (denied with 403).
@@ -554,6 +559,7 @@ Phase 1 is complete when **all** of the following are true:
 - [ ] The `withPermission()` guard and the `<Can>` component are reusable and used in at least one place each.
 
 #### User Management UI
+
 - [ ] A super-admin can list, create, edit, deactivate, and password-reset users.
 - [ ] Role assignment in the UI updates the user's effective permissions on the next session.
 - [ ] Every user management action writes an `AuditLog` entry.
@@ -590,20 +596,20 @@ If a Phase 1 task plan document finds itself needing any of the above, it is a s
 
 ## 10. Phase 1 Document Map (Quick Reference)
 
-| Doc ID | Title | Master Plan Sections Implemented |
-|---|---|---|
-| **1.1.1** | Environment Setup & Toolchain Configuration | 3.1, 3.4 |
-| **1.1.2** | Next.js Project Scaffold & Folder Architecture | 6.2, 7 |
-| **1.1.3** | Prisma Setup & Initial Database Configuration | 3.2, 4.1, 8 (all) |
-| **1.2.1** | NextAuth Configuration & JWT Strategy | 3.2, 10.1, 10.2 |
-| **1.2.2** | Access Token & Refresh Token Implementation | 10.1, 10.2, 10.3, 9.3 |
-| **1.2.3** | Authentication UI & Protected Routes | 6.4, 4.2 |
-| **1.3.1** | Role & Permission Data Seeding | 10.4 |
-| **1.3.2** | RBAC Middleware & API Guard | 9.1, 9.2, 10.1, 15 |
-| **1.3.3** | User Management Admin Panel | 6.4, 6.5, 8.2, 9.3, 10 |
+| Doc ID    | Title                                          | Master Plan Sections Implemented |
+| --------- | ---------------------------------------------- | -------------------------------- |
+| **1.1.1** | Environment Setup & Toolchain Configuration    | 3.1, 3.4                         |
+| **1.1.2** | Next.js Project Scaffold & Folder Architecture | 6.2, 7                           |
+| **1.1.3** | Prisma Setup & Initial Database Configuration  | 3.2, 4.1, 8 (all)                |
+| **1.2.1** | NextAuth Configuration & JWT Strategy          | 3.2, 10.1, 10.2                  |
+| **1.2.2** | Access Token & Refresh Token Implementation    | 10.1, 10.2, 10.3, 9.3            |
+| **1.2.3** | Authentication UI & Protected Routes           | 6.4, 4.2                         |
+| **1.3.1** | Role & Permission Data Seeding                 | 10.4                             |
+| **1.3.2** | RBAC Middleware & API Guard                    | 9.1, 9.2, 10.1, 15               |
+| **1.3.3** | User Management Admin Panel                    | 6.4, 6.5, 8.2, 9.3, 10           |
 
 ---
 
-*End of Phase 1 Overview Document — Version 1.0.0*
+_End of Phase 1 Overview Document — Version 1.0.0_
 
-*This document is the authoritative overview for Phase 1 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 1 task plan documents must be derived from and remain consistent with this overview and the master plan.*
+_This document is the authoritative overview for Phase 1 of the Smart Queue Management System DDD series. It is the parent reference for the 9 task plan documents listed in Section 10. All Phase 1 task plan documents must be derived from and remain consistent with this overview and the master plan._
