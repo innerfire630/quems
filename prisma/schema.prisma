@@ -1,0 +1,511 @@
+// =============================================================================
+// Smart Queue Management System — Prisma schema (Master Plan §8)
+// =============================================================================
+// SQLite is the development database (master plan §3.2). The schema mirrors
+// every model from the master plan and is the single source of truth for the
+// application. Provider and datasource URL are configured in prisma.config.ts
+// (Prisma 7 split-config layout). All enums are written as native Prisma
+// enums — Prisma emits them as text columns for SQLite while preserving type
+// safety in the generated client.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// =============================================================================
+// Enums (Master Plan §8.1)
+// =============================================================================
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Platform {
+  ANDROID
+  IOS
+  WEB
+}
+
+enum CounterOfficerStatus {
+  AVAILABLE
+  SERVING
+  CLOSED
+  OFFLINE
+}
+
+enum CounterEventStatus {
+  OPENED
+  CLOSED_TEMPORARY
+  CLOSED_PERMANENT
+  REOPENED
+}
+
+enum TicketStatus {
+  WAITING
+  CALLED
+  RECALLED
+  SERVING
+  COMPLETED
+  NO_SHOW
+  TRANSFERRED
+  CANCELLED
+}
+
+enum TicketEventType {
+  ISSUED
+  CALLED
+  RECALLED
+  SERVED
+  COMPLETED
+  NO_SHOW
+  TRANSFERRED
+  CANCELLED
+  PRIORITY_CHANGED
+}
+
+enum NotificationType {
+  TICKET_ISSUED
+  TICKET_RECALLED
+  SYSTEM_MESSAGE
+  BROADCAST
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
+enum SettingType {
+  STRING
+  INTEGER
+  BOOLEAN
+  JSON
+}
+
+// =============================================================================
+// Models (Master Plan §8.2)
+// =============================================================================
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String
+  avatar    String?
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  roles         UserRole[]
+  sessions      Session[]
+  accounts      Account[]
+  refreshTokens RefreshToken[]
+  counterProfile CounterOfficer[]
+  auditLogs     AuditLog[]
+  securityBroadcasts BroadcastMessage[] @relation("BroadcastTargetSecurity")
+  updatedSettings   SystemSetting[]    @relation("SettingsUpdatedBy")
+
+  @@index([email])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  description String?
+  module      String
+  createdAt   DateTime @default(now())
+
+  roles RolePermission[]
+
+  @@index([module])
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model UserRole {
+  id           String   @id @default(cuid())
+  userId       String
+  roleId       String
+  assignedAt   DateTime @default(now())
+  assignedById String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model RefreshToken {
+  id              String    @id @default(cuid())
+  token           String    @unique
+  userId          String
+  expiresAt       DateTime
+  isRevoked       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  revokedAt       DateTime?
+  replacedByToken String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Service {
+  id                  String   @id @default(cuid())
+  name                String
+  code                String   @unique
+  ticketPrefix        String   @unique
+  description         String?
+  iconName            String?
+  color               String?
+  isActive            Boolean  @default(true)
+  currentTicketNumber Int      @default(0)
+  averageServiceTime  Int?
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  counters       CounterService[]
+  tickets        Ticket[]
+  dailySnapshots QueueDailySnapshot[]
+
+  @@index([isActive])
+}
+
+model Counter {
+  id            String   @id @default(cuid())
+  name          String
+  number        Int      @unique
+  description   String?
+  isActive      Boolean  @default(true)
+  displayLabel  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  services      CounterService[]
+  officers      CounterOfficer[]
+  tickets       Ticket[]
+  statusHistory CounterStatusEvent[]
+
+  @@index([isActive])
+}
+
+model CounterService {
+  id        String   @id @default(cuid())
+  counterId String
+  serviceId String
+  createdAt DateTime @default(now())
+
+  counter Counter @relation(fields: [counterId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([counterId, serviceId])
+}
+
+model CounterOfficer {
+  id                   String               @id @default(cuid())
+  userId               String
+  counterId            String
+  isOnDuty             Boolean              @default(false)
+  isClosed             Boolean              @default(false)
+  closureReason        String?
+  closedAt             DateTime?
+  notificationsEnabled Boolean              @default(true)
+  currentStatus        CounterOfficerStatus @default(OFFLINE)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  counter              Counter               @relation(fields: [counterId], references: [id], onDelete: Cascade)
+  deviceTokens         DeviceToken[]
+  calledTickets        Ticket[]
+  notifications        Notification[]
+  notificationReplies  NotificationReply[]
+  statusEvents         CounterStatusEvent[]
+  broadcastMessages    BroadcastMessage[]    @relation("BroadcastSender")
+
+  @@unique([userId, counterId])
+}
+
+model CounterStatusEvent {
+  id                String            @id @default(cuid())
+  counterId         String
+  counterOfficerId  String
+  status            CounterEventStatus
+  reason            String?
+  createdAt         DateTime          @default(now())
+
+  counter         Counter         @relation(fields: [counterId], references: [id], onDelete: Cascade)
+  counterOfficer  CounterOfficer  @relation(fields: [counterOfficerId], references: [id], onDelete: Cascade)
+}
+
+model Ticket {
+  id                   String       @id @default(cuid())
+  ticketNumber         String
+  displayNumber        Int
+  serviceId            String
+  counterId            String?
+  calledByOfficerId    String?
+  status               TicketStatus @default(WAITING)
+  priority             Int          @default(0)
+  waitPosition         Int
+  estimatedWaitMinutes Int?
+  issuedAt             DateTime     @default(now())
+  calledAt             DateTime?
+  recalledAt           DateTime?
+  servedAt             DateTime?
+  completedAt          DateTime?
+  noShowAt             DateTime?
+  businessDate         DateTime
+  customerPhone        String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  service         Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  counter         Counter?        @relation(fields: [counterId], references: [id])
+  calledByOfficer CounterOfficer? @relation(fields: [calledByOfficerId], references: [id])
+  events          TicketEvent[]
+  notifications   Notification[]
+
+  @@index([serviceId])
+  @@index([counterId])
+  @@index([status])
+  @@index([businessDate])
+  @@index([ticketNumber])
+}
+
+model TicketEvent {
+  id        String          @id @default(cuid())
+  ticketId  String
+  eventType TicketEventType
+  counterId String?
+  officerId String?
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model DisplayBoard {
+  id                    String   @id @default(cuid())
+  name                  String
+  isDefault             Boolean  @default(false)
+  maxDisplayedTickets   Int      @default(10)
+  announcementEnabled   Boolean  @default(true)
+  bellEnabled           Boolean  @default(true)
+  ttsEnabled            Boolean  @default(true)
+  ttsLanguage           String   @default("en-US")
+  ttsRate               Float    @default(1.0)
+  ttsPitch              Float    @default(1.0)
+  ttsVolume             Float    @default(1.0)
+  announcementTemplate  String   @default("Now serving ticket {number} at {counter}")
+  themeColor            String?
+  logoUrl               String?
+  customMessage         String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  broadcasts BroadcastMessage[]
+}
+
+model KioskConfig {
+  id                String   @id @default(cuid())
+  name              String
+  isActive          Boolean  @default(true)
+  welcomeMessage    String?
+  footerMessage     String?
+  printerName       String?
+  autoResetSeconds  Int      @default(30)
+  showEstimatedWait Boolean  @default(true)
+  restrictedServiceIds Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model DeviceToken {
+  id               String   @id @default(cuid())
+  counterOfficerId String
+  token            String   @unique
+  platform         Platform
+  deviceInfo       Json?
+  isActive         Boolean  @default(true)
+  lastUsedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  counterOfficer CounterOfficer @relation(fields: [counterOfficerId], references: [id], onDelete: Cascade)
+
+  @@index([counterOfficerId])
+}
+
+model Notification {
+  id               String             @id @default(cuid())
+  ticketId         String
+  counterOfficerId String
+  type             NotificationType
+  title            String
+  body             String
+  data             Json?
+  status           NotificationStatus @default(PENDING)
+  fcmMessageId     String?
+  sentAt           DateTime?
+  deliveredAt      DateTime?
+  readAt           DateTime?
+  createdAt        DateTime           @default(now())
+
+  ticket         Ticket          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  counterOfficer CounterOfficer  @relation(fields: [counterOfficerId], references: [id], onDelete: Cascade)
+  replies        NotificationReply[]
+
+  @@index([counterOfficerId])
+}
+
+model NotificationReply {
+  id                  String    @id @default(cuid())
+  notificationId      String
+  counterOfficerId    String
+  message             String
+  isDisplayBroadcast  Boolean   @default(false)
+  isSecurityBroadcast Boolean   @default(false)
+  broadcastAt         DateTime?
+  createdAt           DateTime  @default(now())
+
+  notification      Notification       @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  counterOfficer    CounterOfficer     @relation(fields: [counterOfficerId], references: [id], onDelete: Cascade)
+  broadcastMessages BroadcastMessage[]
+}
+
+model BroadcastMessage {
+  id                     String    @id @default(cuid())
+  message                String
+  senderOfficerId        String
+  senderDisplayName      String
+  sourceReplyId          String?
+  targetDisplayBoardId   String?
+  targetSecurityUserId   String?
+  displayDurationSeconds Int       @default(10)
+  expiresAt              DateTime?
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+
+  senderOfficer      CounterOfficer     @relation("BroadcastSender", fields: [senderOfficerId], references: [id], onDelete: Cascade)
+  sourceReply        NotificationReply?  @relation(fields: [sourceReplyId], references: [id])
+  targetDisplayBoard DisplayBoard?       @relation(fields: [targetDisplayBoardId], references: [id])
+  targetSecurityUser User?              @relation("BroadcastTargetSecurity", fields: [targetSecurityUserId], references: [id])
+}
+
+model QueueDailySnapshot {
+  id                   String   @id @default(cuid())
+  businessDate         DateTime
+  serviceId            String
+  totalIssued          Int      @default(0)
+  totalServed          Int      @default(0)
+  totalNoShow          Int      @default(0)
+  totalCancelled       Int      @default(0)
+  totalWaiting         Int      @default(0)
+  averageWaitMinutes   Float?
+  averageServiceMinutes Float?
+  peakHour             Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([businessDate, serviceId])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  userId         String?
+  userDisplayName String?
+  action         String
+  entity         String
+  entityId       String?
+  before         Json?
+  after          Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model SystemSetting {
+  id           String      @id @default(cuid())
+  key          String      @unique
+  value        String
+  type         SettingType
+  description  String?
+  isPublic     Boolean     @default(false)
+  updatedAt    DateTime    @updatedAt
+  updatedById  String?
+
+  updatedBy User? @relation("SettingsUpdatedBy", fields: [updatedById], references: [id])
+}

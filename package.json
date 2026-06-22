@@ -32,6 +32,9 @@
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@hookform/resolvers": "^5.4.0",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "better-sqlite3": "^12.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.21.0",
@@ -58,6 +61,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "prettier": "^3.4.2",
+    "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
     "typescript": "^5"
