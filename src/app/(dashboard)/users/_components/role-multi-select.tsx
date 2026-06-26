@@ -73,7 +73,7 @@ export function RoleMultiSelect({ roles, value, onChange, disabled }: RoleMultiS
       </Button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover p-1 shadow-md">
+        <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
           {roles.map((role) => {
             const isSelected = value.includes(role.id);
             return (

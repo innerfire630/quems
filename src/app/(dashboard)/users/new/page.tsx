@@ -9,6 +9,8 @@ import { getServerSession } from '@/lib/auth';
 import { ArrowLeft } from 'lucide-react';
 import { UserForm } from '@/app/(dashboard)/users/_components/user-form';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewUserPage() {
   const session = await getServerSession();
 

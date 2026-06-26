@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { SidebarBrand } from './SidebarBrand';
 import { SidebarNavLink } from './SidebarNavLink';
-import { SidebarFooter } from './SidebarFooter';
 import { Can } from '@/components/can';
 import {
   PERMISSION_USER_MANAGE,
@@ -48,7 +47,6 @@ export function AppSidebar() {
         ))}
       </nav>
       <div className="flex-1" />
-      <SidebarFooter />
     </aside>
   );
 }

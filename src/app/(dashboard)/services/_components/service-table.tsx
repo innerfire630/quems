@@ -119,10 +119,10 @@ export function ServiceTable({ services, isLoading, error, onEdit }: ServiceTabl
                 <TableCell>{service.sortOrder}</TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger>
-                      <Button variant="ghost" size="icon" aria-label="Actions">
-                        <MoreHorizontal className="size-4" />
-                      </Button>
+                    <DropdownMenuTrigger
+                      render={<Button variant="ghost" size="icon" aria-label="Actions" />}
+                    >
+                      <MoreHorizontal className="size-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onEdit?.(service.id)}>

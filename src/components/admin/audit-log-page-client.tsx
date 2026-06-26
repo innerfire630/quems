@@ -59,7 +59,14 @@ export function AuditLogPageClient({ initialData }: AuditLogPageClientProps) {
       }
 
       const json = await res.json();
-      setData(json);
+      // Normalize API envelope { success, data, meta } → AuditLogPageResult shape
+      setData({
+        entries: json.data ?? [],
+        total: json.meta?.total ?? 0,
+        page: json.meta?.page ?? 1,
+        pageSize: json.meta?.pageSize ?? 25,
+        totalPages: json.meta?.totalPages ?? 1,
+      });
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
       setError((err as Error).message);

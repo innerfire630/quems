@@ -139,7 +139,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
   const title = mode === 'create' ? 'Create User' : 'Edit User';
 
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
@@ -148,7 +148,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
             : `Editing user: ${initialValues?.email ?? ''}`}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-visible">
         <form onSubmit={handleSubmit} className="space-y-4">
           {submitError && (
             <Alert variant="destructive">
@@ -208,7 +208,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
             {errors.status && <p className="text-sm text-destructive">{errors.status}</p>}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-visible">
             <Label>Roles</Label>
             <RoleMultiSelect
               roles={roles.map((r) => ({

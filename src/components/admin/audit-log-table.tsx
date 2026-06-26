@@ -97,7 +97,7 @@ function ActionBadge({ action }: { action: string }) {
 }
 
 export function AuditLogTable({ entries }: AuditLogTableProps) {
-  if (entries.length === 0) {
+  if (!entries || entries.length === 0) {
     return (
       <div className="flex min-h-[200px] items-center justify-center text-sm text-muted-foreground">
         No audit log entries match the filters.
