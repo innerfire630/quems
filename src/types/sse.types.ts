@@ -37,15 +37,23 @@ export type SseEventType =
 // Per-event payload types (filled in by the document that introduces each event)
 // ---------------------------------------------------------------------------
 
-/** TICKET_ISSUED — emitted by 2.2.1 when a kiosk issues a new ticket. */
+/**
+ * TICKET_ISSUED — emitted by 2.2.1 when a kiosk issues a new ticket.
+ * This variant was added in 2.2.1 as part of the issuance endpoint.
+ * Consumers (Phase 3 display, Phase 4 notifications) can rely on this shape.
+ */
 export interface TicketIssuedPayload {
   ticketId: string;
   ticketNumber: string;
+  displayNumber: number;
   serviceId: string;
   serviceName: string;
-  counterId?: string;
-  estimatedWaitMinutes?: number;
-  queuePosition: number;
+  serviceCode: string;
+  priority: number;
+  waitPosition: number;
+  estimatedWaitMinutes: number | null;
+  businessDate: string;
+  issuedAt: string;
 }
 
 /** TICKET_CALLED — emitted by 2.3.1 when an officer calls a ticket. */

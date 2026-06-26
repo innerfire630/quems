@@ -1,0 +1,135 @@
+/* =============================================================================
+ * src/styles/print.css — Thermal printer stylesheet (2.2.3)
+ * =============================================================================
+ * Print styles for 80mm (default) and 58mm thermal paper tickets.
+ * This file is injected into the hidden iframe at print time, NOT loaded
+ * globally by the main app.
+ * ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+ * @page — 80mm thermal paper (default)
+ * --------------------------------------------------------------------------- */
+@page {
+  size: 80mm auto;
+  margin: 4mm;
+}
+
+/* ---------------------------------------------------------------------------
+ * @media print — reset all non-essential styling
+ * --------------------------------------------------------------------------- */
+@media print {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #000;
+    background: #fff;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Ticket element styles
+ * --------------------------------------------------------------------------- */
+
+.ticket {
+  width: 100%;
+  text-align: center;
+}
+
+.ticket .logo {
+  display: block;
+  max-width: 60mm;
+  margin: 0 auto 4mm;
+}
+
+.ticket .ticket-number {
+  font-size: 48px;
+  font-weight: 900;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin: 8px 0;
+  color: #000;
+}
+
+.ticket .ticket-label {
+  font-size: 12px;
+  text-align: center;
+  margin: 0 0 4px;
+  color: #555;
+}
+
+.ticket .service-name {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  margin: 4px 0;
+  color: #000;
+}
+
+.ticket .estimated-wait {
+  font-size: 14px;
+  text-align: center;
+  margin: 4px 0;
+  color: #333;
+}
+
+.ticket .footer-text {
+  font-size: 10px;
+  text-align: center;
+  margin: 8px 0 0;
+  color: #333;
+}
+
+.ticket .metadata {
+  font-size: 10px;
+  text-align: center;
+  margin: 4px 0;
+  color: #666;
+}
+
+.ticket .divider {
+  border-top: 1px dashed #999;
+  margin: 8px 0;
+  height: 0;
+}
+
+.ticket .qr-placeholder {
+  width: 80px;
+  height: 80px;
+  margin: 8px auto;
+  border: 1px dashed #ccc;
+}
+
+/* ---------------------------------------------------------------------------
+ * 58mm variant (when kiosk config specifies paperWidth = '58MM')
+ * --------------------------------------------------------------------------- */
+.ticket--58mm .ticket-number {
+  font-size: 36px;
+  margin: 6px 0;
+}
+
+.ticket--58mm .service-name {
+  font-size: 16px;
+}
+
+.ticket--58mm .estimated-wait,
+.ticket--58mm .footer-text,
+.ticket--58mm .metadata {
+  margin: 2px 0;
+}

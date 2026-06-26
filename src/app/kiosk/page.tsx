@@ -1,13 +1,33 @@
-import { Badge } from '@/components/ui/badge';
+// =============================================================================
+// src/app/kiosk/page.tsx — Kiosk home page (2.2.2)
+// =============================================================================
+// Server component that loads the kiosk configuration and active services,
+// then delegates to client components for interactivity.
+// =============================================================================
 
-export default function KioskPage() {
+import { loadKioskConfig, getActiveServicesForKiosk } from '@/lib/kiosk-config';
+import { KioskHeader } from './_components/kiosk-header';
+import { KioskHome } from './_components/kiosk-home';
+import { KioskNoConfig } from './_components/kiosk-no-config';
+
+interface KioskPageProps {
+  searchParams: Promise<{ kioskId?: string }>;
+}
+
+export default async function KioskPage({ searchParams }: KioskPageProps) {
+  const { kioskId } = await searchParams;
+  const kioskConfig = await loadKioskConfig(kioskId ?? null);
+
+  if (!kioskConfig) {
+    return <KioskNoConfig />;
+  }
+
+  const services = await getActiveServicesForKiosk(kioskConfig);
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-card p-8">
-      <h1 className="text-4xl font-bold text-foreground">Self-Service Kiosk</h1>
-      <p className="mt-4 text-lg text-muted-foreground">Take a ticket and join the queue</p>
-      <div className="mt-8">
-        <Badge variant="outline">Implemented in Phase 2</Badge>
-      </div>
-    </div>
+    <>
+      <KioskHeader welcomeMessage={kioskConfig.welcomeMessage ?? 'Welcome!'} />
+      <KioskHome services={services} kioskConfig={kioskConfig} />
+    </>
   );
 }

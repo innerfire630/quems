@@ -200,6 +200,35 @@ async function seedSuperAdmin(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Kiosk config seed
+// ---------------------------------------------------------------------------
+
+async function seedKioskConfig(): Promise<void> {
+  const existing = await prisma.kioskConfig.findFirst({
+    where: { isDefault: true, isActive: true },
+  });
+
+  if (existing) {
+    console.log('  Default kiosk config already exists — skipping.');
+    return;
+  }
+
+  await prisma.kioskConfig.create({
+    data: {
+      name: 'Default Kiosk',
+      isDefault: true,
+      isActive: true,
+      welcomeMessage: 'Welcome! Please select a service.',
+      footerMessage: 'Please wait to be called.',
+      autoResetSeconds: 30,
+      showEstimatedWait: true,
+    },
+  });
+
+  console.log('  Default kiosk config created.');
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -228,6 +257,10 @@ async function main(): Promise<void> {
   // 4. Default super-admin user
   console.log('▶ Seeding default super-admin user...');
   await seedSuperAdmin();
+
+  // 5. Default KioskConfig
+  console.log('▶ Seeding default kiosk configuration...');
+  await seedKioskConfig();
 
   console.log('');
   console.log('═══════════════════════════════════════════');

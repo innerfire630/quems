@@ -373,6 +373,7 @@ model DisplayBoard {
 model KioskConfig {
   id                String   @id @default(cuid())
   name              String
+  isDefault         Boolean  @default(false)
   isActive          Boolean  @default(true)
   welcomeMessage    String?
   footerMessage     String?
