@@ -114,13 +114,12 @@ export interface TicketCompletedPayload {
   counterId: string;
 }
 
-/** BROADCAST_MESSAGE — emitted by Phase 4 when an officer sends a broadcast. */
+/** BROADCAST_MESSAGE — emitted by 4.3.2 when a reply is broadcast to display + security. */
 export interface BroadcastMessagePayload {
-  messageId: string;
-  text: string;
-  senderId: string;
+  broadcastId: string;
+  message: string;
   senderName: string;
-  counterId: string;
+  displaySeconds: number;
 }
 
 /** DAILY_RESET — emitted by 2.3.3 when the system performs a daily reset. */
@@ -172,13 +171,12 @@ export interface NotificationReceivedPayload {
   counterId: string;
 }
 
-/** OFFICER_REPLY — emitted when an officer replies to a notification (Phase 4+). */
+/** OFFICER_REPLY — emitted by 4.3.1 when an officer replies to a notification. */
 export interface OfficerReplyPayload {
-  replyId: string;
   notificationId: string;
-  officerId: string;
-  officerName: string;
-  message: string;
+  replyId: string;
+  repliedByOfficerName: string;
+  repliedAt: string;
 }
 
 // ---------------------------------------------------------------------------

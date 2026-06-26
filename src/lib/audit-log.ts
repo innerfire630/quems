@@ -52,7 +52,11 @@ export type AuditAction =
   // Phase 4.2.1 — Counter status changed by an officer (open/close transitions)
   | 'COUNTER_STATUS_CHANGED'
   // Phase 4.2.2 — Notification toggle changed by an officer
-  | 'NOTIFICATIONS_TOGGLED';
+  | 'NOTIFICATIONS_TOGGLED'
+  // Phase 4.3.1 — Officer reply to a notification
+  | 'NOTIFICATION_REPLIED'
+  // Phase 4.3.2 — Broadcast message sent to display board and security screen
+  | 'BROADCAST_MESSAGE_SENT';
 
 export interface AuditLogEntry {
   action: AuditAction;
