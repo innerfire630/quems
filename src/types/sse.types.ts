@@ -60,28 +60,38 @@ export interface TicketIssuedPayload {
 export interface TicketCalledPayload {
   ticketId: string;
   ticketNumber: string;
-  counterId: string;
-  counterNumber: number;
-  counterLabel: string;
   serviceId: string;
   serviceName: string;
+  counterId: string;
+  counterName: string;
+  counterNumber: number;
+  calledByOfficerId: string;
+  calledByOfficerName: string;
+  calledAt: string;
+  previousStatus: string;
 }
 
 /** TICKET_RECALLED — emitted by 2.3.1 when an officer recalls a ticket. */
-export interface TicketRecalledPayload {
-  ticketId: string;
-  ticketNumber: string;
-  counterId: string;
-  counterNumber: number;
-  counterLabel: string;
+export interface TicketRecalledPayload extends TicketCalledPayload {
+  recalledAt: string;
+  recallCount: number;
 }
 
 /** TICKET_NO_SHOW — emitted by 2.3.2 when a ticket is marked as no-show. */
 export interface TicketNoShowPayload {
   ticketId: string;
   ticketNumber: string;
+  serviceId: string;
+  serviceName: string;
   counterId: string;
-  reason?: string;
+  counterNumber: number;
+  calledByOfficerId: string;
+  calledByOfficerName: string;
+  noShowAt: string;
+  gracePeriodSeconds: number;
+  elapsedSeconds: number;
+  autoAdvanced: boolean;
+  autoAdvancedTicketNumber: string | null;
 }
 
 /** TICKET_SERVED — emitted when a ticket is marked as served (Phase 3+). */
@@ -109,10 +119,14 @@ export interface BroadcastMessagePayload {
 
 /** DAILY_RESET — emitted by 2.3.3 when the system performs a daily reset. */
 export interface DailyResetPayload {
-  date: string; // ISO date string
-  previousDate: string;
-  servicesReset: number;
-  snapshotsCreated: number;
+  resetAt: string;
+  previousBusinessDate: string;
+  trigger: 'SCHEDULED' | 'MANUAL';
+  triggeredByUserId: string | null;
+  affectedServiceIds: string[];
+  totalSnapshotsUpserted: number;
+  totalCountersReset: number;
+  errors: { serviceId: string; message: string }[];
 }
 
 /** COUNTER_OPENED — emitted by Phase 4 when an officer opens their counter. */

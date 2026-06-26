@@ -1,5 +1,5 @@
 // =============================================================================
-// src/types/ticket.types.ts — Ticket API types (2.2.1)
+// src/types/ticket.types.ts — Ticket API types (2.2.1, extended in 2.3.1, 2.3.2)
 // =============================================================================
 
 // ---------------------------------------------------------------------------
@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 
 export type { IssueTicketInput } from '@/schemas/ticket.schema';
+import type { TicketStatus } from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Ticket event log entry
@@ -70,4 +71,101 @@ export interface TicketListMeta {
   limit: number;
   total: number;
   totalPages: number;
+}
+
+// =============================================================================
+// Ticket action types (2.3.1 — Call / Recall)
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Input types
+// ---------------------------------------------------------------------------
+
+export interface TicketCallInput {
+  ticketId: string;
+  counterId: string;
+}
+
+export interface TicketRecallInput {
+  ticketId: string;
+  counterId: string;
+}
+
+// ---------------------------------------------------------------------------
+// Response types
+// ---------------------------------------------------------------------------
+
+export interface TicketCallResponse extends TicketDetail {
+  sseEventId: string;
+  previousStatus: string;
+}
+
+export interface TicketRecallResponse extends TicketCallResponse {
+  recallCount: number;
+}
+
+// ---------------------------------------------------------------------------
+// Discriminated union for generic action surfaces
+// ---------------------------------------------------------------------------
+
+export type TicketActionResult =
+  | { kind: 'CALLED'; data: TicketCallResponse }
+  | { kind: 'RECALLED'; data: TicketRecallResponse };
+
+// ---------------------------------------------------------------------------
+// Error types
+// ---------------------------------------------------------------------------
+
+export interface OfficerNotOnDutyError {
+  kind: 'OFFICER_NOT_ON_DUTY';
+  message: string;
+}
+
+export interface CounterInactiveError {
+  kind: 'COUNTER_INACTIVE';
+  message: string;
+}
+
+export interface ServiceNotAssignedToCounterError {
+  kind: 'SERVICE_NOT_ASSIGNED_TO_COUNTER';
+  message: string;
+}
+
+export interface InvalidTicketTransitionError {
+  kind: 'INVALID_TRANSITION';
+  message: string;
+}
+
+export type ActionErrorKind =
+  | 'OFFICER_NOT_ON_DUTY'
+  | 'OFFICER_NOT_ASSIGNED'
+  | 'COUNTER_INACTIVE'
+  | 'SERVICE_NOT_ASSIGNED_TO_COUNTER'
+  | 'INVALID_TRANSITION'
+  | 'GRACE_PERIOD_NOT_ELAPSED'
+  | 'INTERNAL_ERROR';
+
+// =============================================================================
+// No-Show types (2.3.2)
+// =============================================================================
+
+export interface TicketNoShowInput {
+  ticketId: string;
+  counterId: string;
+}
+
+export interface TicketNoShowResponse extends TicketDetail {
+  sseEventId: string;
+  previousStatus: TicketStatus;
+  gracePeriodSeconds: number;
+  elapsedSeconds: number;
+  autoAdvanced: boolean;
+  autoAdvancedTicket: TicketListItem | null;
+}
+
+export interface NoShowValidationError {
+  kind: 'GRACE_PERIOD_NOT_ELAPSED';
+  elapsedSeconds: number;
+  requiredSeconds: number;
+  message: string;
 }

@@ -35,7 +35,9 @@ export type AuditAction =
   | 'COUNTER_DEACTIVATED'
   // Phase 2.1.3 — Service-Counter assignment actions
   | 'SERVICE_ASSIGNED_TO_COUNTER'
-  | 'SERVICE_UNASSIGNED_FROM_COUNTER';
+  | 'SERVICE_UNASSIGNED_FROM_COUNTER'
+  // Phase 2.3.3 — Daily reset
+  | 'DAILY_RESET_MANUAL';
 
 export interface AuditLogEntry {
   action: AuditAction;

@@ -58,3 +58,48 @@ export const getTicketByIdParamsSchema = z.object({
 });
 
 export type GetTicketByIdParams = z.infer<typeof getTicketByIdParamsSchema>;
+
+// ---------------------------------------------------------------------------
+// Shared body for ticket action endpoints (call, recall, no-show) — 2.3.1
+// ---------------------------------------------------------------------------
+
+export const ticketActionBodySchema = z.object({
+  counterId: z.string().min(1, 'Counter ID is required.'),
+});
+
+export type TicketActionBody = z.infer<typeof ticketActionBodySchema>;
+
+// ---------------------------------------------------------------------------
+// POST /api/tickets/[ticketId]/call — 2.3.1
+// ---------------------------------------------------------------------------
+
+export const callTicketSchema = ticketActionBodySchema;
+
+export type CallTicketInput = z.infer<typeof callTicketSchema>;
+
+// ---------------------------------------------------------------------------
+// POST /api/tickets/[ticketId]/recall — 2.3.1
+// ---------------------------------------------------------------------------
+
+export const recallTicketSchema = ticketActionBodySchema;
+
+export type RecallTicketInput = z.infer<typeof recallTicketSchema>;
+
+// ---------------------------------------------------------------------------
+// POST /api/tickets/[ticketId]/no-show — 2.3.2
+// ---------------------------------------------------------------------------
+
+export const noShowTicketSchema = ticketActionBodySchema;
+
+export type NoShowTicketInput = z.infer<typeof noShowTicketSchema>;
+
+// ---------------------------------------------------------------------------
+// POST /api/tickets/call-next — 2.3.2
+// ---------------------------------------------------------------------------
+
+export const callNextTicketSchema = z.object({
+  counterId: z.string().min(1, 'Counter ID is required.'),
+  serviceId: z.string().optional(),
+});
+
+export type CallNextTicketInput = z.infer<typeof callNextTicketSchema>;
