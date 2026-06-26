@@ -13,8 +13,13 @@
     "type-check": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
     "prisma:seed": "prisma db seed",
     "db:reset": "prisma migrate reset",
+    "migration:verify": "tsx scripts/migration/verify-migration.ts",
+    "env:check": "tsx scripts/check-env.ts",
+    "smoke:test": "tsx scripts/smoke-test.ts",
     "prepare": "husky"
   },
   "prisma": {

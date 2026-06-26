@@ -1,0 +1,49 @@
+# =============================================================================
+# CI Workflow — Smart Queue Management System
+# =============================================================================
+# Runs on every push to main and every pull request. Catches regressions
+# before they reach production. Must pass before any merge.
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint, Type-Check & Build
+    runs-on: ubuntu-latest
+
+    env:
+      # Dummy SQLite URL required for prisma generate during build
+      DATABASE_URL: 'file:./prisma/dev.db'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Type-check
+        run: yarn type-check
+
+      - name: Build
+        run: yarn build

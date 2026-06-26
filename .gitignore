@@ -29,6 +29,9 @@ desktop.ini
 
 # Misc
 *.pem
+*.key
+service-account.json
+*-credentials.json
 
 # Debug logs
 npm-debug.log*

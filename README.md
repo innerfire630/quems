@@ -48,21 +48,25 @@ The application boots on <http://localhost:3000>.
 
 ## Available Scripts
 
-| Script                 | Purpose                                          |
-| ---------------------- | ------------------------------------------------ |
-| `yarn dev`             | Start the Next.js development server             |
-| `yarn build`           | Create a production build                        |
-| `yarn start`           | Start the production server (after `build`)      |
-| `yarn lint`            | Run ESLint without auto-fixing                   |
-| `yarn lint:fix`        | Run ESLint with auto-fix                         |
-| `yarn format`          | Format all files with Prettier                   |
-| `yarn format:check`    | Verify formatting without writing                |
-| `yarn type-check`      | Run TypeScript type checking (`tsc --noEmit`)    |
-| `yarn prisma:generate` | Generate the Prisma client                       |
-| `yarn prisma:migrate`  | Apply Prisma migrations in development           |
-| `yarn prisma:seed`     | Run the seed script                              |
-| `yarn db:reset`        | Reset the database (development only)            |
-| `yarn prepare`         | Husky install hook (auto-runs on `yarn install`) |
+| Script                       | Purpose                                            |
+| ---------------------------- | -------------------------------------------------- |
+| `yarn dev`                   | Start the Next.js development server               |
+| `yarn build`                 | Create a production build                          |
+| `yarn start`                 | Start the production server (after `build`)        |
+| `yarn lint`                  | Run ESLint without auto-fixing                     |
+| `yarn lint:fix`              | Run ESLint with auto-fix                           |
+| `yarn format`                | Format all files with Prettier                     |
+| `yarn format:check`          | Verify formatting without writing                  |
+| `yarn type-check`            | Run TypeScript type checking (`tsc --noEmit`)      |
+| `yarn prisma:generate`       | Generate the Prisma client                         |
+| `yarn prisma:migrate`        | Apply Prisma migrations in development             |
+| `yarn prisma:migrate:deploy` | Apply Prisma migrations in production (idempotent) |
+| `yarn prisma:studio`         | Open Prisma Studio database browser                |
+| `yarn prisma:seed`           | Run the seed script                                |
+| `yarn db:reset`              | Reset the database (development only)              |
+| `yarn migration:verify`      | Verify SQLite → PostgreSQL data migration          |
+| `yarn env:check`             | Validate environment variables before deploy       |
+| `yarn prepare`               | Husky install hook (auto-runs on `yarn install`)   |
 
 ## Project Structure
 
@@ -105,6 +109,40 @@ The application boots on <http://localhost:3000>.
 3. Run `yarn lint` and `yarn format:check` to confirm code quality.
 4. Database changes go through Prisma migrations — never edit the schema by hand
    after the initial migration.
+
+## Deployment
+
+### Vercel (Recommended)
+
+This project is deployable to Vercel with zero configuration. See `vercel.json` for the framework setting and `.github/workflows/deploy.yml` for the CI/CD pipeline.
+
+**Environment variables:** Set all variables from `.env.example` in Vercel's project settings UI. Mark `NEXTAUTH_SECRET`, `DATABASE_URL`, `FCM_SERVICE_ACCOUNT_JSON`, and `FCM_PROJECT_ID` as sensitive.
+
+### Self-Hosted
+
+For self-hosted deployments, see the comprehensive runbook at `docs/self-hosted-deployment.md`.
+
+### Post-Deployment Verification
+
+After every deployment, run the smoke test checklist: `docs/smoke-test-checklist.md`.
+
+## Documentation
+
+| Document                | Location                               | Description                                |
+| ----------------------- | -------------------------------------- | ------------------------------------------ |
+| Master Plan             | `document_series/MASTER-PLAN.md`       | System architecture and full specification |
+| Phase Overviews         | `document_series/PHASE-*/`             | Per-phase strategic overview               |
+| Task Plans              | `document_series/PHASE-*/SUB-PHASE-*/` | 45 detailed implementation documents       |
+| PostgreSQL Migration    | `docs/postgresql-migration.md`         | SQLite → PostgreSQL migration runbook      |
+| Self-Hosted Deployment  | `docs/self-hosted-deployment.md`       | Server setup, nginx, systemd, TLS          |
+| Smoke Test Checklist    | `docs/smoke-test-checklist.md`         | Post-deployment verification               |
+| Operations Runbook      | `docs/operations-runbook.md`           | Incident response, backup/restore, scaling |
+| Integration Tests       | `docs/integration-test-scenarios.md`   | 12 end-to-end user role scenarios          |
+| Cross-Browser Checklist | `docs/cross-browser-checklist.md`      | Chrome, Safari, Android browser matrix     |
+| Printer Compatibility   | `docs/printer-compatibility-test.md`   | Silent printing verification               |
+| FCM Verification        | `docs/fcm-delivery-verification.md`    | Push notification delivery test            |
+| SSE Stability           | `docs/sse-stability-test.md`           | 50+ concurrent connections load test       |
+| Security Review         | `docs/security-review-checklist.md`    | 16-point security audit checklist          |
 
 ## License
 
