@@ -135,21 +135,25 @@ export interface DailyResetPayload {
   errors: { serviceId: string; message: string }[];
 }
 
-/** COUNTER_OPENED — emitted by Phase 4 when an officer opens their counter. */
+/** COUNTER_OPENED — emitted by 4.2.1 when an officer opens their counter. */
 export interface CounterOpenedPayload {
   counterId: string;
   counterNumber: number;
-  officerId: string;
-  officerName: string;
+  counterName: string;
+  changedByOfficerId: string;
+  changedByOfficerName: string;
+  changedAt: string;
 }
 
-/** COUNTER_CLOSED — emitted by Phase 4 when an officer closes their counter. */
+/** COUNTER_CLOSED — emitted by 4.2.1 when an officer closes their counter. */
 export interface CounterClosedPayload {
   counterId: string;
   counterNumber: number;
-  officerId: string;
-  officerName: string;
-  reason?: string;
+  counterName: string;
+  changedByOfficerId: string;
+  changedByOfficerName: string;
+  changedAt: string;
+  reason: string | null;
 }
 
 /** QUEUE_UPDATED — emitted when queue state changes (Phase 3+). */

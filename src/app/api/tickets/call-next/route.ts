@@ -7,6 +7,7 @@ import { withPermission } from '@/lib/guards';
 import { PERMISSION_COUNTER_CALL } from '@/lib/permissions';
 import { callTicket } from '@/lib/ticket-service';
 import { resolveCallingOfficer, findNextWaitingTicketForCounter } from '@/lib/ticket-officer';
+import { isCounterClosed } from '@/lib/counter-status';
 import { callNextTicketSchema } from '@/schemas/ticket.schema';
 
 export const POST = withPermission(async (req: Request) => {
@@ -25,6 +26,22 @@ export const POST = withPermission(async (req: Request) => {
           },
         },
         { status: 422 },
+      );
+    }
+
+    // Check if counter is closed (pre-transaction, fail fast)
+    const counterClosed = await isCounterClosed(bodyResult.data.counterId);
+    if (counterClosed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'COUNTER_CLOSED',
+            message:
+              'Cannot call the next ticket on a temporarily closed counter. Please reopen the counter first.',
+          },
+        },
+        { status: 403 },
       );
     }
 

@@ -74,9 +74,9 @@ export const EVENT_ROUTING: Record<SseEventType, readonly RouteTemplate[]> = {
   // Phase 4.3 — broadcast message (forward seam)
   BROADCAST_MESSAGE: ['global', 'security'],
 
-  // Phase 4.2.1 — counter open/close (forward seam)
-  COUNTER_OPENED: ['global'],
-  COUNTER_CLOSED: ['global'],
+  // Phase 4.2.1 — counter open/close (emitted by PATCH /api/counters/[counterId]/status)
+  COUNTER_OPENED: ['global', 'counter:<counterId>'],
+  COUNTER_CLOSED: ['global', 'counter:<counterId>'],
 
   // Phase 4.2.3 — queue updated (per-counter) (forward seam)
   QUEUE_UPDATED: ['counter:<counterId>'],

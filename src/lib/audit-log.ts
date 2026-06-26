@@ -48,7 +48,11 @@ export type AuditAction =
   | 'DEVICE_TOKEN_REMOVED'
   // Phase 4.1.3 — Notification dispatch actions
   | 'NOTIFICATION_DISPATCHED'
-  | 'NOTIFICATION_FAILED';
+  | 'NOTIFICATION_FAILED'
+  // Phase 4.2.1 — Counter status changed by an officer (open/close transitions)
+  | 'COUNTER_STATUS_CHANGED'
+  // Phase 4.2.2 — Notification toggle changed by an officer
+  | 'NOTIFICATIONS_TOGGLED';
 
 export interface AuditLogEntry {
   action: AuditAction;
