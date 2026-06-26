@@ -4,32 +4,39 @@
 
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useCallback, type MutableRefObject } from 'react';
 import Image from 'next/image';
 
 interface AudioUnlockOverlayProps {
   onUnlock: () => void;
   logoUrl?: string | null;
+  /**
+   * Optional external AudioContext ref. When provided, the overlay uses this
+   * instead of creating its own, so the caller (DisplayPageClient) can share
+   * the context with the bell/TTS system.
+   */
+  audioCtxRef?: MutableRefObject<AudioContext | null>;
 }
 
-export function AudioUnlockOverlay({ onUnlock, logoUrl }: AudioUnlockOverlayProps) {
-  const audioCtxRef = useRef<AudioContext | null>(null);
-
+export function AudioUnlockOverlay({ onUnlock, logoUrl, audioCtxRef }: AudioUnlockOverlayProps) {
   const handleClick = useCallback(async () => {
     try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContext();
+      // Use external ref if provided, otherwise create inline
+      const ctx = audioCtxRef
+        ? (audioCtxRef.current ?? (audioCtxRef.current = new AudioContext()))
+        : new AudioContext();
+
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
       }
-      if (audioCtxRef.current.state === 'suspended') {
-        await audioCtxRef.current.resume();
-      }
+
       window.dispatchEvent(new CustomEvent('quems:audio-unlocked'));
       console.debug('Audio context unlocked');
     } catch {
       // AudioContext may not be supported — unlock anyway so the display is visible
     }
     onUnlock();
-  }, [onUnlock]);
+  }, [onUnlock, audioCtxRef]);
 
   return (
     <div

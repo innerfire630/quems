@@ -1,8 +1,8 @@
 // =============================================================================
-// src/components/display/display-page-client.tsx — Client wrapper (3.2.1)
+// src/components/display/display-page-client.tsx — Client wrapper (3.2.1 / 3.3.x)
 // =============================================================================
 // Top-level client component that holds the SSE subscription, the display
-// state, and the event dispatcher.
+// state, the audio context lifecycle, and the announcement hook.
 // =============================================================================
 
 'use client';
@@ -11,6 +11,9 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useSSE } from '@/hooks/use-sse';
 import { applyEvent } from '@/lib/display-state';
+import { loadBellBuffer, getCachedBellBuffer } from '@/lib/audio-bell';
+import { useAudioUnlock } from '@/hooks/use-audio-unlock';
+import { useAnnouncement } from '@/hooks/use-announcement';
 import { AudioUnlockOverlay } from './audio-unlock-overlay';
 import { DisplayClock } from './display-clock';
 import { DisplayCounterGrid } from './display-counter-grid';
@@ -47,11 +50,52 @@ function buildInitialState(snapshot: DisplaySnapshot): DisplayState {
 }
 
 export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: DisplayPageClientProps) {
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [state, setState] = useState<DisplayState>(() => buildInitialState(initialSnapshot));
   const broadcastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Audio unlock listener (bridges the overlay's event to a boolean)
+  const { isAudioUnlocked } = useAudioUnlock();
+
+  // Sync the AudioContext from the ref into state once created (avoids refs-during-render)
+  useEffect(() => {
+    if (audioCtxRef.current && !audioContext) {
+      setAudioContext(audioCtxRef.current);
+    }
+  }, [unlocked, audioContext]);
+
+  // Bell buffer preload — start decoding as soon as we have an unlocked AudioContext
+  const [bellBuffer, setBellBuffer] = useState<AudioBuffer | null>(getCachedBellBuffer);
+
   const handleUnlock = useCallback(() => setUnlocked(true), []);
+
+  // Preload the bell buffer once the overlay creates the AudioContext (and we're unlocked)
+  useEffect(() => {
+    if (!unlocked || !audioCtxRef.current || bellBuffer) return;
+
+    let cancelled = false;
+    loadBellBuffer(audioCtxRef.current)
+      .then((buf) => {
+        if (!cancelled) setBellBuffer(buf);
+      })
+      .catch((err) => {
+        console.warn('Bell buffer preload failed:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [unlocked, bellBuffer]);
+
+  // Wire the announcement queue (bell + TTS orchestration)
+  useAnnouncement({
+    displayBoard: state.board,
+    audioContext,
+    bellBuffer,
+    isAudioUnlocked,
+  });
 
   // SSE subscription
   useSSE('global', {
@@ -86,7 +130,13 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
 
   // Show unlock overlay until dismissed
   if (!unlocked) {
-    return <AudioUnlockOverlay onUnlock={handleUnlock} logoUrl={state.board?.logoUrl} />;
+    return (
+      <AudioUnlockOverlay
+        onUnlock={handleUnlock}
+        logoUrl={state.board?.logoUrl}
+        audioCtxRef={audioCtxRef}
+      />
+    );
   }
 
   const maxDisplayedTickets = state.board?.maxDisplayedTickets ?? 10;
