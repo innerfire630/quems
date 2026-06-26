@@ -8,6 +8,7 @@ import { PERMISSION_COUNTER_CALL } from '@/lib/permissions';
 import { callTicket } from '@/lib/ticket-service';
 import { resolveCallingOfficer } from '@/lib/ticket-officer';
 import { isCounterClosed } from '@/lib/counter-status';
+import { incrementServiceCounter } from '@/lib/analytics-service';
 import { callTicketSchema, getTicketByIdParamsSchema } from '@/schemas/ticket.schema';
 
 export const POST = withPermission(async (req: Request) => {
@@ -92,6 +93,9 @@ export const POST = withPermission(async (req: Request) => {
       { ticketId: paramsResult.data.ticketId, counterId: bodyResult.data.counterId },
       officer,
     );
+
+    // Increment in-memory analytics counter (best-effort, post-commit)
+    incrementServiceCounter(result.serviceId, 'CALLED');
 
     return NextResponse.json({ success: true, data: result }, { status: 200 });
   } catch (e: unknown) {

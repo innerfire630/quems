@@ -13,6 +13,7 @@
 import 'server-only';
 import { prisma as db } from '@/lib/db';
 import { broadcastEvent } from '@/lib/events';
+import { resetServiceCountersForDate } from '@/lib/analytics-service';
 import type {
   ResetOptions,
   ResetResult,
@@ -290,6 +291,9 @@ export async function runDailyReset(options: ResetOptions): Promise<ResetResult>
     totalCountersReset: perServiceResults.filter((r) => r.counterReset).length,
     errors,
   };
+
+  // Clear in-memory analytics counters for the new business date
+  await resetServiceCountersForDate();
 
   // Broadcast SSE event AFTER all services are processed
   await broadcastEvent('global', 'DAILY_RESET', {

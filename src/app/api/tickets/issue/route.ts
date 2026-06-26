@@ -7,6 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { issueTicket } from '@/lib/ticket-service';
+import { incrementServiceCounter } from '@/lib/analytics-service';
 import { issueTicketSchema } from '@/schemas/ticket.schema';
 
 export async function POST(req: Request): Promise<Response> {
@@ -40,6 +41,10 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     const data = await issueTicket(parsed.data);
+
+    // Increment in-memory analytics counter (best-effort, post-commit)
+    incrementServiceCounter(parsed.data.serviceId, 'ISSUED');
+
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (err: unknown) {
     const error = err as Error & { code?: string };

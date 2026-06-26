@@ -56,7 +56,11 @@ export type AuditAction =
   // Phase 4.3.1 — Officer reply to a notification
   | 'NOTIFICATION_REPLIED'
   // Phase 4.3.2 — Broadcast message sent to display board and security screen
-  | 'BROADCAST_MESSAGE_SENT';
+  | 'BROADCAST_MESSAGE_SENT'
+  // Phase 5.1.1 — Report generation
+  | 'REPORT_GENERATED'
+  // Phase 5.1.3 — Report CSV export
+  | 'REPORT_EXPORTED';
 
 export interface AuditLogEntry {
   action: AuditAction;

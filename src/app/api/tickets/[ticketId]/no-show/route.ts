@@ -8,6 +8,7 @@ import { PERMISSION_COUNTER_CALL } from '@/lib/permissions';
 import { noShowTicket } from '@/lib/ticket-service';
 import { resolveCallingOfficer } from '@/lib/ticket-officer';
 import { isCounterClosed } from '@/lib/counter-status';
+import { incrementServiceCounter } from '@/lib/analytics-service';
 import {
   getAutoAdvanceEnabled,
   getNoShowGracePeriodSeconds,
@@ -102,6 +103,9 @@ export const POST = withPermission(async (req: Request) => {
       officer,
       gracePeriodSeconds,
     );
+
+    // Increment in-memory analytics counter (best-effort, post-commit)
+    incrementServiceCounter(result.serviceId, 'NO_SHOW');
 
     // Auto-advance (after the no-show transaction commits)
     const autoAdvanceEnabled = await getAutoAdvanceEnabled();
