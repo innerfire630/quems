@@ -1,11 +1,41 @@
-import { PlaceholderPage } from '@/components/shared/PlaceholderPage';
+// =============================================================================
+// src/app/(dashboard)/users/new/page.tsx — Create user page (1.3.3)
+// =============================================================================
 
-export default function NewUserPage() {
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { prisma } from '@/lib/db';
+import { getServerSession } from '@/lib/auth';
+import { ArrowLeft } from 'lucide-react';
+import { UserForm } from '@/app/(dashboard)/users/_components/user-form';
+
+export default async function NewUserPage() {
+  const session = await getServerSession();
+
+  if (!session) {
+    redirect('/login');
+  }
+
+  if (!session.user.permissions.includes('user:create')) {
+    redirect('/?error=forbidden');
+  }
+
+  const roles = await prisma.role.findMany({
+    select: { id: true, name: true, displayName: true, description: true, isSystem: true },
+  });
+
   return (
-    <PlaceholderPage
-      title="Create User"
-      description="Create a new user account with role assignments."
-      implementedIn="1.3.3"
-    />
+    <div className="space-y-6 max-w-xl">
+      <div className="flex items-center gap-3">
+        <Link
+          href="/users"
+          className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="size-4" />
+        </Link>
+        <h1 className="text-2xl font-bold text-foreground">Create User</h1>
+      </div>
+      <UserForm mode="create" roles={roles} />
+    </div>
   );
 }
