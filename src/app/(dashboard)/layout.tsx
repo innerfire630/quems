@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { DashboardTopBar } from '@/app/(dashboard)/_components/dashboard-top-bar';
+import { AuthProvider } from '@/components/layout/AuthProvider';
 import { getServerSession } from '@/lib/auth';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
@@ -19,12 +20,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AppSidebar />
-      <div className="flex flex-1 flex-col">
-        <DashboardTopBar session={session} />
-        <main className="flex-1 p-6">{children}</main>
+    <AuthProvider>
+      <div className="flex min-h-screen bg-background">
+        <AppSidebar />
+        <div className="flex flex-1 flex-col">
+          <DashboardTopBar session={session} />
+          <main className="flex-1 p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </AuthProvider>
   );
 }

@@ -1,11 +1,10 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Root `/` route is handled by (dashboard)/page.tsx which provides
- * the authenticated dashboard layout (sidebar + topbar).
- * This file exists only to prevent a missing route error in case the
- * route group page is ever removed.
+ * Root `/` route redirects to the dashboard overview.
+ * The proxy.ts already handles auth gating for unauthenticated users
+ * (redirects to /login). This page is only reached by authenticated users.
  */
 export default function RootFallback() {
-  redirect('/');
+  redirect('/overview');
 }

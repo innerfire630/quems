@@ -83,8 +83,8 @@ async function getRowCount(client: any, delegate: string): Promise<number> {
   return client[delegate].count() as Promise<number>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getSampleRows(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   client: any,
   delegate: string,
   limit = 10,
