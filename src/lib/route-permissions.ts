@@ -10,6 +10,8 @@ import {
   PERMISSION_USER_MANAGE,
   PERMISSION_SYSTEM_CONFIGURE,
   PERMISSION_SYSTEM_AUDIT,
+  PERMISSION_SERVICE_MANAGE,
+  PERMISSION_COUNTER_MANAGE,
 } from '@/lib/permissions';
 import type { Permission } from '@/lib/permissions';
 
@@ -23,4 +25,6 @@ export const ROUTE_PERMISSION_MAP: Record<string, Permission> = {
   '/users': PERMISSION_USER_MANAGE,
   '/settings': PERMISSION_SYSTEM_CONFIGURE,
   '/audit-log': PERMISSION_SYSTEM_AUDIT,
+  '/services': PERMISSION_SERVICE_MANAGE,
+  '/counters': PERMISSION_COUNTER_MANAGE,
 };

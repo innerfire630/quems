@@ -29,10 +29,10 @@ export interface GuardedContext {
  * Signature of a handler wrapped by `withPermission`.
  * Receives the original Next.js request and the typed GuardedContext.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GuardedHandler = (
   req: Request,
   ctx: GuardedContext,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...rest: any[]
 ) => Promise<Response>;
 

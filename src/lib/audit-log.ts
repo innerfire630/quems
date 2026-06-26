@@ -24,7 +24,18 @@ export type AuditAction =
   | 'USER_REACTIVATED'
   | 'PASSWORD_RESET_BY_ADMIN'
   | 'ROLE_ASSIGNED'
-  | 'ROLE_REMOVED';
+  | 'ROLE_REMOVED'
+  // Phase 2.1.1 — Service actions
+  | 'SERVICE_CREATED'
+  | 'SERVICE_UPDATED'
+  | 'SERVICE_DEACTIVATED'
+  // Phase 2.1.2 — Counter actions
+  | 'COUNTER_CREATED'
+  | 'COUNTER_UPDATED'
+  | 'COUNTER_DEACTIVATED'
+  // Phase 2.1.3 — Service-Counter assignment actions
+  | 'SERVICE_ASSIGNED_TO_COUNTER'
+  | 'SERVICE_UNASSIGNED_FROM_COUNTER';
 
 export interface AuditLogEntry {
   action: AuditAction;
