@@ -12,7 +12,13 @@
 // Channel identifiers
 // ---------------------------------------------------------------------------
 
-export type SseChannel = 'global' | 'counter' | 'security';
+/**
+ * SSE Channel identifier.
+ * - 'global' — public display board, kiosk, unauthenticated viewers
+ * - 'security' — security officer screen (requires SECURITY_OFFICER role)
+ * - `counter:${string}` — per-counter officer channel (e.g. 'counter:abc123')
+ */
+export type SseChannel = 'global' | 'security' | `counter:${string}`;
 
 // ---------------------------------------------------------------------------
 // Event type registry
@@ -202,4 +208,61 @@ export type SseEventPayload =
 export interface SseEvent {
   channel: SseChannel;
   envelope: SseEventPayload;
+}
+
+// =============================================================================
+// 3.1.2 — Client-side typed envelope & internal events
+// =============================================================================
+
+/**
+ * Typed SSE envelope for a specific event type T.
+ * Extracts the exact variant from SseEventPayload whose `type` matches T.
+ *
+ * Usage:
+ *   useSSE<'TICKET_CALLED'>('global', {
+ *     filter: 'TICKET_CALLED',
+ *     onEvent: (envelope) => {
+ *       // envelope.payload.ticketNumber is typed as string
+ *     }
+ *   });
+ */
+export type SseEnvelope<T extends SseEventType> = Extract<SseEventPayload, { type: T }>;
+
+/**
+ * Type-level mapping from event type to its payload type.
+ * For type inference only — do NOT use the runtime values.
+ */
+export const SSE_EVENT_TYPE_MAP = {
+  TICKET_ISSUED: null as unknown as TicketIssuedPayload,
+  TICKET_CALLED: null as unknown as TicketCalledPayload,
+  TICKET_RECALLED: null as unknown as TicketRecalledPayload,
+  TICKET_NO_SHOW: null as unknown as TicketNoShowPayload,
+  TICKET_SERVED: null as unknown as TicketServedPayload,
+  TICKET_COMPLETED: null as unknown as TicketCompletedPayload,
+  BROADCAST_MESSAGE: null as unknown as BroadcastMessagePayload,
+  DAILY_RESET: null as unknown as DailyResetPayload,
+  COUNTER_OPENED: null as unknown as CounterOpenedPayload,
+  COUNTER_CLOSED: null as unknown as CounterClosedPayload,
+  QUEUE_UPDATED: null as unknown as QueueUpdatedPayload,
+  NOTIFICATION_RECEIVED: null as unknown as NotificationReceivedPayload,
+  OFFICER_REPLY: null as unknown as OfficerReplyPayload,
+} as const satisfies Record<SseEventType, unknown>;
+
+/** Payload type extracted from the map for a given event type. */
+export type SsePayloadFor<T extends SseEventType> = (typeof SSE_EVENT_TYPE_MAP)[T];
+
+// ---------------------------------------------------------------------------
+// Internal connection events (emitted by the SSE route handler, NOT via broadcastEvent)
+// ---------------------------------------------------------------------------
+
+/** Internal event types emitted by the SSE infrastructure. */
+export const SSE_INTERNAL_EVENTS = ['CONNECTED'] as const;
+export type SseInternalEventType = (typeof SSE_INTERNAL_EVENTS)[number];
+
+/** Envelope shape for internal connection events. */
+export interface SseInternalEnvelope {
+  type: SseInternalEventType;
+  id: string;
+  timestamp: string;
+  payload: { clientId: string; channel: string };
 }
