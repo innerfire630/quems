@@ -1,12 +1,13 @@
 // =============================================================================
-// src/proxy.ts — Next.js 16 proxy for route protection
+// src/proxy.ts — Next.js 16 proxy for route protection, rate limiting & CORS
 // =============================================================================
 // Next.js 16 deprecates `middleware.ts` in favor of `proxy.ts`.
-// Same API: intercepts matching requests and redirects unauthenticated users.
+// Same API: intercepts matching requests.
 //
-// Two-tier protection:
-//   1. Authentication check — redirects to /login if no JWT token.
-//   2. Authorization check — redirects to /?error=forbidden if the token
+// Three-tier protection:
+//   1. CORS preflight & rate limiting — rejects abusive traffic early.
+//   2. Authentication check — redirects to /login if no JWT token.
+//   3. Authorization check — redirects to /?error=forbidden if the token
 //      lacks a required permission for the requested route prefix.
 //
 // IMPORTANT: The proxy does NOT verify the JWT signature (no Node crypto in
@@ -18,9 +19,89 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { ROUTE_PERMISSION_MAP } from '@/lib/route-permissions';
+import {
+  checkIpRateLimit,
+  checkUserRateLimit,
+  checkIpOrUserRateLimit,
+  createRateLimitResponse,
+  getRequestIp,
+  RATE_LIMITS,
+  startRateLimitCleanup,
+} from '@/lib/rate-limit';
+import type { RouteGroup } from '@/lib/rate-limit';
+import { handleCorsPreflight } from '@/lib/cors';
+import { applySecurityHeaders } from '@/lib/security-headers';
+
+// ---------------------------------------------------------------------------
+// Rate limit route group classification (Master Plan §15.3)
+// ---------------------------------------------------------------------------
+
+const ROUTE_GROUP_PATTERNS: Array<{ pattern: RegExp; group: RouteGroup }> = [
+  { pattern: /^\/api\/auth/, group: 'AUTH' },
+  { pattern: /^\/api\/tickets\/issue/, group: 'TICKET_ISSUANCE' },
+  {
+    pattern: /^\/api\/tickets\/[^/]+\/(call|recall|no-show)/,
+    group: 'OFFICER_ACTIONS',
+  },
+  { pattern: /^\/api\/tickets\/call-next/, group: 'OFFICER_ACTIONS' },
+  { pattern: /^\/api\/sse/, group: 'SSE' },
+  { pattern: /^\/api\/health/, group: 'HEALTH' },
+  { pattern: /^\/api/, group: 'GENERAL' },
+];
+
+function classifyRoute(pathname: string): RouteGroup | null {
+  const path = pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
+  for (const { pattern, group } of ROUTE_GROUP_PATTERNS) {
+    if (pattern.test(path)) return group;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Main proxy handler
+// ---------------------------------------------------------------------------
 
 export default async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // Start cleanup interval on first request
+  startRateLimitCleanup();
+
+  // ---- Step 1: CORS preflight for API routes ----
+  if (pathname.startsWith('/api/')) {
+    const corsResponse = handleCorsPreflight(request);
+    if (corsResponse) return applySecurityHeaders(corsResponse);
+  }
+
+  // ---- Step 2: Rate limiting for API routes ----
+  const routeGroup = classifyRoute(pathname);
+
+  if (routeGroup && process.env.RATE_LIMIT_ENABLED !== 'false') {
+    const config = RATE_LIMITS[routeGroup];
+
+    let limitResult: { allowed: boolean } | null = null;
+    if (config.keyStrategy === 'ip') {
+      const ip = getRequestIp(request);
+      limitResult = checkIpRateLimit(ip, routeGroup);
+    } else if (config.keyStrategy === 'user') {
+      const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+      if (token?.sub) {
+        limitResult = checkUserRateLimit(token.sub, routeGroup);
+      }
+    } else {
+      const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+      limitResult = checkIpOrUserRateLimit(request, token?.sub ?? null, routeGroup);
+    }
+
+    if (limitResult && !limitResult.allowed) {
+      return createRateLimitResponse(
+        limitResult as import('@/lib/rate-limit').RateLimitResult,
+        config,
+      );
+    }
+  }
+
+  // ---- Step 3: Authentication & authorization (existing logic) ----
 
   // Read the JWT cookie (decoded, not verified — Edge runtime limitation)
   const token = await getToken({
@@ -30,38 +111,38 @@ export default async function proxy(request: NextRequest) {
 
   const permissions: string[] = (token?.permissions as string[]) ?? [];
 
-  // 1. Check role-protected route prefixes
+  // Check role-protected route prefixes
   for (const [prefix, requiredPermission] of Object.entries(ROUTE_PERMISSION_MAP)) {
     if (pathname.startsWith(prefix)) {
       // No session → redirect to login
       if (!token) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('callbackUrl', pathname + search);
-        return NextResponse.redirect(loginUrl);
+        return applySecurityHeaders(NextResponse.redirect(loginUrl));
       }
 
       // Session present but missing required permission → redirect to home
       if (!permissions.includes(requiredPermission)) {
         const forbiddenUrl = new URL('/', request.url);
         forbiddenUrl.searchParams.set('error', 'forbidden');
-        return NextResponse.redirect(forbiddenUrl);
+        return applySecurityHeaders(NextResponse.redirect(forbiddenUrl));
       }
 
       // Authorised — allow
-      return NextResponse.next();
+      return applySecurityHeaders(NextResponse.next());
     }
   }
 
-  // 2. If no role-protected prefix matched, check authentication only
+  // If no role-protected prefix matched, check authentication only
   if (token) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   // Not authenticated — redirect to login
   const loginUrl = new URL('/login', request.url);
   loginUrl.searchParams.set('callbackUrl', pathname + search);
 
-  return NextResponse.redirect(loginUrl);
+  return applySecurityHeaders(NextResponse.redirect(loginUrl));
 }
 
 export const config = {

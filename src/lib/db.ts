@@ -7,10 +7,14 @@
 //
 // Prisma 7 requires a driver adapter to talk directly to the database (no
 // more embedded query engine). For SQLite we use @prisma/adapter-better-sqlite3.
+//
+// Query logging is enabled in development (5.2.2) with slow query detection
+// handled by the Prisma event emitter.
 // =============================================================================
 
 import { PrismaClient } from '@prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { logQuery, logWarn, logError, isLoggingEnabled } from '@/lib/prisma-logging';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -18,15 +22,31 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPrismaClient(): PrismaClient {
   const url = process.env.DATABASE_URL ?? 'file:./dev.db';
-  // Prisma's SQLite URL format is `file:./relative/path.db` — strip the prefix
-  // before handing the path to better-sqlite3.
   const dbPath = url.startsWith('file:') ? url.slice('file:'.length) : url;
 
   const adapter = new PrismaBetterSqlite3({ url: dbPath });
-  return new PrismaClient({
+
+  // Enable query logging in development (5.2.2)
+  const emitLog = isLoggingEnabled();
+  const client = new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    log: emitLog
+      ? [
+          { level: 'query', emit: 'event' },
+          { level: 'warn', emit: 'event' },
+          { level: 'error', emit: 'event' },
+        ]
+      : ['error'],
   });
+
+  // Register event listeners for query logging with slow query detection
+  if (emitLog) {
+    client.$on('query', logQuery);
+  }
+  client.$on('warn', logWarn);
+  client.$on('error', logError);
+
+  return client;
 }
 
 export const prisma: PrismaClient = globalForPrisma.prisma ?? createPrismaClient();

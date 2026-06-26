@@ -299,6 +299,9 @@ model CounterStatusEvent {
 
   counter         Counter         @relation(fields: [counterId], references: [id], onDelete: Cascade)
   counterOfficer  CounterOfficer  @relation(fields: [counterOfficerId], references: [id], onDelete: Cascade)
+
+  @@index([counterId, createdAt])
+  @@index([status, createdAt])
 }
 
 model Ticket {
@@ -334,6 +337,8 @@ model Ticket {
   @@index([status])
   @@index([businessDate])
   @@index([ticketNumber])
+  @@index([serviceId, businessDate])
+  @@index([status, businessDate])
 }
 
 model TicketEvent {
@@ -346,6 +351,9 @@ model TicketEvent {
   createdAt DateTime        @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([eventType, createdAt])
+  @@index([ticketId, createdAt])
 }
 
 model DisplayBoard {
@@ -421,6 +429,8 @@ model Notification {
   replies        NotificationReply[]
 
   @@index([counterOfficerId])
+  @@index([counterOfficerId, status])
+  @@index([createdAt])
 }
 
 model NotificationReply {
@@ -436,6 +446,8 @@ model NotificationReply {
   notification      Notification       @relation(fields: [notificationId], references: [id], onDelete: Cascade)
   counterOfficer    CounterOfficer     @relation(fields: [counterOfficerId], references: [id], onDelete: Cascade)
   broadcastMessages BroadcastMessage[]
+
+  @@index([notificationId])
 }
 
 model BroadcastMessage {
@@ -455,6 +467,8 @@ model BroadcastMessage {
   sourceReply        NotificationReply?  @relation(fields: [sourceReplyId], references: [id])
   targetDisplayBoard DisplayBoard?       @relation(fields: [targetDisplayBoardId], references: [id])
   targetSecurityUser User?              @relation("BroadcastTargetSecurity", fields: [targetSecurityUserId], references: [id])
+
+  @@index([isActive, expiresAt])
 }
 
 model QueueDailySnapshot {
@@ -496,6 +510,9 @@ model AuditLog {
   @@index([action])
   @@index([entity])
   @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([entity, entityId])
 }
 
 model SystemSetting {

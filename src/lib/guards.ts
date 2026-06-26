@@ -12,6 +12,13 @@ import { NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 import { auth } from '@/lib/auth';
 import type { Permission, Role } from '@/lib/permissions';
+import {
+  checkIpRateLimit,
+  createRateLimitResponse,
+  getRequestIp,
+  RATE_LIMITS,
+} from '@/lib/rate-limit';
+import type { RouteGroup } from '@/lib/rate-limit';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -170,5 +177,43 @@ export function withRole(
     }
 
     return handler(req, { session }, ...rest);
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Rate limit guard — handler-level rate limiting (5.2.1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Wraps an API route handler with rate limiting at the handler level.
+ * Useful for routes that need handler-level access to the request body
+ * for fingerprinting, or for routes within a group that need stricter limits.
+ *
+ * The middleware-level rate limiting (src/middleware.ts) is the primary
+ * mechanism; use this for edge cases.
+ *
+ * @example
+ *   export const POST = withRateLimit(handler, 'AUTH');
+ */
+export function withRateLimit(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: (req: Request, ...rest: any[]) => Promise<Response>,
+  routeGroup: RouteGroup,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): (req: Request, ...rest: any[]) => Promise<Response> {
+  const config = RATE_LIMITS[routeGroup];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return async (req: Request, ...rest: any[]): Promise<Response> => {
+    if (process.env.RATE_LIMIT_ENABLED !== 'false') {
+      const ip = getRequestIp(req);
+      const result = checkIpRateLimit(ip, routeGroup);
+
+      if (!result.allowed) {
+        return createRateLimitResponse(result, config);
+      }
+    }
+
+    return handler(req, ...rest);
   };
 }

@@ -14,6 +14,8 @@ import 'server-only';
 import { prisma as db } from '@/lib/db';
 import { broadcastEvent } from '@/lib/events';
 import { resetServiceCountersForDate } from '@/lib/analytics-service';
+import { revalidateTag } from 'next/cache';
+import { QUEUE_SNAPSHOTS_TAG } from '@/lib/cache-tags';
 import type {
   ResetOptions,
   ResetResult,
@@ -314,6 +316,13 @@ export async function runDailyReset(options: ResetOptions): Promise<ResetResult>
         `${resetResult.totalCountersReset} counters reset, ` +
         `${errors.length} errors.`,
     );
+  }
+
+  // Invalidate report snapshot cache
+  try {
+    revalidateTag(QUEUE_SNAPSHOTS_TAG, 'max');
+  } catch {
+    // best-effort
   }
 
   return resetResult;

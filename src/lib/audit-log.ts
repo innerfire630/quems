@@ -60,7 +60,11 @@ export type AuditAction =
   // Phase 5.1.1 — Report generation
   | 'REPORT_GENERATED'
   // Phase 5.1.3 — Report CSV export
-  | 'REPORT_EXPORTED';
+  | 'REPORT_EXPORTED'
+  // Phase 5.2.3 — Audit log access
+  | 'AUDIT_LOG_VIEWED'
+  // Phase 5.2.3 — System setting changes (forward-compat)
+  | 'SYSTEM_SETTING_CHANGED';
 
 export interface AuditLogEntry {
   action: AuditAction;
