@@ -10,6 +10,7 @@
 import { randomUUID } from 'node:crypto';
 import { prisma as db } from '@/lib/db';
 import { broadcastEvent } from '@/lib/events';
+import { notifyOfficers } from '@/lib/notification-dispatch';
 import { transitionTicket } from '@/lib/ticket-state-machine';
 import type {
   IssueTicketInput,
@@ -209,6 +210,50 @@ export function mapTicketToDetail(ticket: Record<string, unknown>): TicketDetail
 }
 
 // ---------------------------------------------------------------------------
+// findEligibleRecipientsForIssuance — Phase 4.1.3
+// ---------------------------------------------------------------------------
+
+/**
+ * Finds all on-duty officers with notifications enabled whose counters
+ * handle the given service. Returns deduplicated officer IDs with their
+ * counter info (for the notification payload).
+ */
+async function findEligibleRecipientsForIssuance(
+  serviceId: string,
+): Promise<{ officerId: string; counterId: string; counterName: string }[]> {
+  const counterServices = await db.counterService.findMany({
+    where: { serviceId },
+    include: {
+      counter: {
+        include: {
+          officers: {
+            where: { isOnDuty: true, notificationsEnabled: true },
+          },
+        },
+      },
+    },
+  });
+
+  const seen = new Set<string>();
+  const recipients: { officerId: string; counterId: string; counterName: string }[] = [];
+
+  for (const cs of counterServices) {
+    for (const officer of cs.counter.officers) {
+      if (!seen.has(officer.id)) {
+        seen.add(officer.id);
+        recipients.push({
+          officerId: officer.id,
+          counterId: cs.counter.id,
+          counterName: cs.counter.name,
+        });
+      }
+    }
+  }
+
+  return recipients;
+}
+
+// ---------------------------------------------------------------------------
 // issueTicket — the orchestrator
 // ---------------------------------------------------------------------------
 
@@ -334,6 +379,27 @@ export async function issueTicket(input: IssueTicketInput): Promise<IssuedTicket
     businessDate: businessDate.toISOString(),
     issuedAt: fullTicket.issuedAt.toISOString(),
   });
+
+  // Dispatch push notifications to eligible officers — best-effort (Phase 4.1.3)
+  try {
+    const eligibleRecipients = await findEligibleRecipientsForIssuance(service.id);
+    if (eligibleRecipients.length > 0) {
+      const first = eligibleRecipients[0];
+      await notifyOfficers({
+        ticketId: fullTicket.id,
+        ticketNumber: fullTicket.ticketNumber,
+        serviceId: service.id,
+        serviceName: service.name,
+        counterId: first.counterId,
+        counterName: first.counterName,
+        type: 'TICKET_ISSUED',
+        recipientCounterOfficerIds: eligibleRecipients.map((r) => r.officerId),
+      });
+    }
+  } catch (notifyError) {
+    // Best-effort — notification failure must not fail the ticket issuance
+    console.error('[ticket-service] notifyOfficers (issue) failed:', notifyError);
+  }
 
   return {
     ...mapTicketToDetail(fullTicket as unknown as Record<string, unknown>),
@@ -592,6 +658,24 @@ export async function recallTicket(
     recalledAt: now.toISOString(),
     recallCount: result.recallCount,
   });
+
+  // Notify the original calling officer — best-effort (Phase 4.1.3)
+  try {
+    if (result.fullTicket.calledByOfficerId) {
+      await notifyOfficers({
+        ticketId: result.fullTicket.id,
+        ticketNumber: result.fullTicket.ticketNumber,
+        serviceId: result.fullTicket.serviceId,
+        serviceName: result.fullTicket.service.name,
+        counterId: officer.counterId,
+        counterName: result.counter?.name ?? null,
+        type: 'TICKET_RECALLED',
+        recipientCounterOfficerIds: [result.fullTicket.calledByOfficerId],
+      });
+    }
+  } catch (notifyError) {
+    console.error('[ticket-service] notifyOfficers (recall) failed:', notifyError);
+  }
 
   return {
     ...detail,

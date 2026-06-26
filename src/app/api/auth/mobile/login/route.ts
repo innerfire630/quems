@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { NextResponse } from 'next/server';
+import { prisma as db } from '@/lib/db';
 import {
   verifyCredentials,
   fetchUserRolesAndPermissions,
@@ -58,13 +59,66 @@ export async function POST(request: Request) {
     const { accessToken, expiresIn } = await issueAccessToken(enrichedUser);
     const { token: refreshToken } = await createRefreshTokenForUser(user.id);
 
-    // 5. Return tokens (no cookies — mobile stores them in secure storage)
+    // 5. Load officer profile (Phase 4.1.2)
+    let officer = null;
+    try {
+      const officerProfile = await db.counterOfficer.findFirst({
+        where: { userId: user.id },
+        include: {
+          counter: true,
+          user: {
+            include: {
+              roles: {
+                include: { role: { include: { permissions: { include: { permission: true } } } } },
+              },
+            },
+          },
+        },
+      });
+
+      if (officerProfile) {
+        const flatPermissions = Array.from(
+          new Set(
+            officerProfile.user.roles.flatMap((ur) =>
+              ur.role.permissions.map((rp) => rp.permission.name),
+            ),
+          ),
+        );
+
+        officer = {
+          id: officerProfile.id,
+          userId: officerProfile.userId,
+          name: officerProfile.user.name,
+          email: officerProfile.user.email,
+          counter: officerProfile.counter
+            ? {
+                id: officerProfile.counter.id,
+                name: officerProfile.counter.name,
+                number: officerProfile.counter.number,
+                displayLabel: officerProfile.counter.displayLabel,
+              }
+            : null,
+          notificationsEnabled: officerProfile.notificationsEnabled,
+          currentStatus: officerProfile.currentStatus,
+          roles: officerProfile.user.roles.map((ur) => ur.role.name),
+          permissions: flatPermissions,
+        };
+      }
+    } catch (profileError) {
+      // Best-effort — if profile fetch fails, return tokens without officer data
+      if (process.env['NODE_ENV'] === 'development') {
+        console.error('[POST /api/auth/mobile/login] Officer profile fetch failed:', profileError);
+      }
+    }
+
+    // 6. Return tokens + officer profile (no cookies — mobile stores them in secure storage)
     return NextResponse.json({
       success: true,
       data: {
         accessToken,
         refreshToken,
         expiresIn,
+        officer,
       },
     });
   } catch (error) {

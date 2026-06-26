@@ -42,7 +42,13 @@ export type AuditAction =
   | 'DISPLAY_BOARD_CREATED'
   | 'DISPLAY_BOARD_UPDATED'
   | 'DISPLAY_BOARD_DELETED'
-  | 'DISPLAY_BOARD_DEFAULT_CHANGED';
+  | 'DISPLAY_BOARD_DEFAULT_CHANGED'
+  // Phase 4.1.2 — Device token actions
+  | 'DEVICE_TOKEN_REGISTERED'
+  | 'DEVICE_TOKEN_REMOVED'
+  // Phase 4.1.3 — Notification dispatch actions
+  | 'NOTIFICATION_DISPATCHED'
+  | 'NOTIFICATION_FAILED';
 
 export interface AuditLogEntry {
   action: AuditAction;

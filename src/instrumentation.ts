@@ -12,6 +12,16 @@
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
+  // Subscribes the FCM invalid-token cleanup. Must run before any FCM
+  // dispatch to ensure dead tokens are deactivated. (Phase 4.1.2)
+  try {
+    await import('@/lib/fcm-cleanup-listener');
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[instrumentation] FCM cleanup listener failed:', error);
+    }
+  }
+
   try {
     // Dynamic imports to ensure Prisma is only loaded in Node.js runtime
     const { seedQueueDefaultSettings } = await import('@/lib/settings-seed');
