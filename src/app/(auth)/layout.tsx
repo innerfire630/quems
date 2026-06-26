@@ -1,7 +1,22 @@
-import type { ReactNode } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// =============================================================================
+// src/app/(auth)/layout.tsx — Auth route group layout
+// =============================================================================
+// Centered card layout for unauthenticated pages (login).
+// Redirects already-authenticated users away from the login page.
+// =============================================================================
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
+import type { ReactNode } from 'react';
+import { redirect } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getServerSession } from '@/lib/auth';
+
+export default async function AuthLayout({ children }: { children: ReactNode }) {
+  // If already authenticated, redirect to dashboard
+  const session = await getServerSession();
+  if (session) {
+    redirect('/');
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">

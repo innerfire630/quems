@@ -1,17 +1,10 @@
-import { NextResponse } from 'next/server';
+// =============================================================================
+// src/app/api/auth/[...nextauth]/route.ts — NextAuth.js v5 API route handler
+// =============================================================================
+// Catches all /api/auth/* requests and delegates to NextAuth's built-in
+// handlers (sign-in callback, session, sign-out, CSRF, providers, etc.).
+// =============================================================================
 
-const BODY = {
-  success: false,
-  error: {
-    code: 'NOT_IMPLEMENTED',
-    message: 'This endpoint is scheduled for implementation in a later phase.',
-  },
-} as const;
+import { handlers } from '@/lib/auth';
 
-export async function GET() {
-  return NextResponse.json(BODY, { status: 501 });
-}
-
-export async function POST() {
-  return NextResponse.json(BODY, { status: 501 });
-}
+export const { GET, POST } = handlers;

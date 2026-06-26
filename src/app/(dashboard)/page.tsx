@@ -1,11 +1,19 @@
-import { PlaceholderPage } from '@/components/shared/PlaceholderPage';
+import { getServerSession } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
-export default function DashboardRootPage() {
+export default async function DashboardHomePage() {
+  const session = await getServerSession();
+
+  if (!session) {
+    redirect('/login');
+  }
+
   return (
-    <PlaceholderPage
-      title="Dashboard"
-      description="Welcome to the admin dashboard. Overview widgets are implemented in Phase 1.3.3 and Phase 5."
-      implementedIn="1.3.3"
-    />
+    <div>
+      <h1 className="text-2xl font-bold text-foreground">Welcome, {session.user.name}</h1>
+      <p className="mt-2 text-muted-foreground">
+        Dashboard overview widgets are implemented in Phase 1.3.3 and Phase 5.
+      </p>
+    </div>
   );
 }
