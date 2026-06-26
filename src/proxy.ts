@@ -76,11 +76,12 @@ export const config = {
      * - /api/auth/* (auth endpoints)
      * - /api/sse/* (SSE streaming)
      * - /api/tickets/issue (kiosk ticket issuance)
+     * - /api/display-boards/snapshot/* (public display snapshot)
      * - /api/health (health check)
      * - /api/_dev/* (development-only routes)
      * - /api/debug/* (development-only debug routes)
      * - _next/static, _next/image, favicon.ico (static assets)
      */
-    '/((?!login|display|kiosk|security|sse-test|api/auth|api/sse|api/tickets/issue|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
+    '/((?!login|display|kiosk|security|sse-test|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
   ],
 };

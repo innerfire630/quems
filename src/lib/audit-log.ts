@@ -37,7 +37,12 @@ export type AuditAction =
   | 'SERVICE_ASSIGNED_TO_COUNTER'
   | 'SERVICE_UNASSIGNED_FROM_COUNTER'
   // Phase 2.3.3 — Daily reset
-  | 'DAILY_RESET_MANUAL';
+  | 'DAILY_RESET_MANUAL'
+  // Phase 3.2.3 — Display board configuration
+  | 'DISPLAY_BOARD_CREATED'
+  | 'DISPLAY_BOARD_UPDATED'
+  | 'DISPLAY_BOARD_DELETED'
+  | 'DISPLAY_BOARD_DEFAULT_CHANGED';
 
 export interface AuditLogEntry {
   action: AuditAction;

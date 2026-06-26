@@ -46,6 +46,11 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Display board color tokens (Phase 3.2 — always dark theme) */
+  --color-display-bg: #0f172a;
+  --color-display-accent: #3b82f6;
+  --color-display-text: #f8fafc;
 }
 
 :root {

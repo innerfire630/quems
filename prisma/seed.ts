@@ -229,6 +229,42 @@ async function seedKioskConfig(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Display board seed
+// ---------------------------------------------------------------------------
+
+async function seedDisplayBoard(): Promise<void> {
+  const existing = await prisma.displayBoard.findFirst({
+    where: { isDefault: true },
+  });
+
+  if (existing) {
+    console.log('  Default display board already exists — skipping.');
+    return;
+  }
+
+  await prisma.displayBoard.create({
+    data: {
+      name: 'Main Display',
+      isDefault: true,
+      maxDisplayedTickets: 10,
+      announcementEnabled: true,
+      bellEnabled: true,
+      ttsEnabled: true,
+      ttsLanguage: 'en-US',
+      ttsRate: 1.0,
+      ttsPitch: 1.0,
+      ttsVolume: 1.0,
+      announcementTemplate: 'Now serving ticket {number} at {counter}',
+      themeColor: null,
+      logoUrl: null,
+      customMessage: null,
+    },
+  });
+
+  console.log('  Default display board created.');
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -261,6 +297,10 @@ async function main(): Promise<void> {
   // 5. Default KioskConfig
   console.log('▶ Seeding default kiosk configuration...');
   await seedKioskConfig();
+
+  // 6. Default DisplayBoard
+  console.log('▶ Seeding default display board...');
+  await seedDisplayBoard();
 
   console.log('');
   console.log('═══════════════════════════════════════════');
