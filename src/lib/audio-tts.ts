@@ -101,32 +101,73 @@ export async function loadTtsVoices(): Promise<SpeechSynthesisVoice[]> {
 
 /**
  * Find the best matching voice for the given BCP-47 language tag.
- * - Exact match first (e.g. 'en-US' === 'en-US')
+ * Prefers a female voice when available.
+ * - Exact language match first (e.g. 'en-US' === 'en-US')
  * - Language-only fallback (e.g. 'en-US' matches 'en-GB' because both start with 'en')
+ * - Within matches, prefers female voices
  * - First available voice as last resort
  * Returns null if the voice list is empty.
  */
+const FEMALE_VOICE_NAMES = [
+  'female',
+  'woman',
+  'zira',
+  'samantha',
+  'susan',
+  'karen',
+  'linda',
+  'catherine',
+  'hazel',
+  'heather',
+  'zahara',
+  'natasha',
+  'sofia',
+  'google uk english female',
+  'google us english',
+];
+
+function isFemaleVoice(voice: SpeechSynthesisVoice): boolean {
+  const lower = voice.name.toLowerCase();
+  return FEMALE_VOICE_NAMES.some((keyword) => lower.includes(keyword));
+}
+
 export function selectVoice(
   voices: SpeechSynthesisVoice[],
   language: string,
 ): SpeechSynthesisVoice | null {
   if (voices.length === 0) return null;
 
-  // Exact BCP-47 match
-  const exact = voices.find((v) => v.lang === language);
-  if (exact) return exact;
-
-  // Language-only fallback
   const langPrefix = language.split('-')[0];
-  const languageMatch = voices.find((v) => v.lang.startsWith(langPrefix));
-  if (languageMatch) {
-    console.warn(
-      `TTS: no exact voice match for language "${language}", falling back to "${languageMatch.lang}"`,
-    );
-    return languageMatch;
+
+  // Exact BCP-47 matches
+  const exactMatches = voices.filter((v) => v.lang === language);
+  // Language-only matches (only used if no exact match)
+  const langMatches =
+    exactMatches.length > 0 ? [] : voices.filter((v) => v.lang.startsWith(langPrefix));
+
+  const candidates = exactMatches.length > 0 ? exactMatches : langMatches;
+
+  if (candidates.length > 0) {
+    // Prefer female voice among candidates
+    const female = candidates.find(isFemaleVoice);
+    if (female) {
+      console.debug(`TTS: selected female voice "${female.name}" (${female.lang})`);
+      return female;
+    }
+    console.debug(`TTS: selected voice "${candidates[0].name}" (${candidates[0].lang})`);
+    return candidates[0];
   }
 
-  // First available voice
+  // No language match — try any female voice
+  const anyFemale = voices.find(isFemaleVoice);
+  if (anyFemale) {
+    console.warn(
+      `TTS: no voice for language "${language}", using female voice "${anyFemale.name}" (${anyFemale.lang})`,
+    );
+    return anyFemale;
+  }
+
+  // Last resort: first available voice
   console.warn(
     `TTS: no matching voice for language "${language}", using first available voice "${voices[0].lang}"`,
   );
@@ -158,32 +199,35 @@ export function speakAnnouncement(options: SpeakAnnouncementOptions): Promise<vo
     utterance.pitch = safePitch;
     utterance.volume = safeVolume;
 
-    // Best-effort voice selection from whatever is currently available
-    const voice = selectVoice(speechSynthesis.getVoices(), options.language);
-    if (voice) {
-      utterance.voice = voice;
-    } else {
-      console.debug('TTS: using browser default voice (no matching voice installed)');
-    }
-
-    utterance.onstart = () => {
-      options.onStart?.();
-    };
-
-    utterance.onend = () => {
-      resolve();
-    };
-
-    utterance.onerror = (event) => {
-      // 'interrupted' is expected when cancelTts() is called — don't log as error
-      if (event.error !== 'interrupted') {
-        console.warn('TTS utterance error:', event.error);
+    // Load voices asynchronously (Chrome loads voices lazily; synchronous
+    // getVoices() often returns an empty array). Then pick the best female voice.
+    loadTtsVoices().then((voices) => {
+      const voice = selectVoice(voices, options.language);
+      if (voice) {
+        utterance.voice = voice;
+        console.debug(`TTS: using voice "${voice.name}" (${voice.lang})`);
+      } else {
+        console.debug('TTS: using browser default voice (no matching voice installed)');
       }
-      options.onError?.(event);
-      resolve();
-    };
 
-    speechSynthesis.speak(utterance);
+      utterance.onstart = () => {
+        options.onStart?.();
+      };
+
+      utterance.onend = () => {
+        resolve();
+      };
+
+      utterance.onerror = (event) => {
+        if (event.error !== 'interrupted') {
+          console.warn('TTS utterance error:', event.error);
+        }
+        options.onError?.(event);
+        resolve();
+      };
+
+      speechSynthesis.speak(utterance);
+    });
   });
 }
 

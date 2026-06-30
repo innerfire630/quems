@@ -30,8 +30,8 @@ interface AnnouncementJob {
   id: string;
   /** The ticket number to announce (e.g. 'A005'). */
   ticketNumber: string;
-  /** The counter display name (e.g. 'Counter 2'). */
-  counterName: string;
+  /** The counter number (e.g. 1) — used in "Counter 1" phrasing. */
+  counterNumber: number;
   /** The service name (e.g. 'General Inquiry'). */
   serviceName: string;
   /** Timestamp (Date.now()) when the job was enqueued. */
@@ -52,45 +52,53 @@ export interface UseAnnouncementOptions {
 export function useAnnouncement(options: UseAnnouncementOptions): void {
   const { displayBoard, audioContext, bellBuffer, isAudioUnlocked } = options;
 
-  // ---- FIFO queue state ----------------------------------------------------
-  const [queue, setQueue] = useState<AnnouncementJob[]>([]);
+  // ---- FIFO queue (ref-based — synchronous, immune to React batching) ------
+  const queueRef = useRef<AnnouncementJob[]>([]);
+  const [queueVersion, setQueueVersion] = useState(0);
 
   // ---- Single-flight guard refs --------------------------------------------
   const isProcessingRef = useRef(false);
 
-  // ---- Enqueue / dequeue helpers -------------------------------------------
+  // ---- Ref holder for processQueue (avoids stale closure in setTimeout) ----
+  const processQueueRef = useRef<(() => void) | null>(null);
+
+  // ---- Enqueue helper (writes directly to ref — never stale) ---------------
 
   const enqueue = useCallback((job: AnnouncementJob) => {
-    setQueue((prev) => {
-      const next = [...prev, job];
-      if (next.length > MAX_ANNOUNCEMENT_QUEUE_SIZE) {
-        const dropped = next.shift();
-        console.warn(`Announcement queue overflow: dropping ${dropped?.ticketNumber}`);
-      }
-      return next;
-    });
+    const next = [...queueRef.current, job];
+    if (next.length > MAX_ANNOUNCEMENT_QUEUE_SIZE) {
+      const dropped = next.shift();
+      console.warn(`Announcement queue overflow: dropping ${dropped?.ticketNumber}`);
+    }
+    queueRef.current = next;
+    setQueueVersion((v) => v + 1);
+
+    // Trigger processing immediately (single-flight guard prevents double-fire)
+    setTimeout(() => {
+      processQueueRef.current?.();
+    }, 0);
   }, []);
 
-  // ---- Dequeue helper (uses functional setState to avoid stale reads) ------
+  // ---- Dequeue helper (reads directly from ref — no setState involved) -----
 
   const takeOne = useCallback((): AnnouncementJob | null => {
-    let taken: AnnouncementJob | null = null;
-    setQueue((prev) => {
-      if (prev.length === 0) return prev;
-      taken = prev[0];
-      return prev.slice(1);
-    });
-    return taken;
+    const prev = queueRef.current;
+    if (prev.length === 0) return null;
+    const [head, ...rest] = prev;
+    queueRef.current = rest;
+    setQueueVersion((v) => v + 1);
+    return head;
   }, []);
 
   const clearQueue = useCallback(() => {
-    setQueue([]);
+    queueRef.current = [];
+    setQueueVersion((v) => v + 1);
   }, []);
 
   // ---- Processor (single-flight bell → TTS loop) ---------------------------
 
   const processQueue = useCallback(async () => {
-    if (isProcessingRef.current) return; // single-flight guard
+    if (isProcessingRef.current) return;
 
     if (!isAudioUnlocked || !audioContext || !displayBoard || !displayBoard.announcementEnabled) {
       return;
@@ -99,7 +107,6 @@ export function useAnnouncement(options: UseAnnouncementOptions): void {
     isProcessingRef.current = true;
 
     try {
-      // Process until the queue is empty
       for (;;) {
         const job = takeOne();
         if (!job) break;
@@ -141,7 +148,7 @@ export function useAnnouncement(options: UseAnnouncementOptions): void {
         ) {
           const text = substituteTemplate(displayBoard.announcementTemplate, {
             number: job.ticketNumber,
-            counter: job.counterName,
+            counter: `Counter ${job.counterNumber}`,
             service: job.serviceName,
           });
 
@@ -163,7 +170,13 @@ export function useAnnouncement(options: UseAnnouncementOptions): void {
     }
   }, [isAudioUnlocked, audioContext, bellBuffer, displayBoard, takeOne]);
 
-  // ---- Trigger processor when queue / unlock / dependencies change ---------
+  // ---- Sync processQueueRef in an effect (not during render) ----------------
+
+  useEffect(() => {
+    processQueueRef.current = processQueue;
+  }, [processQueue]);
+
+  // ---- Trigger processor when queue version / unlock / deps change ---------
 
   useEffect(() => {
     if (
@@ -171,12 +184,12 @@ export function useAnnouncement(options: UseAnnouncementOptions): void {
       !audioContext ||
       !displayBoard ||
       !displayBoard.announcementEnabled ||
-      queue.length === 0
+      queueRef.current.length === 0
     ) {
       return;
     }
     processQueue();
-  }, [isAudioUnlocked, audioContext, bellBuffer, displayBoard, queue.length, processQueue]);
+  }, [isAudioUnlocked, audioContext, bellBuffer, displayBoard, queueVersion, processQueue]);
 
   // ---- SSE subscription ----------------------------------------------------
 
@@ -184,13 +197,19 @@ export function useAnnouncement(options: UseAnnouncementOptions): void {
     filter: ['TICKET_CALLED', 'TICKET_RECALLED'] as const,
     onEvent: (envelope) => {
       const p = (
-        envelope as { payload: { ticketNumber: string; counterName: string; serviceName: string } }
+        envelope as {
+          payload: {
+            ticketNumber: string;
+            counterNumber: number;
+            serviceName: string;
+          };
+        }
       ).payload;
 
       const job: AnnouncementJob = {
         id: (envelope as { id: string }).id,
         ticketNumber: p.ticketNumber,
-        counterName: p.counterName,
+        counterNumber: p.counterNumber,
         serviceName: p.serviceName,
         enqueuedAt: Date.now(),
       };

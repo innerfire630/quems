@@ -25,7 +25,7 @@ export const displayBoardCreateSchema = z.object({
     .string()
     .min(1, 'Announcement template is required')
     .max(500, 'Template must be 500 characters or less')
-    .default('Now serving ticket {number} at {counter}'),
+    .default('Ticket {number}, please proceed to {counter}'),
   themeColor: z
     .string()
     .regex(hexColorRegex, 'Must be a valid hex color (e.g. #3B82F6)')

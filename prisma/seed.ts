@@ -254,7 +254,7 @@ async function seedDisplayBoard(): Promise<void> {
       ttsRate: 1.0,
       ttsPitch: 1.0,
       ttsVolume: 1.0,
-      announcementTemplate: 'Now serving ticket {number} at {counter}',
+      announcementTemplate: 'Ticket {number}, please proceed to {counter}',
       themeColor: null,
       logoUrl: null,
       customMessage: null,

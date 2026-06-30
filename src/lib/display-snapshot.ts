@@ -31,7 +31,7 @@ function mapDisplayBoard(record: Record<string, unknown>): DisplayBoardConfig {
     ttsPitch: (record['ttsPitch'] as number) ?? 1.0,
     ttsVolume: (record['ttsVolume'] as number) ?? 1.0,
     announcementTemplate:
-      (record['announcementTemplate'] as string) ?? 'Now serving ticket {number} at {counter}',
+      (record['announcementTemplate'] as string) ?? 'Ticket {number}, please proceed to {counter}',
     themeColor: (record['themeColor'] as string) ?? null,
     logoUrl: (record['logoUrl'] as string) ?? null,
     customMessage: (record['customMessage'] as string) ?? null,
