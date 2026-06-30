@@ -154,6 +154,7 @@ export const config = {
      * - /kiosk/* (public kiosk)
      * - /security/* (security screen)
      * - /sse-test (SSE test page, dev only)
+     * - /sounds/* (public static audio/assets directory)
      * - /api/auth/* (auth endpoints)
      * - /api/sse/* (SSE streaming)
      * - /api/tickets/issue (kiosk ticket issuance)
@@ -163,6 +164,6 @@ export const config = {
      * - /api/debug/* (development-only debug routes)
      * - _next/static, _next/image, favicon.ico (static assets)
      */
-    '/((?!login|display|kiosk|security|sse-test|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
+    '/((?!login|display|kiosk|security|sse-test|sounds|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
   ],
 };

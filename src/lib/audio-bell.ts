@@ -61,7 +61,22 @@ export async function loadBellBuffer(audioContext: AudioContext): Promise<AudioB
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('Bell audio file is empty');
+      }
+
+      let audioBuffer: AudioBuffer;
+      try {
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      } catch (decodeError) {
+        throw new Error(
+          `Failed to decode bell audio (${arrayBuffer.byteLength} bytes). ` +
+            'The file may be corrupt or in an unsupported format. ' +
+            'Use a valid MP3 file. Original error: ' +
+            (decodeError instanceof Error ? decodeError.message : String(decodeError)),
+        );
+      }
 
       cachedBuffer = audioBuffer;
 
