@@ -13,15 +13,7 @@ export function TransitionWrapper({ ticketId, children }: TransitionWrapperProps
   return (
     <span
       key={ticketId ?? 'empty'}
-      className="inline-block animate-in fade-in zoom-in-95 duration-300"
-      style={
-        {
-          // Respect prefers-reduced-motion
-          '@media (prefers-reduced-motion: reduce)': {
-            animation: 'none',
-          },
-        } as React.CSSProperties
-      }
+      className="inline-block animate-in fade-in zoom-in-95 duration-300 motion-reduce:animate-none"
     >
       {children}
     </span>

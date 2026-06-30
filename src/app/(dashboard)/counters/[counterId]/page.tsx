@@ -7,8 +7,9 @@ import Link from 'next/link';
 import { ArrowLeft, Wrench } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { PERMISSION_COUNTER_UPDATE } from '@/lib/permissions';
+import { PERMISSION_COUNTER_MANAGE } from '@/lib/permissions';
 import { CounterForm } from '@/app/(dashboard)/counters/_components/counter-form';
+import { OfficerAssignment } from '@/app/(dashboard)/counters/_components/officer-assignment';
 
 interface EditCounterPageProps {
   params: Promise<{ counterId: string }>;
@@ -19,7 +20,7 @@ export default async function EditCounterPage({ params }: EditCounterPageProps) 
   if (!session?.user) redirect('/login');
 
   const permissions = session.user.permissions ?? [];
-  if (!permissions.includes(PERMISSION_COUNTER_UPDATE)) redirect('/?error=forbidden');
+  if (!permissions.includes(PERMISSION_COUNTER_MANAGE)) redirect('/?error=forbidden');
 
   const { counterId } = await params;
 
@@ -65,6 +66,8 @@ export default async function EditCounterPage({ params }: EditCounterPageProps) 
       </div>
 
       <CounterForm mode="edit" initialValues={initialValues} counterId={counterId} />
+
+      <OfficerAssignment counterId={counterId} />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { Plus } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { PERMISSION_COUNTER_READ } from '@/lib/permissions';
-import { CounterTable } from './_components/counter-table';
+import { CounterTableWrapper } from './_components/counter-table-wrapper';
 import { CounterSearch } from './_components/counter-search';
 import { CounterPagination } from './_components/counter-pagination';
 import type { OperationalStatus } from '@/types/counter.types';
@@ -108,8 +108,8 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
         <CounterSearch defaultValue={search} activeFilter={isActive} />
       </Suspense>
 
-      <Suspense fallback={<CounterTable counters={[]} isLoading />}>
-        <CounterTable counters={mapped} />
+      <Suspense fallback={<CounterTableWrapper counters={[]} isLoading />}>
+        <CounterTableWrapper counters={mapped} />
         <CounterPagination
           page={page}
           totalPages={totalPages}

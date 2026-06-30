@@ -36,7 +36,9 @@ export function KioskHeader({ welcomeMessage }: KioskHeaderProps) {
     <header className="mb-12">
       <div className="flex items-center justify-between">
         <div className="text-2xl font-bold text-primary">QUEMS</div>
-        <div className="text-lg font-mono text-muted-foreground">{formatDateTime(now)}</div>
+        <div className="text-lg font-mono text-muted-foreground" suppressHydrationWarning>
+          {formatDateTime(now)}
+        </div>
       </div>
       <h1 className="mt-6 text-center text-3xl font-bold text-foreground">{welcomeMessage}</h1>
     </header>

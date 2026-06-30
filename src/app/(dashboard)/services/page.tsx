@@ -9,7 +9,7 @@ import { Plus } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { PERMISSION_SERVICE_READ } from '@/lib/permissions';
-import { ServiceTable } from './_components/service-table';
+import { ServiceTableWrapper } from './_components/service-table-wrapper';
 import { ServiceSearch } from './_components/service-search';
 import { ServicePagination } from './_components/service-pagination';
 
@@ -95,8 +95,8 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
         <ServiceSearch defaultValue={search} activeFilter={isActive} />
       </Suspense>
 
-      <Suspense fallback={<ServiceTable services={[]} isLoading />}>
-        <ServiceTable services={mapped} />
+      <Suspense fallback={<ServiceTableWrapper services={[]} isLoading />}>
+        <ServiceTableWrapper services={mapped} />
         <ServicePagination
           page={page}
           totalPages={totalPages}

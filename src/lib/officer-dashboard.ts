@@ -89,7 +89,8 @@ export async function getOfficerDashboardData(
     notificationsState,
     officerContext: {
       counterOfficerId: officerRecord.id,
-      currentStatus: currentStatus?.status ?? 'OPENED',
+      currentStatus:
+        currentStatus?.status ?? (officerRecord.currentStatus === 'OFFLINE' ? 'CLOSED' : 'OPENED'),
       isOnDuty: officerRecord.isOnDuty,
       notificationsEnabled: officerRecord.notificationsEnabled,
     },

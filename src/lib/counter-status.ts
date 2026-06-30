@@ -71,8 +71,14 @@ function mapApiStatusToDbStatus(apiStatus: 'OPENED' | 'CLOSED'): 'AVAILABLE' | '
 }
 
 function mapDbStatusToApiStatus(dbStatus: CounterOfficerStatus | string): 'OPENED' | 'CLOSED' {
-  if (dbStatus === 'AVAILABLE') return 'OPENED';
-  return 'CLOSED';
+  // CounterOfficerStatus enum: AVAILABLE, SERVING → open; CLOSED, OFFLINE → closed
+  // CounterEventStatus enum:  OPENED, REOPENED → open; CLOSED_TEMPORARY, CLOSED_PERMANENT → closed
+  return dbStatus === 'AVAILABLE' ||
+    dbStatus === 'SERVING' ||
+    dbStatus === 'OPENED' ||
+    dbStatus === 'REOPENED'
+    ? 'OPENED'
+    : 'CLOSED';
 }
 
 // ---------------------------------------------------------------------------
@@ -166,6 +172,7 @@ export async function setCounterStatus(
     // Update the officer status and optionally the closure fields
     const updateData: {
       currentStatus: CounterOfficerStatus;
+      isOnDuty?: boolean;
       closureReason?: string | null;
       closedAt?: Date | null;
     } = {
@@ -176,6 +183,8 @@ export async function setCounterStatus(
       updateData.closureReason = input.reason ?? null;
       updateData.closedAt = new Date();
     } else {
+      // Opening the counter sets isOnDuty true and clears closure fields
+      updateData.isOnDuty = true;
       updateData.closureReason = null;
       updateData.closedAt = null;
     }

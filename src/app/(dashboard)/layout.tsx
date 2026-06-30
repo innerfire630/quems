@@ -11,12 +11,38 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { DashboardTopBar } from '@/app/(dashboard)/_components/dashboard-top-bar';
 import { AuthProvider } from '@/components/layout/AuthProvider';
 import { getServerSession } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await getServerSession();
 
   if (!session) {
     redirect('/login');
+  }
+
+  // Role-based routing: these roles should never see the admin dashboard
+  const roles = (session.user.roles as string[] | undefined) ?? [];
+
+  // Kiosk → self-service ticket issuance
+  if (roles.includes('KIOSK')) {
+    redirect('/kiosk');
+  }
+
+  // Security officer → broadcast & queue monitoring
+  if (roles.includes('SECURITY_OFFICER')) {
+    redirect('/security');
+  }
+
+  // Counter officer → assigned counter dashboard
+  if (roles.includes('COUNTER_OFFICER')) {
+    const officer = await prisma.counterOfficer.findFirst({
+      where: { userId: session.user.userId as string },
+      select: { counterId: true },
+      orderBy: { counter: { number: 'asc' } },
+    });
+    if (officer) {
+      redirect(`/counter/${officer.counterId}`);
+    }
   }
 
   return (

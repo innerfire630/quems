@@ -88,7 +88,7 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
         case 'COUNTER_OPENED':
           setData((prev) => ({
             ...prev,
-            officerContext: { ...prev.officerContext, currentStatus: 'OPENED' },
+            officerContext: { ...prev.officerContext, currentStatus: 'OPENED', isOnDuty: true },
           }));
           break;
 
@@ -165,7 +165,11 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
           onStatusChange={(newStatus) => {
             setData((prev) => ({
               ...prev,
-              officerContext: { ...prev.officerContext, currentStatus: newStatus },
+              officerContext: {
+                ...prev.officerContext,
+                currentStatus: newStatus,
+                isOnDuty: newStatus === 'OPENED' ? true : prev.officerContext.isOnDuty,
+              },
             }));
           }}
         />

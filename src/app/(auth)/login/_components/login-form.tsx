@@ -8,7 +8,6 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,6 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ callbackUrl }: LoginFormProps) {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +58,8 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         return;
       }
 
-      router.push(res?.url ?? callbackUrl);
-      router.refresh();
+      // Full page reload ensures the session cookie is read by server components
+      window.location.href = callbackUrl;
     } catch {
       setError('An unexpected error occurred. Please try again.');
       setIsSubmitting(false);

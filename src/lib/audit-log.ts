@@ -36,6 +36,9 @@ export type AuditAction =
   // Phase 2.1.3 — Service-Counter assignment actions
   | 'SERVICE_ASSIGNED_TO_COUNTER'
   | 'SERVICE_UNASSIGNED_FROM_COUNTER'
+  // Phase 2.1.x — Officer-Counter assignment actions
+  | 'OFFICER_ASSIGNED_TO_COUNTER'
+  | 'OFFICER_UNASSIGNED_FROM_COUNTER'
   // Phase 2.3.3 — Daily reset
   | 'DAILY_RESET_MANUAL'
   // Phase 3.2.3 — Display board configuration

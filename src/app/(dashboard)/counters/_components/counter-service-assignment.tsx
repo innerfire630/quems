@@ -154,15 +154,12 @@ export function CounterServiceAssignment({
                   </Badge>
                 </div>
                 <AlertDialog>
-                  <AlertDialogTrigger>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={removingId === assignment.serviceId}
-                      aria-label={`Remove ${assignment.service.name}`}
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
+                  <AlertDialogTrigger
+                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                    disabled={removingId === assignment.serviceId}
+                    aria-label={`Remove ${assignment.service.name}`}
+                  >
+                    <Trash2 className="size-4 text-destructive" />
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>

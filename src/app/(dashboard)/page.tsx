@@ -10,6 +10,8 @@ import { ShieldX, Users, Layers, Monitor, Ticket, Clock, BarChart3 } from 'lucid
 
 export const dynamic = 'force-dynamic';
 
+const ROLE_COUNTER_OFFICER = 'COUNTER_OFFICER' as const;
+
 interface DashboardHomePageProps {
   searchParams: Promise<{ error?: string }>;
 }
@@ -39,6 +41,33 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
 
   if (!session) {
     redirect('/login');
+  }
+
+  // COUNTER_OFFICER users → redirect to their assigned counter, or show message
+  const roles = (session.user.roles ?? []) as string[];
+  if (roles.includes(ROLE_COUNTER_OFFICER)) {
+    const officer = await prisma.counterOfficer.findFirst({
+      where: { userId: session.user.userId },
+      select: { counterId: true },
+      orderBy: { counter: { number: 'asc' } },
+    });
+    if (officer) {
+      redirect(`/counter/${officer.counterId}`);
+    }
+    // Not assigned — show a clear message instead of admin overview
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Monitor className="size-12 text-muted-foreground mb-4" />
+        <h1 className="text-2xl font-bold">No Counter Assigned</h1>
+        <p className="mt-2 text-muted-foreground text-center max-w-md">
+          You have a COUNTER_OFFICER role but are not yet assigned to a counter. An administrator
+          must assign you to a counter before you can serve tickets.
+        </p>
+        <p className="mt-6 text-xs text-muted-foreground">
+          Signed in as: <span className="font-medium">{session.user.email}</span>
+        </p>
+      </div>
+    );
   }
 
   const params = await searchParams;

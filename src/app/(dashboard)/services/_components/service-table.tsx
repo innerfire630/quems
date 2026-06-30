@@ -5,7 +5,6 @@
 'use client';
 
 import { MoreHorizontal, Pencil } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -120,7 +119,8 @@ export function ServiceTable({ services, isLoading, error, onEdit }: ServiceTabl
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      render={<Button variant="ghost" size="icon" aria-label="Actions" />}
+                      className="inline-flex size-8 items-center justify-center rounded-md hover:bg-muted hover:text-foreground aria-expanded:bg-muted"
+                      aria-label="Actions"
                     >
                       <MoreHorizontal className="size-4" />
                     </DropdownMenuTrigger>
