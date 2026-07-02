@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -93,7 +94,14 @@ export function CounterForm({ mode, initialValues, counterId }: CounterFormProps
         return;
       }
 
-      router.push('/counters');
+      // After creation, redirect to the edit page so user can assign officers/services
+      if (mode === 'create' && json.data?.id) {
+        toast.success('Counter created! You can now assign officers and services.');
+        router.push(`/counters/${json.data.id}`);
+      } else {
+        toast.success('Counter updated.');
+        router.push('/counters');
+      }
       router.refresh();
     } catch {
       setErrors({ _form: 'Network error. Please try again.' });

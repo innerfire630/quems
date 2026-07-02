@@ -37,10 +37,14 @@ export function applyTICKET_CALLED(state: DisplayState, envelope: SseEventPayloa
     counterNumber: (p['counterNumber'] as number) ?? 0,
     officerName: (p['officerName'] as string) ?? 'Unknown',
     calledAt: (p['calledAt'] as string) ?? envelope.timestamp,
+    status: 'CALLED',
   };
 
-  const maxItems = state.board?.maxDisplayedTickets ?? 10;
-  const recent = [ticket, ...(state.recentByCounter[counterId] ?? [])].slice(0, maxItems);
+  const maxItems = state.board?.maxDisplayedTickets ?? 5;
+  const existingRecent = state.recentByCounter[counterId] ?? [];
+  // Deduplicate by ticket ID — remove any existing entry for this ticket, then prepend
+  const dedupedRecent = existingRecent.filter((t) => t.id !== ticket.id);
+  const recent = [ticket, ...dedupedRecent].slice(0, maxItems);
 
   return {
     ...state,
@@ -49,16 +53,89 @@ export function applyTICKET_CALLED(state: DisplayState, envelope: SseEventPayloa
   };
 }
 
-export function applyTICKET_RECALLED(
-  state: DisplayState,
-  _envelope: SseEventPayload,
-): DisplayState {
+export function applyTICKET_RECALLED(state: DisplayState, envelope: SseEventPayload): DisplayState {
+  const p = inner(envelope) as Record<string, unknown>;
+  const counterId = p['counterId'] as string;
+  const ticketId = p['ticketId'] as string;
+
+  const nowServing = state.nowServing[counterId];
+  // If the recalled ticket is the one currently shown as "now serving", update its status
+  if (nowServing && nowServing.id === ticketId) {
+    const updatedTicket: TicketDisplayData = {
+      ...nowServing,
+      status: 'RECALLED',
+    };
+    const recent = state.recentByCounter[counterId] ?? [];
+    const updatedRecent = recent.map((t) => (t.id === ticketId ? updatedTicket : t));
+    return {
+      ...state,
+      nowServing: { ...state.nowServing, [counterId]: updatedTicket },
+      recentByCounter: { ...state.recentByCounter, [counterId]: updatedRecent },
+    };
+  }
+
   return state;
 }
 
 export function applyTICKET_NO_SHOW(state: DisplayState, envelope: SseEventPayload): DisplayState {
   const p = inner(envelope) as Record<string, unknown>;
   const counterId = p['counterId'] as string;
+  const ticketId = p['ticketId'] as string;
+
+  // Add a NO_SHOW entry to recent list
+  const nowServing = state.nowServing[counterId];
+  const recent = state.recentByCounter[counterId] ?? [];
+
+  if (nowServing && nowServing.id === ticketId) {
+    const noShowTicket: TicketDisplayData = {
+      ...nowServing,
+      status: 'NO_SHOW',
+    };
+    // Deduplicate by ticket ID — update if exists, otherwise prepend
+    const existsInRecent = recent.some((t) => t.id === ticketId);
+    const updatedRecent = existsInRecent
+      ? [noShowTicket, ...recent.filter((t) => t.id !== ticketId)].slice(
+          0,
+          state.board?.maxDisplayedTickets ?? 5,
+        )
+      : [noShowTicket, ...recent].slice(0, state.board?.maxDisplayedTickets ?? 5);
+    return {
+      ...state,
+      nowServing: { ...state.nowServing, [counterId]: null },
+      recentByCounter: { ...state.recentByCounter, [counterId]: updatedRecent },
+    };
+  }
+
+  return {
+    ...state,
+    nowServing: { ...state.nowServing, [counterId]: null },
+  };
+}
+
+export function applyTICKET_SERVED(state: DisplayState, envelope: SseEventPayload): DisplayState {
+  const p = inner(envelope) as Record<string, unknown>;
+  const counterId = p['counterId'] as string;
+  const ticketId = p['ticketId'] as string;
+
+  const nowServing = state.nowServing[counterId];
+  if (nowServing && nowServing.id === ticketId) {
+    const servedTicket: TicketDisplayData = {
+      ...nowServing,
+      status: 'SERVED',
+    };
+    const recent = state.recentByCounter[counterId] ?? [];
+    // Deduplicate — update existing entry or prepend
+    const dedupedRecent = recent.filter((t) => t.id !== ticketId);
+    const updatedRecent = [servedTicket, ...dedupedRecent].slice(
+      0,
+      state.board?.maxDisplayedTickets ?? 5,
+    );
+    return {
+      ...state,
+      nowServing: { ...state.nowServing, [counterId]: servedTicket },
+      recentByCounter: { ...state.recentByCounter, [counterId]: updatedRecent },
+    };
+  }
 
   return {
     ...state,
@@ -69,18 +146,22 @@ export function applyTICKET_NO_SHOW(state: DisplayState, envelope: SseEventPaylo
 export function applyCOUNTER_OPENED(state: DisplayState, envelope: SseEventPayload): DisplayState {
   const p = inner(envelope) as Record<string, unknown>;
   const counterId = p['counterId'] as string;
+  const { [counterId]: _, ...restReasons } = state.counterCloseReasons;
   return {
     ...state,
     counterStatus: { ...state.counterStatus, [counterId]: 'open' },
+    counterCloseReasons: restReasons,
   };
 }
 
 export function applyCOUNTER_CLOSED(state: DisplayState, envelope: SseEventPayload): DisplayState {
   const p = inner(envelope) as Record<string, unknown>;
   const counterId = p['counterId'] as string;
+  const reason = (p['reason'] as string) || '';
   return {
     ...state,
     counterStatus: { ...state.counterStatus, [counterId]: 'closed' },
+    counterCloseReasons: { ...state.counterCloseReasons, [counterId]: reason },
   };
 }
 
@@ -132,6 +213,8 @@ export function applyEvent(state: DisplayState, envelope: SseEventPayload): Disp
       return applyTICKET_RECALLED(state, envelope);
     case 'TICKET_NO_SHOW':
       return applyTICKET_NO_SHOW(state, envelope);
+    case 'TICKET_SERVED':
+      return applyTICKET_SERVED(state, envelope);
     case 'COUNTER_OPENED':
       return applyCOUNTER_OPENED(state, envelope);
     case 'COUNTER_CLOSED':

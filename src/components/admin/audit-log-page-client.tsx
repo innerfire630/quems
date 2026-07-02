@@ -113,7 +113,7 @@ export function AuditLogPageClient({ initialData }: AuditLogPageClientProps) {
 
       {/* Pagination */}
       {data.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
           <p className="text-sm text-muted-foreground">
             Showing {(page - 1) * data.pageSize + 1}–{Math.min(page * data.pageSize, data.total)} of{' '}
             {data.total} entries

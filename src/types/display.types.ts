@@ -44,6 +44,8 @@ export interface TicketDisplayData {
   counterNumber: number;
   officerName: string;
   calledAt: string;
+  /** Ticket status — enables recall/no-show indicators on the display board. */
+  status?: string;
 }
 
 /** The initial state returned by the snapshot endpoint. */
@@ -61,6 +63,7 @@ export interface DisplayState {
   nowServing: Record<string, TicketDisplayData | null>;
   recentByCounter: Record<string, TicketDisplayData[]>;
   counterStatus: Record<string, 'open' | 'closed'>;
+  counterCloseReasons: Record<string, string>;
   broadcastMessage: {
     message: string;
     senderName: string;

@@ -33,9 +33,9 @@ export function DisplayClock() {
   }).format(now);
 
   return (
-    <div className="flex flex-col items-end text-display-text select-none" suppressHydrationWarning>
+    <div className="flex flex-col items-end text-gray-700 select-none" suppressHydrationWarning>
       <span className="text-xl font-semibold tabular-nums tracking-wide">{timeStr}</span>
-      <span className="text-sm text-slate-400">{dateStr}</span>
+      <span className="text-sm text-gray-500">{dateStr}</span>
     </div>
   );
 }

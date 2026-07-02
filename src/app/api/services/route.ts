@@ -163,6 +163,7 @@ export const POST = withPermission(async (req, ctx) => {
     void writeAuditLog({
       action: 'SERVICE_CREATED',
       actorId: ctx.session.user.userId,
+      entity: 'Service',
       targetUserId: service.id,
       description: `Created service "${service.name}" (${service.code}).`,
       metadata: {

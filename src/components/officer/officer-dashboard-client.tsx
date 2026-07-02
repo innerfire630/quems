@@ -11,7 +11,7 @@ import { useState, useCallback } from 'react';
 import { useSSE } from '@/hooks/use-sse';
 import { DASHBOARD_EVENT_FILTER } from '@/types/officer-dashboard.types';
 import type { OfficerDashboardData } from '@/types/officer-dashboard.types';
-import type { TicketListItem } from '@/types/ticket.types';
+import type { TicketListItem, TicketDetail } from '@/types/ticket.types';
 import CounterHeader from '@/components/counter/counter-header';
 import CurrentServingTicketCard from '@/components/counter/current-serving-ticket-card';
 import QueueDepthIndicator from '@/components/counter/queue-depth-indicator';
@@ -28,14 +28,25 @@ interface OfficerDashboardClientProps {
 export default function OfficerDashboardClient({ initialData }: OfficerDashboardClientProps) {
   const [data, setData] = useState<OfficerDashboardData>(initialData);
 
-  // Re-fetch the next ticket after call/queue events
-  const refreshNextTicket = useCallback(async () => {
+  // Re-fetch both current serving ticket and next ticket
+  const refreshDashboard = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/officers/me/dashboard/${encodeURIComponent(data.counter.id)}/next-ticket`,
-      );
-      if (res.ok) {
-        const json = await res.json();
+      const [currentRes, nextRes] = await Promise.all([
+        fetch(`/api/officers/me/dashboard/${encodeURIComponent(data.counter.id)}/current-ticket`),
+        fetch(`/api/officers/me/dashboard/${encodeURIComponent(data.counter.id)}/next-ticket`),
+      ]);
+
+      if (currentRes.ok) {
+        const json = await currentRes.json();
+        if (json.success && json.data) {
+          setData((prev) => ({ ...prev, currentServingTicket: json.data as TicketDetail }));
+        } else {
+          setData((prev) => ({ ...prev, currentServingTicket: null }));
+        }
+      }
+
+      if (nextRes.ok) {
+        const json = await nextRes.json();
         if (json.success && json.data) {
           setData((prev) => ({ ...prev, nextTicket: json.data as TicketListItem }));
         } else {
@@ -72,17 +83,21 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
               },
             }));
           }
-          refreshNextTicket();
+          refreshDashboard();
           break;
 
         case 'TICKET_CALLED':
         case 'TICKET_RECALLED':
-          refreshNextTicket();
+          refreshDashboard();
           break;
 
         case 'TICKET_NO_SHOW':
           setData((prev) => ({ ...prev, currentServingTicket: null }));
-          refreshNextTicket();
+          refreshDashboard();
+          break;
+
+        case 'TICKET_SERVED':
+          refreshDashboard();
           break;
 
         case 'COUNTER_OPENED':
@@ -155,7 +170,8 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
           ticket={data.currentServingTicket}
           counterId={data.counter.id}
           officerOnDuty={data.officerContext.isOnDuty && !isClosed}
-          onActionComplete={refreshNextTicket}
+          hasNextTicket={data.nextTicket !== null}
+          onActionComplete={refreshDashboard}
         />
         <CounterStatusToggle
           counterId={data.counter.id}

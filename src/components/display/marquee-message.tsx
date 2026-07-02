@@ -33,9 +33,9 @@ export function MarqueeMessage({ message }: MarqueeMessageProps) {
           }
         }
       `}</style>
-      <div className="overflow-hidden whitespace-nowrap bg-display-bg border-t border-slate-700">
+      <div className="overflow-hidden whitespace-nowrap bg-white border-t border-gray-200">
         <div
-          className="marquee-animate inline-block py-2 text-lg font-medium text-display-text"
+          className="marquee-animate inline-block py-2 text-lg font-medium text-gray-700"
           style={{
             animationName: 'marquee-scroll',
             animationDuration: `${duration}s`,

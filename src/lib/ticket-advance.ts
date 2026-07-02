@@ -27,16 +27,11 @@ export interface AdvanceResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Reads SystemSetting.queue.auto_advance_on_no_show.
- * Falls back to true when the setting is not present.
- * (2.3.3 seeds the setting; until then this fallback takes effect.)
+ * Auto-advance is disabled. Officers manually call the next ticket.
+ * @deprecated Setting removed — always returns false.
  */
 export async function getAutoAdvanceEnabled(): Promise<boolean> {
-  const setting = await db.systemSetting.findUnique({
-    where: { key: 'queue.auto_advance_on_no_show' },
-  });
-  if (!setting) return true;
-  return setting.value === 'true';
+  return false;
 }
 
 // ---------------------------------------------------------------------------

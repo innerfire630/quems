@@ -19,25 +19,12 @@ import { z } from 'zod';
 /**
  * Validates the PATCH /api/counters/[counterId]/status request body.
  * - `status`: must be 'OPENED' or 'CLOSED'.
- * - `reason`: optional string, max 200 chars. Required when status is 'CLOSED'.
+ * - `reason`: optional string, max 200 chars.
  */
-export const counterStatusChangeSchema = z
-  .object({
-    status: z.enum(['OPENED', 'CLOSED']),
-    reason: z.string().trim().max(200).optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.status === 'CLOSED' && (!data.reason || data.reason.trim().length === 0)) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'Reason is required when closing the counter.',
-      path: ['reason'],
-    },
-  );
+export const counterStatusChangeSchema = z.object({
+  status: z.enum(['OPENED', 'CLOSED']),
+  reason: z.string().trim().max(200).nullish(),
+});
 
 // ---------------------------------------------------------------------------
 // Re-exports

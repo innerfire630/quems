@@ -112,7 +112,6 @@ model User {
   refreshTokens RefreshToken[]
   counterProfile CounterOfficer[]
   auditLogs     AuditLog[]
-  securityBroadcasts BroadcastMessage[] @relation("BroadcastTargetSecurity")
   updatedSettings   SystemSetting[]    @relation("SettingsUpdatedBy")
 
   @@index([email])
@@ -360,7 +359,7 @@ model DisplayBoard {
   id                    String   @id @default(cuid())
   name                  String
   isDefault             Boolean  @default(false)
-  maxDisplayedTickets   Int      @default(10)
+  maxDisplayedTickets   Int      @default(5)
   announcementEnabled   Boolean  @default(true)
   bellEnabled           Boolean  @default(true)
   ttsEnabled            Boolean  @default(true)
@@ -457,7 +456,6 @@ model BroadcastMessage {
   senderDisplayName      String
   sourceReplyId          String?
   targetDisplayBoardId   String?
-  targetSecurityUserId   String?
   displayDurationSeconds Int       @default(10)
   expiresAt              DateTime?
   isActive               Boolean   @default(true)
@@ -466,7 +464,6 @@ model BroadcastMessage {
   senderOfficer      CounterOfficer     @relation("BroadcastSender", fields: [senderOfficerId], references: [id], onDelete: Cascade)
   sourceReply        NotificationReply?  @relation(fields: [sourceReplyId], references: [id])
   targetDisplayBoard DisplayBoard?       @relation(fields: [targetDisplayBoardId], references: [id])
-  targetSecurityUser User?              @relation("BroadcastTargetSecurity", fields: [targetSecurityUserId], references: [id])
 
   @@index([isActive, expiresAt])
 }

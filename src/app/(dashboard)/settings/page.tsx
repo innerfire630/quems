@@ -2,7 +2,7 @@
 // /settings — System Settings page
 // =============================================================================
 // Displays all system settings with inline editing. Protected by the
-// auth guard in the dashboard layout; SUPER_ADMIN-only via `system:configure`.
+// auth guard in the dashboard layout; ADMIN-only via `system:configure`.
 // =============================================================================
 
 import { redirect } from 'next/navigation';
@@ -27,11 +27,13 @@ export default async function SystemSettingsPage() {
   });
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
-      <p className="mt-2 text-muted-foreground">
-        Global system configuration values. Changes take effect immediately.
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
+        <p className="mt-2 text-muted-foreground">
+          Global system configuration values. Changes take effect immediately.
+        </p>
+      </div>
       <SettingsClient settings={settings} />
     </div>
   );

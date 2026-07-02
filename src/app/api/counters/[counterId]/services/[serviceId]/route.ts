@@ -68,6 +68,7 @@ export const DELETE = withPermission(
       void writeAuditLog({
         action: 'SERVICE_UNASSIGNED_FROM_COUNTER',
         actorId: ctx.session.user.userId,
+        entity: 'Counter',
         targetUserId: counterId,
         description: `Removed service "${service?.name ?? serviceId}" from counter "${counter.name}".`,
         metadata: {

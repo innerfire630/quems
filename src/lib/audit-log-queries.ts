@@ -22,9 +22,21 @@ export async function queryAuditLogs(
 ): Promise<AuditLogPageResult> {
   const where: Prisma.AuditLogWhereInput = {};
 
+  // Always exclude read-only "viewed" entries
+  where.action = { not: 'AUDIT_LOG_VIEWED' };
+
   if (filters.userId) where.userId = filters.userId;
   if (filters.action) where.action = filters.action as AuditAction;
-  if (filters.entity) where.entity = filters.entity;
+  if (filters.entity) {
+    // Normalize: match both old and new entity value conventions
+    const entityVariants: Record<string, { in: string[] }> = {
+      User: { in: ['User', 'USER'] },
+      SystemSetting: { in: ['SystemSetting', 'SYSTEM_SETTING'] },
+      Report: { in: ['Report', 'REPORT'] },
+      Notification: { in: ['Notification', 'NOTIFICATION'] },
+    };
+    where.entity = entityVariants[filters.entity] ?? filters.entity;
+  }
   if (filters.entityId) where.entityId = filters.entityId;
   if (filters.startDate) {
     where.createdAt = {

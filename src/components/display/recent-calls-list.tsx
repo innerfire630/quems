@@ -25,16 +25,48 @@ export const RecentCallsList = React.memo(function RecentCallsList({
   tickets,
   maxItems,
 }: RecentCallsListProps) {
-  if (tickets.length === 0) return null;
-
   const visible = tickets.slice(0, maxItems);
+  const placeholdersNeeded = maxItems - visible.length;
 
   return (
     <div className="flex flex-col gap-1 mt-2">
       {visible.map((t) => (
-        <div key={t.id} className="flex justify-between items-center text-display-text">
-          <span className="text-2xl font-bold">{t.ticketNumber}</span>
-          <span className="text-xs text-slate-400">{relativeTime(t.calledAt)}</span>
+        <div key={t.id} className="flex justify-between items-center text-gray-700">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-2xl font-bold ${
+                t.status === 'NO_SHOW'
+                  ? 'text-red-400 line-through'
+                  : t.status === 'RECALLED'
+                    ? 'text-amber-400'
+                    : ''
+              }`}
+            >
+              {t.ticketNumber}
+            </span>
+            {t.status === 'NO_SHOW' && (
+              <span className="text-[10px] font-medium text-red-400 uppercase bg-red-400/10 px-1.5 py-0.5 rounded">
+                No-Show
+              </span>
+            )}
+            {t.status === 'RECALLED' && (
+              <span className="text-[10px] font-medium text-amber-400 uppercase bg-amber-400/10 px-1.5 py-0.5 rounded">
+                Recalled
+              </span>
+            )}
+            {t.status === 'SERVED' && (
+              <span className="text-[10px] font-medium text-green-400 uppercase bg-green-400/10 px-1.5 py-0.5 rounded">
+                Served
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-gray-400">{relativeTime(t.calledAt)}</span>
+        </div>
+      ))}
+      {Array.from({ length: placeholdersNeeded }, (_, i) => (
+        <div key={`placeholder-${i}`} className="flex justify-between items-center text-gray-700">
+          <span className="text-2xl font-bold text-gray-300">&mdash;</span>
+          <span className="text-xs text-gray-300">&nbsp;</span>
         </div>
       ))}
     </div>

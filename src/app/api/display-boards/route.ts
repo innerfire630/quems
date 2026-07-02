@@ -85,6 +85,7 @@ export const POST = withPermission(async (req, _ctx) => {
   await writeAuditLog({
     action: 'DISPLAY_BOARD_CREATED',
     actorId,
+    entity: 'DisplayBoard',
     description: `Created display board "${board.name}"`,
     metadata: { boardId: board.id, isDefault: board.isDefault },
   });
@@ -93,6 +94,7 @@ export const POST = withPermission(async (req, _ctx) => {
     await writeAuditLog({
       action: 'DISPLAY_BOARD_DEFAULT_CHANGED',
       actorId,
+      entity: 'DisplayBoard',
       description: `Set "${board.name}" as the default display board`,
       metadata: { newDefaultId: board.id },
     });

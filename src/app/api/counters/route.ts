@@ -68,7 +68,8 @@ export const GET = withPermission(async (req) => {
 
     function computeStatus(officers: { currentStatus: string }[]): OperationalStatus {
       if (officers.length === 0) return 'NO_OFFICER_ON_DUTY';
-      if (officers.some((o) => o.currentStatus === 'OPEN')) return 'OPEN';
+      if (officers.some((o) => o.currentStatus === 'AVAILABLE' || o.currentStatus === 'SERVING'))
+        return 'OPEN';
       if (officers.some((o) => o.currentStatus === 'CLOSED')) return 'CLOSED';
       if (officers.some((o) => o.currentStatus === 'OFFLINE')) return 'OFFLINE';
       return 'NO_OFFICER_ON_DUTY';
@@ -152,6 +153,7 @@ export const POST = withPermission(async (req, ctx) => {
     void writeAuditLog({
       action: 'COUNTER_CREATED',
       actorId: ctx.session.user.userId,
+      entity: 'Counter',
       targetUserId: counter.id,
       description: `Created counter "${counter.name}" (#${counter.number}).`,
       metadata: { name: counter.name, number: counter.number, isActive: counter.isActive },

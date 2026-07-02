@@ -15,10 +15,9 @@
 /**
  * SSE Channel identifier.
  * - 'global' — public display board, kiosk, unauthenticated viewers
- * - 'security' — security officer screen (requires SECURITY_OFFICER role)
  * - `counter:${string}` — per-counter officer channel (e.g. 'counter:abc123')
  */
-export type SseChannel = 'global' | 'security' | `counter:${string}`;
+export type SseChannel = 'global' | `counter:${string}`;
 
 // ---------------------------------------------------------------------------
 // Event type registry

@@ -66,17 +66,31 @@ export const LEGAL_TRANSITIONS: readonly TicketTransition[] = [
   // RECALL transitions
   { from: 'CALLED', action: 'RECALL', to: 'RECALLED' },
   { from: 'RECALLED', action: 'RECALL', to: 'RECALLED' },
+  { from: 'NO_SHOW', action: 'RECALL', to: 'RECALLED' },
 
   // NO_SHOW transitions (2.3.2 — listed here so the state machine is complete)
   { from: 'CALLED', action: 'NO_SHOW', to: 'NO_SHOW' },
   { from: 'RECALLED', action: 'NO_SHOW', to: 'NO_SHOW' },
+
+  // SERVE transitions
+  { from: 'CALLED', action: 'SERVE', to: 'SERVING' },
+  { from: 'RECALLED', action: 'SERVE', to: 'SERVING' },
+
+  // COMPLETE transitions
+  { from: 'SERVING', action: 'COMPLETE', to: 'COMPLETED' },
 ];
 
 // ---------------------------------------------------------------------------
 // IMPLEMENTED_ACTIONS — which actions are wired up in Phase 2
 // ---------------------------------------------------------------------------
 
-export const IMPLEMENTED_ACTIONS: readonly TicketAction[] = ['CALL', 'RECALL', 'NO_SHOW'];
+export const IMPLEMENTED_ACTIONS: readonly TicketAction[] = [
+  'CALL',
+  'RECALL',
+  'NO_SHOW',
+  'SERVE',
+  'COMPLETE',
+];
 
 // ---------------------------------------------------------------------------
 // canTransition — predicate

@@ -57,19 +57,13 @@ export const PERMISSION_SYSTEM_AUDIT = 'system:audit' as const;
 // Role name constants
 // ---------------------------------------------------------------------------
 
-export const ROLE_SUPER_ADMIN = 'SUPER_ADMIN' as const;
 export const ROLE_ADMIN = 'ADMIN' as const;
 export const ROLE_COUNTER_OFFICER = 'COUNTER_OFFICER' as const;
-export const ROLE_SECURITY_OFFICER = 'SECURITY_OFFICER' as const;
-export const ROLE_KIOSK = 'KIOSK' as const;
 
 /** Object form for iteration. */
 export const ROLE = {
-  SUPER_ADMIN: ROLE_SUPER_ADMIN,
   ADMIN: ROLE_ADMIN,
   COUNTER_OFFICER: ROLE_COUNTER_OFFICER,
-  SECURITY_OFFICER: ROLE_SECURITY_OFFICER,
-  KIOSK: ROLE_KIOSK,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -105,12 +99,7 @@ export type Permission =
   | typeof PERMISSION_SYSTEM_CONFIGURE
   | typeof PERMISSION_SYSTEM_AUDIT;
 
-export type Role =
-  | typeof ROLE_SUPER_ADMIN
-  | typeof ROLE_ADMIN
-  | typeof ROLE_COUNTER_OFFICER
-  | typeof ROLE_SECURITY_OFFICER
-  | typeof ROLE_KIOSK;
+export type Role = typeof ROLE_ADMIN | typeof ROLE_COUNTER_OFFICER;
 
 // ---------------------------------------------------------------------------
 // Helper arrays (for iteration in seed / UI)
@@ -148,13 +137,7 @@ export const ALL_PERMISSIONS: Permission[] = [
 ];
 
 /** Every role name in the system. */
-export const ALL_ROLES: Role[] = [
-  ROLE_SUPER_ADMIN,
-  ROLE_ADMIN,
-  ROLE_COUNTER_OFFICER,
-  ROLE_SECURITY_OFFICER,
-  ROLE_KIOSK,
-];
+export const ALL_ROLES: Role[] = [ROLE_ADMIN, ROLE_COUNTER_OFFICER];
 
 // ---------------------------------------------------------------------------
 // Role-to-permission mapping (Master Plan §10.4)
@@ -165,9 +148,7 @@ export const ALL_ROLES: Role[] = [
  * Every entry must use only permission constants and role constants defined above.
  */
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  [ROLE_SUPER_ADMIN]: ALL_PERMISSIONS,
-
-  [ROLE_ADMIN]: ALL_PERMISSIONS.filter((p) => p !== PERMISSION_SYSTEM_CONFIGURE),
+  [ROLE_ADMIN]: ALL_PERMISSIONS,
 
   [ROLE_COUNTER_OFFICER]: [
     PERMISSION_COUNTER_READ,
@@ -177,10 +158,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSION_NOTIFICATION_TOGGLE,
     PERMISSION_NOTIFICATION_REPLY,
   ],
-
-  [ROLE_SECURITY_OFFICER]: [PERMISSION_TICKET_VIEW, PERMISSION_NOTIFICATION_BROADCAST],
-
-  [ROLE_KIOSK]: [PERMISSION_TICKET_ISSUE, PERMISSION_SERVICE_READ],
 };
 
 // ---------------------------------------------------------------------------
@@ -260,12 +237,8 @@ export const PERMISSION_MODULES: Record<string, Permission[]> = {
 // ---------------------------------------------------------------------------
 
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
-  [ROLE_SUPER_ADMIN]: 'Full system access. Cannot be modified or removed.',
   [ROLE_ADMIN]:
-    'Manages users, services, counters, and reports. Cannot configure system-level settings.',
+    'Full system access. Manages users, services, counters, reports, and system settings.',
   [ROLE_COUNTER_OFFICER]:
     'Operates a counter: calls tickets, closes counters, receives notifications.',
-  [ROLE_SECURITY_OFFICER]: 'Views the queue and sends broadcast messages to the display.',
-  [ROLE_KIOSK]:
-    "Issues tickets from a public kiosk. No login required from the kiosk's perspective; permission is granted for API access.",
 };

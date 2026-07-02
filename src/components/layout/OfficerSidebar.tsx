@@ -1,7 +1,7 @@
 'use client';
 
 import { signOut } from 'next-auth/react';
-import { LogOut, Monitor, Settings } from 'lucide-react';
+import { LogOut, Monitor } from 'lucide-react';
 import { SidebarBrand } from './SidebarBrand';
 import { SidebarNavLink } from './SidebarNavLink';
 import { Button } from '@/components/ui/button';
@@ -36,11 +36,6 @@ export function OfficerSidebar({ userName, userEmail, primaryCounterId }: Office
           href={dashboardHref}
           label="Dashboard"
           icon={<Monitor className="size-4" aria-hidden />}
-        />
-        <SidebarNavLink
-          href="#"
-          label="Settings"
-          icon={<Settings className="size-4" aria-hidden />}
         />
       </nav>
       <div className="flex-1" />

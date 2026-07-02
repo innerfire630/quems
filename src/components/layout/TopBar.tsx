@@ -1,32 +1,35 @@
 'use client';
 
-import { Bell, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import Image from 'next/image';
+import { ProfileDropdown } from '@/components/layout/profile-dropdown';
 
-export function TopBar() {
+interface TopBarProps {
+  userName?: string | null;
+  userEmail?: string;
+  logoUrl?: string | null;
+  title?: string;
+  roles?: string[];
+}
+
+export function TopBar({ userName, userEmail, logoUrl, title, roles }: TopBarProps) {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
-      <div className="relative w-full max-w-sm">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <Input type="search" placeholder="Search..." className="pl-8" aria-label="Search" />
+      <div className="flex items-center gap-3">
+        {logoUrl ? (
+          <Image
+            src={logoUrl}
+            alt={title ?? 'Logo'}
+            width={120}
+            height={32}
+            className="h-8 w-auto object-contain"
+          />
+        ) : null}
+        {title ? <span className="text-lg font-semibold text-foreground">{title}</span> : null}
       </div>
       <div className="flex items-center gap-4">
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          <Bell className="size-4" aria-hidden />
-        </button>
-        <div
-          aria-label="User avatar"
-          className="flex size-9 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
-        >
-          SA
-        </div>
+        {userName ? (
+          <ProfileDropdown userName={userName} userEmail={userEmail} roles={roles} />
+        ) : null}
       </div>
     </header>
   );

@@ -9,7 +9,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { signIn } from 'next-auth/react';
-import { Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,12 +18,13 @@ import { loginSchema } from '@/schemas/auth.schema';
 
 interface LoginFormProps {
   callbackUrl: string;
+  initialError?: string;
 }
 
-export function LoginForm({ callbackUrl }: LoginFormProps) {
+export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -48,20 +49,33 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         callbackUrl,
       });
 
-      if (!res?.ok) {
-        setError(
+      if (!res || res.error) {
+        const errorMessage =
           res?.error === 'CredentialsSignin'
             ? 'Invalid email or password'
-            : (res?.error ?? 'Sign-in failed'),
-        );
+            : (res?.error ?? 'Sign-in failed');
+        setError(errorMessage);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!res.ok) {
+        setError('Sign-in failed');
         setIsSubmitting(false);
         return;
       }
 
       // Full page reload ensures the session cookie is read by server components
       window.location.href = callbackUrl;
-    } catch {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err) {
+      // NextAuth v5 throws CredentialsSignin when authorize() returns null.
+      // Check the error's type property (safer than instanceof for client bundles).
+      const isCredentialsError = (err as Record<string, unknown>)?.type === 'CredentialsSignin';
+      setError(
+        isCredentialsError
+          ? 'Invalid email or password'
+          : 'An unexpected error occurred. Please try again.',
+      );
       setIsSubmitting(false);
     }
   }
@@ -69,8 +83,9 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
-        <Alert variant="destructive" role="alert">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" role="alert" className="border-red-300 bg-red-50 text-red-800">
+          <AlertCircle className="size-4 text-red-600" />
+          <AlertDescription className="text-red-800">{error}</AlertDescription>
         </Alert>
       )}
 

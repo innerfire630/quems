@@ -65,7 +65,7 @@ export default function CounterStatusToggle({
       const res = await fetch(`/api/counters/${encodeURIComponent(counterId)}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'CLOSED', reason: reason.trim() || 'On break' }),
+        body: JSON.stringify({ status: 'CLOSED', reason: reason.trim() || null }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -73,7 +73,7 @@ export default function CounterStatusToggle({
         return;
       }
       setShowCloseDialog(false);
-      onStatusChange('CLOSED', reason.trim() || 'On break');
+      onStatusChange('CLOSED', reason.trim() || null);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -106,16 +106,14 @@ export default function CounterStatusToggle({
 
   return (
     <>
-      <div className="flex items-center justify-between rounded-lg border p-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Counter Status</span>
-            <Badge variant={isOpen ? 'default' : 'secondary'}>
-              {isOpen ? 'Open' : 'Temporarily Closed'}
-            </Badge>
-          </div>
+      <div className="flex items-center justify-between rounded-md border px-3 py-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Counter Status</span>
+          <Badge variant={isOpen ? 'default' : 'secondary'} className="text-[10px]">
+            {isOpen ? 'Open' : 'Closed'}
+          </Badge>
           {currentReason && !isOpen && (
-            <p className="text-xs text-muted-foreground">Reason: {currentReason}</p>
+            <span className="text-xs text-muted-foreground">— {currentReason}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -146,21 +144,38 @@ export default function CounterStatusToggle({
           <DialogHeader>
             <DialogTitle>Close Counter — {counterName}</DialogTitle>
             <DialogDescription>
-              Please provide a reason for the closure. Customers will see that this counter is
-              temporarily unavailable.
+              Select a reason or type a custom one. Customers will see this on the display.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="closure-reason">Reason (optional)</Label>
-            <Textarea
-              id="closure-reason"
-              placeholder="e.g., On break, In a meeting"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={200}
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">{reason.length}/200</p>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {['On break', 'In a meeting', 'Lunch break', 'Shift change'].map((preset) => (
+                <Button
+                  key={preset}
+                  type="button"
+                  variant={reason === preset ? 'default' : 'outline'}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setReason(preset)}
+                >
+                  {preset}
+                </Button>
+              ))}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="closure-reason" className="text-xs">
+                Or type a custom reason
+              </Label>
+              <Textarea
+                id="closure-reason"
+                placeholder="e.g., Back in 10 minutes"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                maxLength={200}
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">{reason.length}/200</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCloseDialog(false)} disabled={loading}>

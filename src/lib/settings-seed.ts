@@ -33,12 +33,6 @@ const QUEUE_DEFAULT_SETTINGS: {
     description: 'Minimum seconds after calledAt before a ticket can be marked no-show.',
   },
   {
-    key: 'queue.auto_advance_on_no_show',
-    value: 'true',
-    type: 'BOOLEAN',
-    description: 'Whether to automatically call the next waiting ticket after a no-show.',
-  },
-  {
     key: 'queue.default_average_service_time_minutes',
     value: '5',
     type: 'INTEGER',

@@ -4,11 +4,13 @@
 // src/components/admin/audit-log-filters.tsx — Audit log filter controls (5.2.3)
 // =============================================================================
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -22,7 +24,16 @@ interface AuditLogFiltersProps {
   onChange: (filters: AuditLogFilters) => void;
 }
 
-const ENTITY_OPTIONS = ['User', 'Service', 'Counter', 'DisplayBoard', 'SystemSetting', 'Ticket'];
+const ENTITY_OPTIONS = [
+  'User',
+  'Service',
+  'Counter',
+  'CounterOfficer',
+  'DisplayBoard',
+  'SystemSetting',
+  'Report',
+  'Notification',
+];
 const ACTION_OPTIONS = [
   {
     label: 'User Actions',
@@ -32,6 +43,7 @@ const ACTION_OPTIONS = [
       'USER_DEACTIVATED',
       'USER_REACTIVATED',
       'PASSWORD_RESET_BY_ADMIN',
+      'PASSWORD_CHANGED',
       'ROLE_ASSIGNED',
       'ROLE_REMOVED',
     ],
@@ -63,7 +75,7 @@ const ACTION_OPTIONS = [
     ],
   },
   { label: 'Reports', options: ['REPORT_GENERATED', 'REPORT_EXPORTED'] },
-  { label: 'Security', options: ['AUDIT_LOG_VIEWED', 'SYSTEM_SETTING_CHANGED'] },
+  { label: 'Security', options: ['SYSTEM_SETTING_CHANGED'] },
   {
     label: 'Notifications',
     options: [
@@ -86,13 +98,24 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
     filters.endDate ? new Date(filters.endDate).toISOString().split('T')[0] : '',
   );
 
+  // Keep a ref to the latest filters so the date effect never sends stale data
+  const filtersRef = useRef(filters);
+
+  // Sync ref to current filters outside render (React 19 refs-during-render lint)
+  useEffect(() => {
+    filtersRef.current = filters;
+  });
+
   // Debounce date changes by 300ms
   useEffect(() => {
     const timer = setTimeout(() => {
+      const current = filtersRef.current;
+      // End date should cover the full day (set to 23:59:59.999)
+      const endDateValue = localEndDate ? new Date(`${localEndDate}T23:59:59.999`) : undefined;
       onChange({
-        ...filters,
+        ...current,
         startDate: localStartDate ? new Date(localStartDate) : undefined,
-        endDate: localEndDate ? new Date(localEndDate) : undefined,
+        endDate: endDateValue,
       });
     }, 300);
     return () => clearTimeout(timer);
@@ -106,7 +129,7 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
   }, [onChange]);
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
       <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-muted-foreground">Action</label>
         <Select
@@ -118,22 +141,22 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
             })
           }
         >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All actions" />
+          <SelectTrigger className="w-full max-w-none">
+            <SelectValue placeholder="All actions">
+              {(val: string) => (val === 'all' ? 'All actions' : val)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All actions</SelectItem>
             {ACTION_OPTIONS.map((group) => (
-              <div key={group.label}>
-                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                  {group.label}
-                </div>
+              <SelectGroup key={group.label}>
+                <SelectLabel>{group.label}</SelectLabel>
                 {group.options.map((action) => (
                   <SelectItem key={action} value={action}>
                     {action}
                   </SelectItem>
                 ))}
-              </div>
+              </SelectGroup>
             ))}
           </SelectContent>
         </Select>
@@ -147,8 +170,10 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
             onChange({ ...filters, entity: v === 'all' ? undefined : v || undefined })
           }
         >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All entities" />
+          <SelectTrigger className="w-full max-w-none">
+            <SelectValue placeholder="All entities">
+              {(val: string) => (val === 'all' ? 'All entities' : val)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All entities</SelectItem>
@@ -165,7 +190,7 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
         <label className="text-xs font-medium text-muted-foreground">Start Date</label>
         <Input
           type="date"
-          className="w-[160px]"
+          className="w-full"
           value={localStartDate}
           onChange={(e) => setLocalStartDate(e.target.value)}
         />
@@ -175,16 +200,18 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
         <label className="text-xs font-medium text-muted-foreground">End Date</label>
         <Input
           type="date"
-          className="w-[160px]"
+          className="w-full"
           value={localEndDate}
           onChange={(e) => setLocalEndDate(e.target.value)}
         />
       </div>
 
-      <Button variant="ghost" size="sm" onClick={handleReset} className="h-9">
-        <RotateCcw className="mr-1 size-3" />
-        Reset
-      </Button>
+      <div className="flex items-end">
+        <Button variant="ghost" size="sm" onClick={handleReset} className="h-9 w-full sm:w-auto">
+          <RotateCcw className="mr-1 size-3" />
+          Reset
+        </Button>
+      </div>
     </div>
   );
 }

@@ -47,6 +47,7 @@ const handler = async (request: Request, { session }: GuardedContext): Promise<R
       action: 'REPORT_GENERATED',
       actorId: session.user.userId,
       actorName: session.user.name ?? undefined,
+      entity: 'Report',
       description: 'Report generated',
       metadata: {
         startDate: query.startDate,

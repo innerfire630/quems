@@ -289,6 +289,7 @@ export async function notifyOfficers(
       await writeAuditLog({
         action: 'NOTIFICATION_DISPATCHED',
         actorId: '',
+        entity: 'Notification',
         description: `Dispatched ${summary.notificationsSent} notification(s) for ${input.type} ticket ${input.ticketNumber}`,
         metadata: {
           type: input.type,
@@ -301,6 +302,7 @@ export async function notifyOfficers(
       await writeAuditLog({
         action: 'NOTIFICATION_FAILED',
         actorId: '',
+        entity: 'Notification',
         description: `Failed to dispatch notifications for ${input.type} ticket ${input.ticketNumber}`,
         metadata: {
           type: input.type,

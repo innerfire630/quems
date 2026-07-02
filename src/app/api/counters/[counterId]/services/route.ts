@@ -128,6 +128,7 @@ export const POST = withPermission(
       void writeAuditLog({
         action: 'SERVICE_ASSIGNED_TO_COUNTER',
         actorId: ctx.session.user.userId,
+        entity: 'Counter',
         targetUserId: counterId,
         description: `Assigned service "${service.name}" to counter "${counter.name}".`,
         metadata: { counterId, counterName: counter.name, serviceId, serviceName: service.name },

@@ -135,14 +135,37 @@ async function getRecentActivity(counterId: string, limit: number): Promise<Rece
     },
   });
 
+  // Resolve counter and officer names in batch (TicketEvent has raw IDs, no relations)
+  const counterIds = [...new Set(events.map((e) => e.counterId).filter(Boolean))] as string[];
+  const officerIds = [...new Set(events.map((e) => e.officerId).filter(Boolean))] as string[];
+
+  const [counterMap, officerMap] = await Promise.all([
+    counterIds.length > 0
+      ? db.counter
+          .findMany({
+            where: { id: { in: counterIds } },
+            select: { id: true, name: true },
+          })
+          .then((rows) => Object.fromEntries(rows.map((r) => [r.id, r.name])))
+      : Promise.resolve({} as Record<string, string>),
+    officerIds.length > 0
+      ? db.counterOfficer
+          .findMany({
+            where: { id: { in: officerIds } },
+            select: { id: true, user: { select: { name: true } } },
+          })
+          .then((rows) => Object.fromEntries(rows.map((r) => [r.id, r.user?.name ?? 'Unknown'])))
+      : Promise.resolve({} as Record<string, string>),
+  ]);
+
   return events.map((event) => ({
     id: event.id,
     type: event.eventType as RecentActivityEntry['type'],
     ticketId: event.ticketId,
     ticketNumber: event.ticket?.ticketNumber ?? null,
     counterId: event.counterId ?? counterId,
-    counterName: '',
-    officerName: 'Unknown',
+    counterName: event.counterId ? (counterMap[event.counterId] ?? '') : '',
+    officerName: event.officerId ? (officerMap[event.officerId] ?? 'Unknown') : 'Unknown',
     timestamp: event.createdAt,
   }));
 }

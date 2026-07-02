@@ -157,7 +157,7 @@ export const PATCH = withPermission(
       );
     }
 
-    const { name, email, status, roleIds } = parsed.data;
+    const { name, email, status, roleId } = parsed.data;
 
     // Email conflict check
     if (email && email !== existingUser.email) {
@@ -208,18 +208,18 @@ export const PATCH = withPermission(
         },
       });
 
-      // Handle role reassignment
-      if (roleIds !== undefined) {
+      // Handle role reassignment (single role)
+      if (roleId !== undefined) {
         // Delete all existing role assignments
         await tx.userRole.deleteMany({ where: { userId } });
-        // Create new assignments
-        if (roleIds.length > 0) {
-          await tx.userRole.createMany({
-            data: roleIds.map((roleId) => ({
+        // Create new assignment if a role is provided
+        if (roleId) {
+          await tx.userRole.create({
+            data: {
               userId,
               roleId,
               assignedById: session.user.userId,
-            })),
+            },
           });
         }
       }
@@ -234,6 +234,7 @@ export const PATCH = withPermission(
       action: auditAction,
       actorId: session.user.userId,
       actorName: session.user.name,
+      entity: 'User',
       targetUserId: userId,
       targetUserName: updated.name,
       description: `${auditAction === 'USER_UPDATED' ? 'Updated' : auditAction === 'USER_DEACTIVATED' ? 'Deactivated' : 'Reactivated'} user ${updated.email}.`,
@@ -247,7 +248,7 @@ export const PATCH = withPermission(
         },
         after: { name: updated.name, email: updated.email, status: updated.status },
         rolesBefore,
-        rolesAfter: roleIds !== undefined ? 'changed' : rolesBefore,
+        rolesAfter: roleId !== undefined ? 'changed' : rolesBefore,
       },
     });
 
@@ -310,6 +311,7 @@ export const DELETE = withPermission(
       action: 'USER_DEACTIVATED',
       actorId: session.user.userId,
       actorName: session.user.name,
+      entity: 'User',
       targetUserId: userId,
       targetUserName: existing.name,
       description: `Deactivated user ${existing.email}.`,

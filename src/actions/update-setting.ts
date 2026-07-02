@@ -34,7 +34,7 @@ export async function updateSetting(settingId: string, value: string) {
         userId: session.user.userId,
         userDisplayName: session.user.name ?? null,
         action: 'SYSTEM_SETTING_CHANGED',
-        entity: 'SYSTEM_SETTING',
+        entity: 'SystemSetting',
         entityId: setting.id,
         after: {
           key: setting.key,

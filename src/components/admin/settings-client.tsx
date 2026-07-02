@@ -1,26 +1,60 @@
 'use client';
 
 // =============================================================================
-// settings-client.tsx — System settings editor with inline edit controls
+// settings-client.tsx — System settings editor with card-based layout
 // =============================================================================
-// Renders a table of all system settings. Each setting has an inline form
-// to change its value. Changes are persisted via the server action.
+// Renders all system settings grouped by category. Each setting is a card
+// with inline editing. Changes are persisted via the server action.
 // =============================================================================
 
 import { useState, useTransition } from 'react';
 import { updateSetting } from '@/actions/update-setting';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Save, Loader2, Check } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { ResetQueueButton } from '@/app/(dashboard)/settings/_components/reset-queue-button';
+
+// ---------------------------------------------------------------------------
+// TimePicker — custom hour/minute selector for the daily reset time setting
+// ---------------------------------------------------------------------------
+
+function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [hh = '00', mm = '00'] = value.split(':');
+
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
+  return (
+    <div className="flex items-center gap-1">
+      <select
+        value={hh}
+        onChange={(e) => onChange(`${e.target.value}:${mm}`)}
+        className="h-8 w-14 rounded-md border border-input bg-background px-1.5 text-center text-xs font-mono focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        {hours.map((h) => (
+          <option key={h} value={h}>
+            {h}
+          </option>
+        ))}
+      </select>
+      <span className="text-xs text-muted-foreground">:</span>
+      <select
+        value={mm}
+        onChange={(e) => onChange(`${hh}:${e.target.value}`)}
+        className="h-8 w-14 rounded-md border border-input bg-background px-1.5 text-center text-xs font-mono focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        {minutes.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 interface SystemSetting {
   id: string;
@@ -32,21 +66,37 @@ interface SystemSetting {
   updatedAt: Date;
 }
 
-function typeBadge(type: string) {
-  const colors: Record<string, string> = {
-    STRING: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    INTEGER: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-    BOOLEAN: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-    JSON: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  };
-  return (
-    <Badge variant="outline" className={colors[type] ?? ''}>
-      {type}
-    </Badge>
-  );
+// Human-friendly labels for known setting keys
+const KEY_LABELS: Record<string, string> = {
+  'queue.daily_reset_time': 'Daily Reset Time',
+  'queue.no_show_grace_period_seconds': 'No-Show Grace Period',
+  'queue.default_average_service_time_minutes': 'Default Avg Service Time',
+};
+
+// Group labels for dotted key prefixes
+const GROUP_LABELS: Record<string, string> = {
+  queue: 'Queue Management',
+  email: 'Email',
+  report: 'Reports',
+  display: 'Display Board',
+  security: 'Security',
+  general: 'General',
+};
+
+function formatKeyLabel(key: string): string {
+  if (KEY_LABELS[key]) return KEY_LABELS[key];
+  return key
+    .split('.')
+    .map((part) => part.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()))
+    .join(' › ');
 }
 
-function SettingRow({ setting }: { setting: SystemSetting }) {
+function formatGroup(key: string): string {
+  const prefix = key.split('.')[0];
+  return GROUP_LABELS[prefix] ?? prefix.charAt(0).toUpperCase() + prefix.slice(1);
+}
+
+function SettingCard({ setting }: { setting: SystemSetting }) {
   const [value, setValue] = useState(setting.value);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -66,73 +116,95 @@ function SettingRow({ setting }: { setting: SystemSetting }) {
   }
 
   return (
-    <TableRow>
-      <TableCell className="font-mono text-xs max-w-[220px] truncate" title={setting.key}>
-        {setting.key}
-      </TableCell>
-      <TableCell>{typeBadge(setting.type)}</TableCell>
-      <TableCell className="max-w-[200px]">
-        {setting.type === 'BOOLEAN' ? (
-          <select
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-          >
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
-        ) : (
-          <Input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            className="h-8 font-mono text-xs"
-          />
-        )}
-      </TableCell>
-      <TableCell>
-        <Button
-          size="sm"
-          variant={saved ? 'outline' : 'default'}
-          disabled={!dirty || isPending}
-          onClick={handleSave}
-          className="h-7 gap-1.5 text-xs"
-        >
-          {isPending ? (
-            <Loader2 className="size-3 animate-spin" />
-          ) : saved ? (
-            <Check className="size-3 text-emerald-600" />
-          ) : (
-            <Save className="size-3" />
+    <Card>
+      <CardContent className="flex items-start justify-between gap-4 py-4">
+        {/* Left: label + description */}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">{formatKeyLabel(setting.key)}</p>
+          {setting.description && (
+            <p className="mt-0.5 text-xs text-muted-foreground">{setting.description}</p>
           )}
-          {saved ? 'Saved' : 'Save'}
-        </Button>
-      </TableCell>
-      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-        {setting.description ?? '—'}
-      </TableCell>
-    </TableRow>
+        </div>
+
+        {/* Right: value editor + save */}
+        <div className="flex shrink-0 items-center gap-3">
+          {setting.type === 'BOOLEAN' ? (
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={value === 'true'}
+                onCheckedChange={(checked) => setValue(checked ? 'true' : 'false')}
+              />
+              <Label className="min-w-[60px] text-xs text-muted-foreground">
+                {value === 'true' ? 'Enabled' : 'Disabled'}
+              </Label>
+            </div>
+          ) : setting.key === 'queue.daily_reset_time' ? (
+            <TimePicker value={value} onChange={setValue} />
+          ) : setting.type === 'INTEGER' ? (
+            <Input
+              type="number"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              className="h-8 w-28 font-mono text-xs"
+            />
+          ) : setting.type === 'JSON' ? (
+            <textarea
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              rows={2}
+              className="w-56 rounded-md border border-input bg-background px-3 py-1.5 font-mono text-xs resize-y"
+            />
+          ) : (
+            <Input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              className="h-8 w-40 text-xs"
+            />
+          )}
+          <Button
+            size="sm"
+            variant={saved ? 'outline' : 'default'}
+            disabled={!dirty || isPending}
+            onClick={handleSave}
+            className="h-8 gap-1.5 text-xs"
+          >
+            {isPending ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : saved ? (
+              <Check className="size-3 text-emerald-600" />
+            ) : (
+              <Save className="size-3" />
+            )}
+            {saved ? 'Saved' : 'Save'}
+          </Button>
+          {setting.key === 'queue.daily_reset_time' && <ResetQueueButton />}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 export function SettingsClient({ settings }: { settings: SystemSetting[] }) {
+  // Group settings by prefix
+  const groups = new Map<string, SystemSetting[]>();
+  for (const s of settings) {
+    const group = formatGroup(s.key);
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group)!.push(s);
+  }
+
   return (
-    <div className="mt-6 rounded-lg border border-border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[220px]">Key</TableHead>
-            <TableHead className="w-[80px]">Type</TableHead>
-            <TableHead className="w-[200px]">Value</TableHead>
-            <TableHead className="w-[90px]">Action</TableHead>
-            <TableHead>Description</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {settings.map((s) => (
-            <SettingRow key={s.id} setting={s} />
-          ))}
-        </TableBody>
-      </Table>
+    <div className="mt-6 space-y-8">
+      {[...groups.entries()].map(([group, items]) => (
+        <div key={group}>
+          <h3 className="mb-3 text-sm font-semibold text-foreground">{group}</h3>
+          <div className="space-y-2">
+            {items.map((s) => (
+              <SettingCard key={s.id} setting={s} />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

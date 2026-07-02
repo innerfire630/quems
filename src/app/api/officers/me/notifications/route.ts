@@ -81,6 +81,7 @@ export async function PATCH(req: Request): Promise<Response> {
         action: 'NOTIFICATIONS_TOGGLED',
         actorId: session.user.userId,
         actorName: session.user.name ?? undefined,
+        entity: 'Notification',
         description: `Push notifications ${notificationsEnabled ? 'enabled' : 'disabled'} for counter`,
         metadata: {
           counterId,

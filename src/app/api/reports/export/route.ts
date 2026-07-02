@@ -72,6 +72,7 @@ const handler = async (request: Request, { session }: GuardedContext): Promise<R
       action: 'REPORT_EXPORTED',
       actorId: session.user.userId,
       actorName: session.user.name ?? undefined,
+      entity: 'Report',
       description: 'Report exported as CSV',
       metadata: {
         startDate: query.startDate,

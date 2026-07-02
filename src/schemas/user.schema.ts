@@ -22,7 +22,7 @@ export const createUserSchema = z.object({
     .min(8, 'Password must be at least 8 characters.')
     .max(128, 'Password must be 128 characters or less.'),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
-  roleIds: z.array(z.string()).optional(),
+  roleId: z.string().min(1, 'Role is required.').optional(),
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
@@ -36,7 +36,7 @@ export const updateUserSchema = z
     name: z.string().min(1).max(100).optional(),
     email: z.string().email().max(255).optional(),
     status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
-    roleIds: z.array(z.string()).optional(),
+    roleId: z.string().min(1).nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field must be provided for update.',

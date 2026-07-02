@@ -26,6 +26,7 @@ export default function TicketActionPanelClient({ ticket, counterId, officerOnDu
       ticket={ticket}
       counterId={counterId}
       officerOnDuty={officerOnDuty}
+      hasNextTicket={false}
       onActionComplete={handleActionComplete}
     />
   );

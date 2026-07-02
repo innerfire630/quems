@@ -91,6 +91,11 @@ export interface TicketRecallInput {
   counterId: string;
 }
 
+export interface TicketServeInput {
+  ticketId: string;
+  counterId: string;
+}
+
 // ---------------------------------------------------------------------------
 // Response types
 // ---------------------------------------------------------------------------
@@ -161,6 +166,16 @@ export interface TicketNoShowResponse extends TicketDetail {
   elapsedSeconds: number;
   autoAdvanced: boolean;
   autoAdvancedTicket: TicketListItem | null;
+}
+
+export interface TicketServeInput {
+  ticketId: string;
+  counterId: string;
+}
+
+export interface TicketServeResponse extends TicketDetail {
+  sseEventId: string;
+  previousStatus: string;
 }
 
 export interface NoShowValidationError {

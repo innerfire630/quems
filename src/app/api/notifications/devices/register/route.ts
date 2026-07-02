@@ -97,6 +97,7 @@ export async function POST(req: Request): Promise<Response> {
         action: 'DEVICE_TOKEN_REGISTERED',
         actorId: session.user.userId,
         actorName: session.user.name ?? undefined,
+        entity: 'Notification',
         description: `Device token registered for officer ${session.user.name ?? session.user.userId}`,
         metadata: {
           platform: parsed.data.platform,

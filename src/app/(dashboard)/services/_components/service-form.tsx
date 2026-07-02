@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FieldInfo } from '@/components/ui/field-info';
 import { createServiceSchema, updateServiceSchema } from '@/schemas/service.schema';
 import type { ServiceListItem } from '@/types/service.types';
 
@@ -147,7 +148,10 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="code">Code *</Label>
+              <Label htmlFor="code" className="inline-flex items-center gap-1.5">
+                Code *
+                <FieldInfo text="A short uppercase identifier for this service (e.g. GEN, PAS, VIP). Must be unique across all services." />
+              </Label>
               <Input
                 id="code"
                 value={code}
@@ -157,12 +161,14 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
                 required
                 className="font-mono"
               />
-              <p className="text-xs text-muted-foreground">3-10 uppercase letters/digits</p>
               {errors.code && <p className="text-xs text-destructive">{errors.code}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ticketPrefix">Ticket Prefix *</Label>
+              <Label htmlFor="ticketPrefix" className="inline-flex items-center gap-1.5">
+                Ticket Prefix *
+                <FieldInfo text="Single letter (A-Z) printed at the start of every ticket number for this service (e.g. A-001, B-012)." />
+              </Label>
               <Input
                 id="ticketPrefix"
                 value={ticketPrefix}
@@ -172,38 +178,44 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
                 required
                 className="font-mono"
               />
-              <p className="text-xs text-muted-foreground">Single letter A-Z</p>
               {errors.ticketPrefix && (
                 <p className="text-xs text-destructive">{errors.ticketPrefix}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="iconName">Icon Name</Label>
+              <Label htmlFor="iconName" className="inline-flex items-center gap-1.5">
+                Icon Name
+                <FieldInfo text="A Lucide icon name (e.g. HelpCircle, FileText, Shield) shown next to the service on the kiosk and display board." />
+              </Label>
               <Input
                 id="iconName"
                 value={iconName}
                 onChange={(e) => setIconName(e.target.value)}
                 placeholder="e.g. HelpCircle"
               />
-              <p className="text-xs text-muted-foreground">Lucide icon name</p>
               {errors.iconName && <p className="text-xs text-destructive">{errors.iconName}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="color">Color</Label>
+              <Label htmlFor="color" className="inline-flex items-center gap-1.5">
+                Color
+                <FieldInfo text="Hex color code (e.g. #3B82F6) used to visually distinguish this service on the kiosk buttons, tickets, and display board." />
+              </Label>
               <Input
                 id="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 placeholder="#3B82F6"
               />
-              <p className="text-xs text-muted-foreground">Hex color like #3B82F6</p>
               {errors.color && <p className="text-xs text-destructive">{errors.color}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="avgTime">Avg Service Time (min)</Label>
+              <Label htmlFor="avgTime" className="inline-flex items-center gap-1.5">
+                Avg Service Time (min)
+                <FieldInfo text="Estimated minutes to serve one ticket. Used to calculate and display wait-time estimates to customers on the kiosk and display board." />
+              </Label>
               <Input
                 id="avgTime"
                 type="number"
@@ -213,14 +225,16 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
                 min={1}
                 max={120}
               />
-              <p className="text-xs text-muted-foreground">Used to estimate wait times</p>
               {errors.averageServiceTime && (
                 <p className="text-xs text-destructive">{errors.averageServiceTime}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sortOrder">Sort Order</Label>
+              <Label htmlFor="sortOrder" className="inline-flex items-center gap-1.5">
+                Sort Order
+                <FieldInfo text="Controls the display order on the kiosk. Lower numbers appear first. Default is 0." />
+              </Label>
               <Input
                 id="sortOrder"
                 type="number"

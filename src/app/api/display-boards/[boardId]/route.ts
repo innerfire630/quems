@@ -124,6 +124,7 @@ export const PATCH = withPermission(
       await writeAuditLog({
         action: 'DISPLAY_BOARD_UPDATED',
         actorId,
+        entity: 'DisplayBoard',
         description: `Updated display board "${board.name}"`,
         metadata: { boardId, changedFields },
       });
@@ -133,6 +134,7 @@ export const PATCH = withPermission(
       await writeAuditLog({
         action: 'DISPLAY_BOARD_DEFAULT_CHANGED',
         actorId,
+        entity: 'DisplayBoard',
         description: `Set "${board.name}" as the default display board`,
         metadata: { newDefaultId: boardId },
       });
@@ -168,6 +170,7 @@ export const DELETE = withPermission(
     await writeAuditLog({
       action: 'DISPLAY_BOARD_DELETED',
       actorId,
+      entity: 'DisplayBoard',
       description: `Deleted display board "${existing.name}"`,
       metadata: { boardId, boardName: existing.name, wasDefault },
     });
@@ -176,6 +179,7 @@ export const DELETE = withPermission(
       await writeAuditLog({
         action: 'DISPLAY_BOARD_DEFAULT_CHANGED',
         actorId,
+        entity: 'DisplayBoard',
         description: `Default display board "${existing.name}" was deleted — no default now exists`,
         metadata: { previousDefaultId: boardId, newDefaultId: null },
       });

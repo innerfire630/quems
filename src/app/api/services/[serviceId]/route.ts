@@ -198,6 +198,7 @@ export const PATCH = withPermission(
         void writeAuditLog({
           action: 'SERVICE_DEACTIVATED',
           actorId: ctx.session.user.userId,
+          entity: 'Service',
           targetUserId: serviceId,
           description: `Deactivated service "${service.name}" (${service.code}).`,
           metadata: { name: service.name, code: service.code },
@@ -206,6 +207,7 @@ export const PATCH = withPermission(
         void writeAuditLog({
           action: 'SERVICE_UPDATED',
           actorId: ctx.session.user.userId,
+          entity: 'Service',
           targetUserId: serviceId,
           description: `Updated service "${service.name}".`,
           metadata: { before, after },
@@ -258,6 +260,7 @@ export const DELETE = withPermission(
       void writeAuditLog({
         action: 'SERVICE_DEACTIVATED',
         actorId: ctx.session.user.userId,
+        entity: 'Service',
         targetUserId: serviceId,
         description: `Deactivated service "${existing.name}" (${existing.code}).`,
         metadata: { name: existing.name, code: existing.code },

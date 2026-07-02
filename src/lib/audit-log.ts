@@ -21,8 +21,10 @@ export type AuditAction =
   | 'USER_CREATED'
   | 'USER_UPDATED'
   | 'USER_DEACTIVATED'
+  | 'USER_DELETED'
   | 'USER_REACTIVATED'
   | 'PASSWORD_RESET_BY_ADMIN'
+  | 'PASSWORD_CHANGED'
   | 'ROLE_ASSIGNED'
   | 'ROLE_REMOVED'
   // Phase 2.1.1 — Service actions
@@ -64,9 +66,7 @@ export type AuditAction =
   | 'REPORT_GENERATED'
   // Phase 5.1.3 — Report CSV export
   | 'REPORT_EXPORTED'
-  // Phase 5.2.3 — Audit log access
-  | 'AUDIT_LOG_VIEWED'
-  // Phase 5.2.3 — System setting changes (forward-compat)
+  // Phase 5.2.3 — System setting changes
   | 'SYSTEM_SETTING_CHANGED';
 
 export interface AuditLogEntry {
@@ -75,6 +75,8 @@ export interface AuditLogEntry {
   actorName?: string;
   targetUserId?: string;
   targetUserName?: string;
+  entity?: string;
+  entityId?: string;
   description: string;
   metadata?: Record<string, unknown>;
 }
@@ -93,8 +95,8 @@ export async function writeAuditLog(entry: AuditLogEntry): Promise<void> {
         userId: entry.actorId,
         userDisplayName: entry.actorName ?? null,
         action: entry.action,
-        entity: 'USER',
-        entityId: entry.targetUserId ?? null,
+        entity: entry.entity ?? 'User',
+        entityId: entry.entityId ?? entry.targetUserId ?? null,
         after: entry.metadata
           ? (JSON.parse(JSON.stringify(entry.metadata)) as Prisma.InputJsonValue)
           : undefined,

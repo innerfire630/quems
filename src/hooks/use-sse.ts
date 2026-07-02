@@ -180,6 +180,9 @@ export function useSSE<T extends SseEventType = SseEventType>(
         setReconnectAttempts(reconnectAttemptsRef.current);
 
         const delay = getReconnectDelay(reconnectAttemptsRef.current);
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[useSSE] Reconnecting in', delay, 'ms');
+        }
         reconnectTimerRef.current = setTimeout(() => {
           connect();
         }, delay);

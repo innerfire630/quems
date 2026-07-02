@@ -4,12 +4,13 @@
 
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Wrench } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { PERMISSION_COUNTER_MANAGE } from '@/lib/permissions';
 import { CounterForm } from '@/app/(dashboard)/counters/_components/counter-form';
 import { OfficerAssignment } from '@/app/(dashboard)/counters/_components/officer-assignment';
+import { ServiceAssignment } from '@/app/(dashboard)/counters/_components/service-assignment';
 
 interface EditCounterPageProps {
   params: Promise<{ counterId: string }>;
@@ -26,9 +27,29 @@ export default async function EditCounterPage({ params }: EditCounterPageProps) 
 
   const counter = await prisma.counter.findUnique({
     where: { id: counterId },
+    include: {
+      services: {
+        include: {
+          service: {
+            select: { id: true, name: true, code: true, ticketPrefix: true, isActive: true },
+          },
+        },
+      },
+    },
   });
 
   if (!counter) redirect('/counters?error=not-found');
+
+  const allServices = await prisma.service.findMany({
+    select: { id: true, name: true, code: true, ticketPrefix: true, isActive: true },
+    orderBy: { name: 'asc' },
+  });
+
+  const assignedServices = counter.services.map((cs) => ({
+    id: cs.id,
+    serviceId: cs.serviceId,
+    service: cs.service,
+  }));
 
   const initialValues = {
     id: counter.id,
@@ -51,13 +72,6 @@ export default async function EditCounterPage({ params }: EditCounterPageProps) 
           <ArrowLeft className="mr-1 size-4" />
           Back to Counters
         </Link>
-        <Link
-          href={`/counters/${counterId}/services`}
-          className="inline-flex items-center gap-1 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground h-8 px-3"
-        >
-          <Wrench className="mr-1 size-4" />
-          Manage Services
-        </Link>
       </div>
 
       <div>
@@ -68,6 +82,12 @@ export default async function EditCounterPage({ params }: EditCounterPageProps) 
       <CounterForm mode="edit" initialValues={initialValues} counterId={counterId} />
 
       <OfficerAssignment counterId={counterId} />
+
+      <ServiceAssignment
+        counterId={counterId}
+        initialAssigned={assignedServices}
+        availableServices={allServices}
+      />
     </div>
   );
 }

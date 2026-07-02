@@ -23,16 +23,6 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   // Role-based routing: these roles should never see the admin dashboard
   const roles = (session.user.roles as string[] | undefined) ?? [];
 
-  // Kiosk → self-service ticket issuance
-  if (roles.includes('KIOSK')) {
-    redirect('/kiosk');
-  }
-
-  // Security officer → broadcast & queue monitoring
-  if (roles.includes('SECURITY_OFFICER')) {
-    redirect('/security');
-  }
-
   // Counter officer → assigned counter dashboard
   if (roles.includes('COUNTER_OFFICER')) {
     const officer = await prisma.counterOfficer.findFirst({
@@ -45,13 +35,19 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     }
   }
 
+  // Fetch default display board for logo/title
+  const board = await prisma.displayBoard.findFirst({
+    where: { isDefault: true },
+    select: { name: true, logoUrl: true },
+  });
+
   return (
     <AuthProvider>
       <div className="flex min-h-screen bg-background">
         <AppSidebar />
-        <div className="flex flex-1 flex-col">
-          <DashboardTopBar session={session} />
-          <main className="flex-1 p-6">{children}</main>
+        <div className="flex flex-1 flex-col min-w-0">
+          <DashboardTopBar session={session} logoUrl={board?.logoUrl} title={board?.name} />
+          <main className="flex-1 p-4 sm:p-6 min-w-0">{children}</main>
         </div>
       </div>
     </AuthProvider>

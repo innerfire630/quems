@@ -3,20 +3,18 @@
 // =============================================================================
 // GET /api/audit-log?userId&action&entity&entityId&startDate&endDate&page&pageSize
 // Requires system:audit permission. Returns paginated, filtered audit log entries.
-// Writes AUDIT_LOG_VIEWED audit entry on access (best-effort, never fails).
 // =============================================================================
 
 import { NextResponse } from 'next/server';
 import { withPermission } from '@/lib/guards';
 import { PERMISSION_SYSTEM_AUDIT } from '@/lib/permissions';
-import { writeAuditLog } from '@/lib/audit-log';
 import { queryAuditLogs } from '@/lib/audit-log-queries';
 import { auditLogQuerySchema } from '@/schemas/audit-log.schema';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const GET = withPermission(async (req, ctx) => {
+export const GET = withPermission(async (req, _ctx) => {
   try {
     const { searchParams } = new URL(req.url);
     const rawParams: Record<string, string> = {};
@@ -47,7 +45,6 @@ export const GET = withPermission(async (req, ctx) => {
 
     const { userId, action, entity, entityId, startDate, endDate, page, pageSize } = parsed.data;
 
-    const startTime = Date.now();
     const result = await queryAuditLogs(
       {
         userId,
@@ -59,24 +56,6 @@ export const GET = withPermission(async (req, ctx) => {
       },
       { page, pageSize },
     );
-    const durationMs = Date.now() - startTime;
-
-    // Best-effort audit log write
-    try {
-      await writeAuditLog({
-        action: 'AUDIT_LOG_VIEWED',
-        actorId: ctx.session.user.id,
-        actorName: ctx.session.user.name ?? undefined,
-        description: `Viewed audit log (${result.total} entries, ${durationMs}ms)`,
-        metadata: {
-          filters: { userId, action, entity, entityId, startDate, endDate },
-          resultCount: result.total,
-          durationMs,
-        },
-      });
-    } catch {
-      // best-effort
-    }
 
     return NextResponse.json({
       success: true,

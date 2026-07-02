@@ -195,7 +195,13 @@ export function CounterServiceAssignment({
             onValueChange={(val) => setSelectedServiceId(val ?? '')}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a service to add..." />
+              <SelectValue placeholder="Select a service to add...">
+                {(val: string) => {
+                  if (!val) return null;
+                  const svc = unassignedServices.find((s) => s.id === val);
+                  return svc ? `${svc.name} (${svc.code})` : val;
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {unassignedServices.length === 0 ? (

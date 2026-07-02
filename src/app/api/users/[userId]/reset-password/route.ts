@@ -56,6 +56,7 @@ export const POST = withPermission(
       action: 'PASSWORD_RESET_BY_ADMIN',
       actorId: session.user.userId,
       actorName: session.user.name,
+      entity: 'User',
       targetUserId: userId,
       targetUserName: user.name,
       description: `Reset password for user ${user.email}.`,

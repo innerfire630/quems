@@ -57,7 +57,13 @@ export function ServiceSearch({ defaultValue, activeFilter }: ServiceSearchProps
         onValueChange={(val) => updateParams('isActive', val ?? '')}
       >
         <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Status" />
+          <SelectValue placeholder="Status">
+            {(val: string) => {
+              if (val === 'true') return 'Active';
+              if (val === 'false') return 'Inactive';
+              return 'All';
+            }}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="">All</SelectItem>

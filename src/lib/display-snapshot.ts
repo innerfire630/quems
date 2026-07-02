@@ -22,7 +22,7 @@ function mapDisplayBoard(record: Record<string, unknown>): DisplayBoardConfig {
     id: record['id'] as string,
     name: record['name'] as string,
     isDefault: (record['isDefault'] as boolean) ?? false,
-    maxDisplayedTickets: (record['maxDisplayedTickets'] as number) ?? 10,
+    maxDisplayedTickets: (record['maxDisplayedTickets'] as number) ?? 5,
     announcementEnabled: (record['announcementEnabled'] as boolean) ?? true,
     bellEnabled: (record['bellEnabled'] as boolean) ?? true,
     ttsEnabled: (record['ttsEnabled'] as boolean) ?? true,

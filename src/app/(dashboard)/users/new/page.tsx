@@ -23,6 +23,7 @@ export default async function NewUserPage() {
   }
 
   const roles = await prisma.role.findMany({
+    where: {},
     select: { id: true, name: true, displayName: true, description: true, isSystem: true },
   });
 

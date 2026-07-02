@@ -20,7 +20,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { MoreHorizontal, Pencil, UserX, KeyRound } from 'lucide-react';
+import { Can } from '@/components/can';
+import { PERMISSION_USER_DELETE, PERMISSION_USER_MANAGE } from '@/lib/permissions';
+import { MoreHorizontal, Pencil, UserX, Trash2, KeyRound } from 'lucide-react';
 import type { UserListItem } from '@/types/user.types';
 
 interface UserTableProps {
@@ -29,6 +31,7 @@ interface UserTableProps {
   error?: string | null;
   onEdit?: (userId: string) => void;
   onDeactivate?: (userId: string) => void;
+  onDelete?: (userId: string) => void;
   onResetPassword?: (userId: string) => void;
 }
 
@@ -81,6 +84,7 @@ export function UserTable({
   error,
   onEdit,
   onDeactivate,
+  onDelete,
   onResetPassword,
 }: UserTableProps) {
   if (error) {
@@ -167,14 +171,29 @@ export function UserTable({
                     <KeyRound className="mr-2 size-4" />
                     Reset Password
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onDeactivate?.(user.id)}
-                    disabled={user.status === 'INACTIVE'}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <UserX className="mr-2 size-4" />
-                    Deactivate
-                  </DropdownMenuItem>
+                  {!user.roles.some((r) => r.name === 'ADMIN') && (
+                    <>
+                      <Can permission={PERMISSION_USER_DELETE}>
+                        <DropdownMenuItem
+                          onClick={() => onDeactivate?.(user.id)}
+                          disabled={user.status === 'INACTIVE'}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <UserX className="mr-2 size-4" />
+                          Deactivate
+                        </DropdownMenuItem>
+                      </Can>
+                      <Can permission={PERMISSION_USER_MANAGE}>
+                        <DropdownMenuItem
+                          onClick={() => onDelete?.(user.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 size-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </Can>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>

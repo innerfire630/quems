@@ -1,11 +1,8 @@
 // =============================================================================
-// src/components/counter/ticket-action-panel.tsx — Temporary Action Panel (2.3.2)
+// src/components/counter/ticket-action-panel.tsx — Action Panel (2.3.2 / extended)
 // =============================================================================
-// Renders Call, Recall, and No-Show buttons for the current serving ticket,
-// or a "Call Next" button when no ticket is in progress.
-//
-// This is a TEMPORARY component — replaced by Phase 4.2.3's full officer
-// dashboard layout.
+// Renders Call Next, Call, Recall, Served, and No-Show buttons depending on
+// the current ticket status.
 // =============================================================================
 
 'use client';
@@ -24,17 +21,20 @@ interface TicketActionPanelProps {
   ticket: TicketDetail | null;
   counterId: string;
   officerOnDuty: boolean;
+  hasNextTicket: boolean;
   onActionComplete: () => void;
 }
 
 // ---------------------------------------------------------------------------
-// API helpers (inline to avoid creating a separate file for the stub)
+// API helpers
 // ---------------------------------------------------------------------------
+
+type TicketAction = 'call' | 'recall' | 'no-show' | 'serve';
 
 async function apiCall(
   ticketId: string,
   counterId: string,
-  action: 'call' | 'recall' | 'no-show',
+  action: TicketAction,
 ): Promise<{ success: boolean; error?: { message: string } }> {
   const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/${action}`, {
     method: 'POST',
@@ -71,13 +71,14 @@ export default function TicketActionPanel({
   ticket,
   counterId,
   officerOnDuty,
+  hasNextTicket,
   onActionComplete,
 }: TicketActionPanelProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleAction = useCallback(
-    async (action: 'call' | 'recall' | 'no-show') => {
+    async (action: TicketAction) => {
       if (!ticket) return;
       setLoading(action);
       setError(null);
@@ -111,16 +112,23 @@ export default function TicketActionPanel({
   }, [counterId, onActionComplete]);
 
   const disabled = !officerOnDuty || loading !== null;
+  const callNextDisabled = disabled || !hasNextTicket;
 
   // --- No ticket in progress: show "Call Next" ---
   if (!ticket) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">No ticket currently being served.</p>
-        <Button onClick={handleCallNext} disabled={disabled} className="w-full min-h-[56px]">
+        <p className="text-sm text-muted-foreground">
+          {hasNextTicket ? 'No ticket currently being served.' : 'No waiting tickets in the queue.'}
+        </p>
+        <Button
+          onClick={handleCallNext}
+          disabled={callNextDisabled}
+          className="w-full min-h-[56px]"
+        >
           {loading === 'call-next' ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 size-4 animate-spin" />
               Calling...
             </>
           ) : (
@@ -132,59 +140,174 @@ export default function TicketActionPanel({
     );
   }
 
-  // --- Ticket in progress: show Call / Recall / No-Show ---
+  // --- Ticket in progress: show all applicable actions ---
   const canCall = canTransition(ticket.status as never, 'CALLED', 'CALL');
   const canRecall = canTransition(ticket.status as never, 'RECALLED', 'RECALL');
+  const canServe = canTransition(ticket.status as never, 'SERVING', 'SERVE');
   const canNoShow = canTransition(ticket.status as never, 'NO_SHOW', 'NO_SHOW');
+  const isServing = ticket.status === 'SERVING';
+  const isRecalled = ticket.status === 'RECALLED';
+  const isNoShow = ticket.status === 'NO_SHOW';
+
+  // --- Ticket is SERVING: show "Call Next Ticket" to advance ---
+  if (isServing) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Currently serving ticket{' '}
+          <span className="font-mono font-medium">{ticket.ticketNumber}</span>.
+        </p>
+        <Button
+          onClick={handleCallNext}
+          disabled={callNextDisabled}
+          className="w-full min-h-[48px]"
+        >
+          {loading === 'call-next' ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Calling...
+            </>
+          ) : (
+            'Call Next Ticket'
+          )}
+        </Button>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+    );
+  }
+
+  // --- Ticket is NO_SHOW: show "Call Next Ticket" + recall + re-call ---
+  if (isNoShow) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Ticket <span className="font-mono font-medium">{ticket.ticketNumber}</span> marked as
+          no-show.
+        </p>
+        <Button
+          onClick={handleCallNext}
+          disabled={callNextDisabled}
+          className="w-full min-h-[48px]"
+        >
+          {loading === 'call-next' ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Calling...
+            </>
+          ) : (
+            'Call Next Ticket'
+          )}
+        </Button>
+        {canRecall && (
+          <Button
+            onClick={() => handleAction('recall')}
+            disabled={disabled}
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'recall' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Recalling...
+              </>
+            ) : (
+              'Recall This Ticket'
+            )}
+          </Button>
+        )}
+        {canCall && (
+          <Button
+            onClick={() => handleAction('call')}
+            disabled={disabled || !canCall}
+            variant="outline"
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'call' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Re-calling...
+              </>
+            ) : (
+              'Re-Call This Ticket'
+            )}
+          </Button>
+        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
-      <Button
-        onClick={() => handleAction('call')}
-        disabled={disabled || !canCall}
-        className="w-full min-h-[56px]"
-      >
-        {loading === 'call' ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Calling...
-          </>
-        ) : (
-          'Call'
-        )}
-      </Button>
+      {canCall && !isRecalled && (
+        <Button
+          onClick={() => handleAction('call')}
+          disabled={disabled || !canCall}
+          className="w-full min-h-[48px]"
+        >
+          {loading === 'call' ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Calling...
+            </>
+          ) : (
+            'Call'
+          )}
+        </Button>
+      )}
 
-      <Button
-        onClick={() => handleAction('recall')}
-        disabled={disabled || !canRecall}
-        variant="outline"
-        className="w-full min-h-[56px]"
-      >
-        {loading === 'recall' ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Recalling...
-          </>
-        ) : (
-          'Recall'
-        )}
-      </Button>
+      {canRecall && (
+        <Button
+          onClick={() => handleAction('recall')}
+          disabled={disabled || !canRecall}
+          variant="outline"
+          className="w-full min-h-[48px]"
+        >
+          {loading === 'recall' ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Recalling...
+            </>
+          ) : (
+            'Recall'
+          )}
+        </Button>
+      )}
 
-      <Button
-        onClick={() => handleAction('no-show')}
-        disabled={disabled || !canNoShow}
-        variant="destructive"
-        className="w-full min-h-[56px]"
-      >
-        {loading === 'no-show' ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Marking...
-          </>
-        ) : (
-          'No-Show'
-        )}
-      </Button>
+      {canServe && (
+        <Button
+          onClick={() => handleAction('serve')}
+          disabled={disabled || !canServe}
+          variant="secondary"
+          className="w-full min-h-[48px]"
+        >
+          {loading === 'serve' ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Marking served...
+            </>
+          ) : (
+            'Served'
+          )}
+        </Button>
+      )}
+
+      {canNoShow && (
+        <Button
+          onClick={() => handleAction('no-show')}
+          disabled={disabled || !canNoShow}
+          variant="destructive"
+          className="w-full min-h-[48px]"
+        >
+          {loading === 'no-show' ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Marking...
+            </>
+          ) : (
+            'No-Show'
+          )}
+        </Button>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>

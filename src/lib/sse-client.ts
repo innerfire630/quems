@@ -58,13 +58,17 @@ const encoder = new TextEncoder();
  *
  * Produces (per the SSE spec and Master Plan §11.2):
  *   id: <envelope.id>\n
- *   event: <envelope.type>\n
  *   data: <JSON.stringify(envelope)>\n
  *   \n
+ *
+ * NOTE: We intentionally omit the `event:` field. Named events
+ * require addEventListener() per event type; using the default
+ * "message" event (no event: field) lets EventSource.onmessage
+ * handle ALL events, routing by the JSON `type` property.
  */
 export function formatSSEMessage(envelope: SSEEnvelope): Uint8Array {
   const data = JSON.stringify(envelope);
-  const message = `id: ${envelope.id}\nevent: ${envelope.type}\ndata: ${data}\n\n`;
+  const message = `id: ${envelope.id}\ndata: ${data}\n\n`;
   return encoder.encode(message);
 }
 

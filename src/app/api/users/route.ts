@@ -143,7 +143,7 @@ const postHandler = withPermission(
       );
     }
 
-    const { name, email, password, status, roleIds } = parsed.data;
+    const { name, email, password, status, roleId } = parsed.data;
 
     // Check for duplicate email
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -160,7 +160,7 @@ const postHandler = withPermission(
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user with roles in a transaction
+    // Create user with role in a transaction
     const user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
         data: {
@@ -187,14 +187,14 @@ const postHandler = withPermission(
         },
       });
 
-      // Assign roles
-      if (roleIds && roleIds.length > 0) {
-        await tx.userRole.createMany({
-          data: roleIds.map((roleId) => ({
+      // Assign single role
+      if (roleId) {
+        await tx.userRole.create({
+          data: {
             userId: created.id,
             roleId,
             assignedById: session.user.userId,
-          })),
+          },
         });
       }
 
@@ -206,10 +206,11 @@ const postHandler = withPermission(
       action: 'USER_CREATED',
       actorId: session.user.userId,
       actorName: session.user.name,
+      entity: 'User',
       targetUserId: user.id,
       targetUserName: user.name,
       description: `Created user ${email}.`,
-      metadata: { email, name, roleIds: roleIds ?? [], status: status ?? 'ACTIVE' },
+      metadata: { email, name, roleId: roleId ?? null, status: status ?? 'ACTIVE' },
     });
 
     // Re-fetch with roles for the response

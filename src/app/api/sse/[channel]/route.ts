@@ -63,7 +63,7 @@ export async function GET(
         { status: 401 },
       );
     }
-    if (reason === 'Not a security officer' || reason === 'Not assigned to counter') {
+    if (reason === 'Not assigned to counter') {
       return NextResponse.json(
         {
           success: false,

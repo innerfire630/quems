@@ -34,7 +34,7 @@ export default async function AuditLogPage() {
   const initialData = await queryAuditLogs({}, { page: 1, pageSize: 25 });
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
         <p className="text-sm text-muted-foreground">

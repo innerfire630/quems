@@ -21,7 +21,6 @@ export function CounterTableWrapper({ counters, isLoading, error }: CounterTable
       isLoading={isLoading}
       error={error}
       onEdit={(counterId) => router.push(`/counters/${counterId}`)}
-      onManageServices={(counterId) => router.push(`/counters/${counterId}/services`)}
     />
   );
 }

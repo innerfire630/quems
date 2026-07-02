@@ -45,7 +45,9 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectKey, setSelectKey] = useState(0);
+
+  const [lastSelectedId, setLastSelectedId] = useState('');
 
   const fetchOfficers = useCallback(async () => {
     try {
@@ -80,13 +82,13 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
   }, [fetchOfficers, fetchAvailableUsers]);
 
   async function handleAssign() {
-    if (!selectedUserId) return;
+    if (!lastSelectedId) return;
     setAssigning(true);
     try {
       const res = await fetch(`/api/counters/${counterId}/officers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: selectedUserId }),
+        body: JSON.stringify({ userId: lastSelectedId }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -94,7 +96,8 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
         return;
       }
       toast.success('Officer assigned.');
-      setSelectedUserId('');
+      setLastSelectedId('');
+      setSelectKey((k) => k + 1);
       await fetchOfficers();
       await fetchAvailableUsers();
     } catch {
@@ -160,7 +163,11 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
         {/* Assign new officer */}
         <div className="flex items-end gap-3">
           <div className="flex-1 space-y-2">
-            <Select value={selectedUserId} onValueChange={(v) => setSelectedUserId(v ?? '')}>
+            <Select
+              key={selectKey}
+              items={unassignedUsers.map((u) => ({ value: u.id, label: u.name }))}
+              onValueChange={(v) => setLastSelectedId(v)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select an officer…" />
               </SelectTrigger>
@@ -174,7 +181,7 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
                 )}
                 {unassignedUsers.map((u) => (
                   <SelectItem key={u.id} value={u.id}>
-                    {u.name} ({u.email})
+                    {u.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -183,7 +190,7 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
           <Button
             type="button"
             onClick={handleAssign}
-            disabled={!selectedUserId || assigning}
+            disabled={!lastSelectedId || assigning}
             size="sm"
           >
             {assigning ? (

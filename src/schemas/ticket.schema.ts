@@ -94,6 +94,14 @@ export const noShowTicketSchema = ticketActionBodySchema;
 export type NoShowTicketInput = z.infer<typeof noShowTicketSchema>;
 
 // ---------------------------------------------------------------------------
+// POST /api/tickets/[ticketId]/serve — Served
+// ---------------------------------------------------------------------------
+
+export const serveTicketSchema = ticketActionBodySchema;
+
+export type ServeTicketInput = z.infer<typeof serveTicketSchema>;
+
+// ---------------------------------------------------------------------------
 // POST /api/tickets/call-next — 2.3.2
 // ---------------------------------------------------------------------------
 

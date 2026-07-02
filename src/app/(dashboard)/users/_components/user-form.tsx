@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RoleMultiSelect } from './role-multi-select';
 import { createUserSchema, updateUserSchema } from '@/schemas/user.schema';
 import type { UserListItem } from '@/types/user.types';
 import { toast } from 'sonner';
@@ -45,7 +44,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
   const [email, setEmail] = useState(initialValues?.email ?? '');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState(initialValues?.status ?? 'ACTIVE');
-  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>(initialValues?.roleIds ?? []);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>(initialValues?.roleIds?.[0] ?? '');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -63,7 +62,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
         email,
         password,
         status,
-        roleIds: selectedRoleIds,
+        roleId: selectedRoleId || undefined,
       });
       if (!parsed.success) {
         const fieldErrors: Record<string, string> = {};
@@ -78,7 +77,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
         name: name || undefined,
         email: email || undefined,
         status,
-        roleIds: selectedRoleIds,
+        roleId: selectedRoleId || null,
       });
       if (!parsed.success) {
         const fieldErrors: Record<string, string> = {};
@@ -96,7 +95,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
       const url = mode === 'create' ? '/api/users' : `/api/users/${userId}`;
       const method = mode === 'create' ? 'POST' : 'PATCH';
 
-      const body: Record<string, unknown> = { name, email, status, roleIds: selectedRoleIds };
+      const body: Record<string, unknown> = { name, email, status, roleId: selectedRoleId || null };
       if (mode === 'create') body.password = password;
 
       const res = await fetch(url, {
@@ -209,17 +208,20 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
           </div>
 
           <div className="space-y-2 overflow-visible">
-            <Label>Roles</Label>
-            <RoleMultiSelect
-              roles={roles.map((r) => ({
-                id: r.id,
-                name: r.name,
-                description: r.description,
-                isSystem: r.isSystem,
-              }))}
-              value={selectedRoleIds}
-              onChange={setSelectedRoleIds}
-            />
+            <Label>Role</Label>
+            <Select value={selectedRoleId} onValueChange={(val) => setSelectedRoleId(val ?? '')}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.displayName || role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.roleId && <p className="text-sm text-destructive">{errors.roleId}</p>}
           </div>
 
           <div className="flex gap-3 pt-2">

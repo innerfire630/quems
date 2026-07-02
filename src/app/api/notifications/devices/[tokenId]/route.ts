@@ -76,6 +76,7 @@ export async function DELETE(
       action: 'DEVICE_TOKEN_REMOVED',
       actorId: session.user.userId,
       actorName: session.user.name ?? undefined,
+      entity: 'Notification',
       description: `Device token removed by officer ${session.user.name ?? session.user.userId}`,
       metadata: { tokenId },
     });

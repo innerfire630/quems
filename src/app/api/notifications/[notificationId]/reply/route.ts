@@ -159,6 +159,7 @@ async function handlePost(req: Request, _ctx: GuardedContext): Promise<Response>
       await writeAuditLog({
         action: 'NOTIFICATION_REPLIED',
         actorId: session.user.userId,
+        entity: 'Notification',
         description: 'Officer replied to notification',
         metadata: {
           notificationId,

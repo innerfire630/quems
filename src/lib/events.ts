@@ -29,7 +29,7 @@ import type { SSEEnvelope } from '@/lib/sse-client';
 // ---------------------------------------------------------------------------
 
 /** Supported channel pattern types for the routing table. */
-type SseChannelPattern = 'global' | 'security' | `counter:${string}`;
+type SseChannelPattern = 'global' | `counter:${string}`;
 
 /**
  * A route template string that may contain a `<counterId>` placeholder.
@@ -72,7 +72,7 @@ export const EVENT_ROUTING: Record<SseEventType, readonly RouteTemplate[]> = {
   TICKET_COMPLETED: ['global'],
 
   // Phase 4.3 — broadcast message (forward seam)
-  BROADCAST_MESSAGE: ['global', 'security'],
+  BROADCAST_MESSAGE: ['global'],
 
   // Phase 4.2.1 — counter open/close (emitted by PATCH /api/counters/[counterId]/status)
   COUNTER_OPENED: ['global', 'counter:<counterId>'],
@@ -85,7 +85,7 @@ export const EVENT_ROUTING: Record<SseEventType, readonly RouteTemplate[]> = {
   NOTIFICATION_RECEIVED: ['counter:<counterId>'],
 
   // Phase 4.3 — officer reply to broadcast (forward seam)
-  OFFICER_REPLY: ['security'],
+  OFFICER_REPLY: ['global'],
 };
 
 // ---------------------------------------------------------------------------
@@ -157,7 +157,6 @@ function resolveChannelTemplate(
 ): string | null {
   // Static channels
   if (template === 'global') return 'global';
-  if (template === 'security') return 'security';
 
   // Dynamic channel: counter:<counterId>
   if (template.startsWith('counter:')) {

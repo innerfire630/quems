@@ -30,7 +30,8 @@ function mapToCounterListItem(c: {
   const officers = c.officers ?? [];
   let status: OperationalStatus = 'NO_OFFICER_ON_DUTY';
   if (officers.length > 0) {
-    if (officers.some((o) => o.currentStatus === 'OPEN')) status = 'OPEN';
+    if (officers.some((o) => o.currentStatus === 'AVAILABLE' || o.currentStatus === 'SERVING'))
+      status = 'OPEN';
     else if (officers.some((o) => o.currentStatus === 'CLOSED')) status = 'CLOSED';
     else if (officers.some((o) => o.currentStatus === 'OFFLINE')) status = 'OFFLINE';
   }
@@ -179,6 +180,7 @@ export const PATCH = withPermission(
         void writeAuditLog({
           action: 'COUNTER_DEACTIVATED',
           actorId: ctx.session.user.userId,
+          entity: 'Counter',
           targetUserId: counterId,
           description: `Deactivated counter "${counter.name}" (#${counter.number}).`,
           metadata: { name: counter.name, number: counter.number },
@@ -187,6 +189,7 @@ export const PATCH = withPermission(
         void writeAuditLog({
           action: 'COUNTER_UPDATED',
           actorId: ctx.session.user.userId,
+          entity: 'Counter',
           targetUserId: counterId,
           description: `Updated counter "${counter.name}".`,
           metadata: { before, after },

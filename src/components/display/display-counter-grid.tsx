@@ -16,6 +16,7 @@ interface DisplayCounterGridProps {
   nowServing: Record<string, TicketDisplayData | null>;
   recentByCounter: Record<string, TicketDisplayData[]>;
   counterStatus: Record<string, 'open' | 'closed'>;
+  counterCloseReasons: Record<string, string>;
   maxDisplayedTickets: number;
 }
 
@@ -30,13 +31,14 @@ export function DisplayCounterGrid({
   nowServing,
   recentByCounter,
   counterStatus,
+  counterCloseReasons,
   maxDisplayedTickets,
 }: DisplayCounterGridProps) {
   const gridClass = useMemo(() => getGridColumns(counters.length), [counters.length]);
 
   if (counters.length === 0) {
     return (
-      <div className="flex items-center justify-center flex-1 text-slate-500 text-2xl">
+      <div className="flex items-center justify-center flex-1 text-gray-400 text-2xl">
         No active counters
       </div>
     );
@@ -51,6 +53,7 @@ export function DisplayCounterGrid({
           nowServing={nowServing[counter.id] ?? null}
           recentTickets={recentByCounter[counter.id] ?? []}
           counterStatus={counterStatus[counter.id] ?? 'open'}
+          closeReason={counterCloseReasons[counter.id] ?? ''}
           maxItems={maxDisplayedTickets}
         />
       ))}

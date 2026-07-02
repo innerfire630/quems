@@ -26,7 +26,6 @@ export interface CreateDirectBroadcastInput {
   senderOfficerId: string;
   senderDisplayName: string;
   targetDisplayBoardId?: string | null;
-  targetSecurityUserId?: string | null;
   displayDurationSeconds?: number;
   expiresAt?: Date;
 }
@@ -109,7 +108,6 @@ export async function createBroadcastFromReply(
         senderDisplayName: replyingOfficerDisplayName,
         sourceReplyId: reply.id,
         targetDisplayBoardId: null,
-        targetSecurityUserId: null,
         displayDurationSeconds,
         expiresAt,
         isActive: true,
@@ -134,6 +132,7 @@ export async function createBroadcastFromReply(
       await writeAuditLog({
         action: 'BROADCAST_MESSAGE_SENT',
         actorId: reply.counterOfficerId,
+        entity: 'Notification',
         description: 'Officer reply broadcast to display board and security screen',
         metadata: {
           broadcastId: broadcast.id,
@@ -180,7 +179,6 @@ export async function createDirectBroadcast(
         senderDisplayName: input.senderDisplayName,
         sourceReplyId: null,
         targetDisplayBoardId: input.targetDisplayBoardId ?? null,
-        targetSecurityUserId: input.targetSecurityUserId ?? null,
         displayDurationSeconds,
         expiresAt,
         isActive: true,
@@ -193,6 +191,7 @@ export async function createDirectBroadcast(
       await writeAuditLog({
         action: 'BROADCAST_MESSAGE_SENT',
         actorId: input.senderOfficerId,
+        entity: 'Notification',
         description: 'Direct broadcast sent',
         metadata: {
           broadcastId: broadcast.id,

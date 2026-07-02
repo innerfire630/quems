@@ -60,12 +60,12 @@ export function AudioUnlockOverlay({ onUnlock, logoUrl, audioCtxRef }: AudioUnlo
           />
         )}
         <div className="animate-pulse">
-          <svg className="w-20 h-20 text-display-accent" fill="currentColor" viewBox="0 0 24 24">
+          <svg className="w-20 h-20 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-display-text">Click anywhere to enable audio</h1>
-        <p className="text-lg text-slate-400">
+        <h1 className="text-3xl font-bold text-gray-800">Click anywhere to enable audio</h1>
+        <p className="text-lg text-gray-500">
           Audio announcements will play when tickets are called
         </p>
       </div>

@@ -154,7 +154,7 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
                 key={role}
                 className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
               >
-                {role}
+                {role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
               </span>
             ))
           ) : (

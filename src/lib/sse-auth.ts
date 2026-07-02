@@ -6,7 +6,6 @@
 //
 // Channel rules:
 //   global          — public, always authorised (no session required)
-//   security        — requires SECURITY_OFFICER role
 //   counter:<id>    — requires the session user to be assigned to that counter
 //   everything else — rejected (defensive default)
 //
@@ -17,7 +16,6 @@
 
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { ROLE_SECURITY_OFFICER } from '@/lib/permissions';
 import type { NextRequest } from 'next/server';
 
 // ---------------------------------------------------------------------------
@@ -69,20 +67,7 @@ export async function authorizeSseChannel(
     return { authorized: true, userId: null };
   }
 
-  // 4. security — requires SECURITY_OFFICER role
-  if (kind === 'security') {
-    const session = await auth();
-    if (!session?.user) {
-      return { authorized: false, reason: 'No active session' };
-    }
-    const roles: string[] = session.user.roles ?? [];
-    if (!roles.includes(ROLE_SECURITY_OFFICER)) {
-      return { authorized: false, reason: 'Not a security officer' };
-    }
-    return { authorized: true, userId: session.user.userId };
-  }
-
-  // 5. counter:<counterId> — requires the session user to be the assigned officer
+  // 4. counter:<counterId> — requires the session user to be the assigned officer
   if (kind === 'counter') {
     if (!channelId) {
       return { authorized: false, reason: 'Missing counter ID in channel' };

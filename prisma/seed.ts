@@ -15,7 +15,7 @@ import {
   ALL_ROLES,
   ROLE_PERMISSIONS,
   ROLE_DESCRIPTIONS,
-  ROLE_SUPER_ADMIN,
+  ROLE_ADMIN,
   PERMISSION_DESCRIPTIONS,
 } from '@/lib/permissions';
 import type { Permission, Role } from '@/lib/permissions';
@@ -126,7 +126,7 @@ async function seedRolePermissions(): Promise<{ created: number; deleted: number
   return { created, deleted };
 }
 
-async function seedSuperAdmin(): Promise<void> {
+async function seedAdminUser(): Promise<void> {
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, BCRYPT_ROUNDS);
 
   let user = await prisma.user.findUnique({ where: { email: DEFAULT_EMAIL } });
@@ -135,7 +135,7 @@ async function seedSuperAdmin(): Promise<void> {
     user = await prisma.user.create({
       data: {
         email: DEFAULT_EMAIL,
-        name: 'Default Super Admin',
+        name: 'Default Admin',
         password: passwordHash,
         status: 'ACTIVE',
       },
@@ -144,22 +144,22 @@ async function seedSuperAdmin(): Promise<void> {
     // Update existing user password & name (not email — operator may have changed it)
     user = await prisma.user.update({
       where: { id: user.id },
-      data: { password: passwordHash, name: 'Default Super Admin' },
+      data: { password: passwordHash, name: 'Default Admin' },
     });
   }
 
-  // Assign SUPER_ADMIN role
-  const superAdminRole = await prisma.role.findUnique({
-    where: { name: ROLE_SUPER_ADMIN },
+  // Assign ADMIN role
+  const adminRole = await prisma.role.findUnique({
+    where: { name: ROLE_ADMIN },
   });
-  if (!superAdminRole) {
-    throw new Error(`SUPER_ADMIN role not found in DB — ensure seedRoles() ran first.`);
+  if (!adminRole) {
+    throw new Error(`ADMIN role not found in DB — ensure seedRoles() ran first.`);
   }
 
   await prisma.userRole.upsert({
-    where: { userId_roleId: { userId: user.id, roleId: superAdminRole.id } },
+    where: { userId_roleId: { userId: user.id, roleId: adminRole.id } },
     update: {},
-    create: { userId: user.id, roleId: superAdminRole.id },
+    create: { userId: user.id, roleId: adminRole.id },
   });
 
   // ---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ async function seedSuperAdmin(): Promise<void> {
     `${yellow}${bold}╔══════════════════════════════════════════════════════════════════╗${reset}`,
   );
   console.warn(
-    `${yellow}${bold}║  SECURITY WARNING — Default super-admin credential detected    ║${reset}`,
+    `${yellow}${bold}║  SECURITY WARNING — Default admin credential detected           ║${reset}`,
   );
   console.warn(
     `${yellow}${bold}╠══════════════════════════════════════════════════════════════════╣${reset}`,
@@ -238,15 +238,36 @@ async function seedDisplayBoard(): Promise<void> {
   });
 
   if (existing) {
-    console.log('  Default display board already exists — skipping.');
+    // Update the name if it's still the old default
+    if (existing.name === 'Main Display') {
+      await prisma.displayBoard.update({
+        where: { id: existing.id },
+        data: { name: 'Smart Queue' },
+      });
+      console.log('  Renamed default display board from "Main Display" to "Smart Queue".');
+    }
+    // Ensure maxDisplayedTickets is 5
+    if (existing.maxDisplayedTickets !== 5) {
+      await prisma.displayBoard.update({
+        where: { id: existing.id },
+        data: { maxDisplayedTickets: 5 },
+      });
+      console.log(
+        '  Updated default display board maxDisplayedTickets from',
+        existing.maxDisplayedTickets,
+        'to 5.',
+      );
+    } else {
+      console.log('  Default display board already exists with correct settings — skipping.');
+    }
     return;
   }
 
   await prisma.displayBoard.create({
     data: {
-      name: 'Main Display',
+      name: 'Smart Queue',
       isDefault: true,
-      maxDisplayedTickets: 10,
+      maxDisplayedTickets: 5,
       announcementEnabled: true,
       bellEnabled: true,
       ttsEnabled: true,
@@ -290,9 +311,9 @@ async function main(): Promise<void> {
   const { created, deleted } = await seedRolePermissions();
   console.log(`  ${created} mappings created, ${deleted} stale mappings removed.`);
 
-  // 4. Default super-admin user
-  console.log('▶ Seeding default super-admin user...');
-  await seedSuperAdmin();
+  // 4. Default admin user
+  console.log('▶ Seeding default admin user...');
+  await seedAdminUser();
 
   // 5. Default KioskConfig
   console.log('▶ Seeding default kiosk configuration...');

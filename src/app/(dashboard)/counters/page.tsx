@@ -63,7 +63,8 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
 
   function computeStatus(officers: { currentStatus: string }[]): OperationalStatus {
     if (officers.length === 0) return 'NO_OFFICER_ON_DUTY';
-    if (officers.some((o) => o.currentStatus === 'OPEN')) return 'OPEN';
+    if (officers.some((o) => o.currentStatus === 'AVAILABLE' || o.currentStatus === 'SERVING'))
+      return 'OPEN';
     if (officers.some((o) => o.currentStatus === 'CLOSED')) return 'CLOSED';
     if (officers.some((o) => o.currentStatus === 'OFFLINE')) return 'OFFLINE';
     return 'NO_OFFICER_ON_DUTY';

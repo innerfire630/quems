@@ -183,3 +183,23 @@ async function getFirstAssignedServiceId(counterId: string): Promise<string | nu
   });
   return row?.serviceId ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// countWaitingTicketsForCounter
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the count of WAITING tickets for any service assigned to this counter.
+ */
+export async function countWaitingTicketsForCounter(counterId: string): Promise<number> {
+  const serviceIds = await findAssignedServiceIdsForCounter(counterId);
+  if (serviceIds.length === 0) return 0;
+
+  return db.ticket.count({
+    where: {
+      counterId: null,
+      status: 'WAITING',
+      serviceId: { in: serviceIds },
+    },
+  });
+}

@@ -22,6 +22,8 @@ import type {
   TicketRecallResponse,
   TicketNoShowInput,
   TicketNoShowResponse,
+  TicketServeInput,
+  TicketServeResponse,
 } from '@/types/ticket.types';
 import type { ResolvedOfficer } from '@/lib/ticket-officer';
 
@@ -380,6 +382,59 @@ export async function issueTicket(input: IssueTicketInput): Promise<IssuedTicket
     issuedAt: fullTicket.issuedAt.toISOString(),
   });
 
+  // Broadcast to ALL counter channels that handle this service so officer
+  // dashboards update live — regardless of the notification toggle (which
+  // controls FCM push notifications, not SSE queue-depth updates).
+  try {
+    const counterServices = await db.counterService.findMany({
+      where: { serviceId: service.id },
+      select: { counterId: true },
+    });
+    const affectedCounterIds = [...new Set(counterServices.map((cs) => cs.counterId))];
+
+    for (const counterId of affectedCounterIds) {
+      broadcastEvent(`counter:${counterId}`, 'TICKET_ISSUED', {
+        ticketId: fullTicket.id,
+        ticketNumber: fullTicket.ticketNumber,
+        displayNumber,
+        serviceId: service.id,
+        serviceName: service.name,
+        serviceCode: service.code,
+        priority: fullTicket.priority,
+        waitPosition,
+        estimatedWaitMinutes,
+        businessDate: businessDate.toISOString(),
+        issuedAt: fullTicket.issuedAt.toISOString(),
+      });
+
+      // Also send QUEUE_UPDATED with the latest waiting count
+      try {
+        const allCounterServices = await db.counterService.findMany({
+          where: { counterId },
+          select: { serviceId: true },
+        });
+        const serviceIds = allCounterServices.map((cs) => cs.serviceId);
+        if (serviceIds.length > 0) {
+          const waitingCount = await db.ticket.count({
+            where: {
+              counterId: null,
+              status: 'WAITING',
+              serviceId: { in: serviceIds },
+            },
+          });
+          broadcastEvent(`counter:${counterId}`, 'QUEUE_UPDATED', {
+            counterId,
+            waitingCount,
+          });
+        }
+      } catch {
+        /* best-effort */
+      }
+    }
+  } catch {
+    /* best-effort */
+  }
+
   // Dispatch push notifications to eligible officers — best-effort (Phase 4.1.3)
   try {
     const eligibleRecipients = await findEligibleRecipientsForIssuance(service.id);
@@ -529,6 +584,45 @@ export async function callTicket(
     previousStatus: result.previousStatus,
   });
 
+  // Also broadcast to per-counter channel so officer dashboard updates live
+  broadcastEvent(`counter:${officer.counterId}`, 'TICKET_CALLED', {
+    ticketId: result.fullTicket.id,
+    ticketNumber: result.fullTicket.ticketNumber,
+    serviceId: result.fullTicket.serviceId,
+    serviceName: result.fullTicket.service.name,
+    counterId: officer.counterId,
+    counterName: result.counter?.name ?? '',
+    counterNumber: result.counter?.number ?? 0,
+    calledByOfficerId: officer.id,
+    calledByOfficerName: officer.userName,
+    calledAt: now.toISOString(),
+    previousStatus: result.previousStatus,
+  });
+
+  // Broadcast fresh queue depth after a ticket leaves the waiting pool
+  try {
+    const counterServices = await db.counterService.findMany({
+      where: { counterId: officer.counterId },
+      select: { serviceId: true },
+    });
+    const serviceIds = counterServices.map((cs) => cs.serviceId);
+    if (serviceIds.length > 0) {
+      const waitingCount = await db.ticket.count({
+        where: {
+          counterId: null,
+          status: 'WAITING',
+          serviceId: { in: serviceIds },
+        },
+      });
+      broadcastEvent(`counter:${officer.counterId}`, 'QUEUE_UPDATED', {
+        counterId: officer.counterId,
+        waitingCount,
+      });
+    }
+  } catch {
+    /* best-effort */
+  }
+
   return {
     ...detail,
     sseEventId,
@@ -644,6 +738,23 @@ export async function recallTicket(
   const detail = mapTicketToDetail(result.fullTicket as unknown as Record<string, unknown>);
 
   await broadcastEvent('global', 'TICKET_RECALLED', {
+    ticketId: result.fullTicket.id,
+    ticketNumber: result.fullTicket.ticketNumber,
+    serviceId: result.fullTicket.serviceId,
+    serviceName: result.fullTicket.service.name,
+    counterId: officer.counterId,
+    counterName: result.counter?.name ?? '',
+    counterNumber: result.counter?.number ?? 0,
+    calledByOfficerId: officer.id,
+    calledByOfficerName: officer.userName,
+    calledAt: result.fullTicket.calledAt?.toISOString() ?? '',
+    previousStatus: result.previousStatus,
+    recalledAt: now.toISOString(),
+    recallCount: result.recallCount,
+  });
+
+  // Also broadcast to per-counter channel so officer dashboard updates live
+  broadcastEvent(`counter:${officer.counterId}`, 'TICKET_RECALLED', {
     ticketId: result.fullTicket.id,
     ticketNumber: result.fullTicket.ticketNumber,
     serviceId: result.fullTicket.serviceId,
@@ -830,6 +941,23 @@ export async function noShowTicket(
     autoAdvancedTicketNumber: null,
   });
 
+  // Also broadcast to per-counter channel so officer dashboard updates live
+  broadcastEvent(`counter:${officer.counterId}`, 'TICKET_NO_SHOW', {
+    ticketId: result.fullTicket.id,
+    ticketNumber: result.fullTicket.ticketNumber,
+    serviceId: result.fullTicket.serviceId,
+    serviceName: result.fullTicket.service.name,
+    counterId: officer.counterId,
+    counterNumber: result.counter?.number ?? 0,
+    calledByOfficerId: result.fullTicket.calledByOfficerId ?? '',
+    calledByOfficerName: officerName,
+    noShowAt: now.toISOString(),
+    gracePeriodSeconds: result.gracePeriodSeconds,
+    elapsedSeconds: result.elapsedSeconds,
+    autoAdvanced: false,
+    autoAdvancedTicketNumber: null,
+  });
+
   return {
     ...detail,
     sseEventId,
@@ -838,5 +966,109 @@ export async function noShowTicket(
     elapsedSeconds: result.elapsedSeconds,
     autoAdvanced: false,
     autoAdvancedTicket: null,
+  };
+}
+
+// =============================================================================
+// serveTicket — marks a ticket as "serving" (officer starts serving)
+// =============================================================================
+
+/**
+ * Marks a called/recalled ticket as SERVING. Called when the officer
+ * starts actively serving the customer.
+ */
+export async function serveTicket(
+  input: TicketServeInput,
+  officer: ResolvedOfficer,
+): Promise<TicketServeResponse> {
+  const now = new Date();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await db.$transaction(async (tx: any) => {
+    const ticket = await tx.ticket.findUnique({
+      where: { id: input.ticketId },
+      include: { service: true },
+    });
+
+    if (!ticket) {
+      throw Object.assign(new Error('Ticket not found.'), { code: 'NOT_FOUND' });
+    }
+
+    // Verify transition
+    const previousStatus = ticket.status;
+    transitionTicket(ticket.status, 'SERVE');
+
+    // Update the ticket
+    await tx.ticket.update({
+      where: { id: input.ticketId },
+      data: {
+        status: 'SERVING',
+        servedAt: now,
+      },
+    });
+
+    // Create the TicketEvent
+    await tx.ticketEvent.create({
+      data: {
+        ticketId: input.ticketId,
+        eventType: 'SERVED',
+        counterId: officer.counterId,
+        officerId: officer.id,
+        metadata: {
+          previousStatus,
+          servedAt: now.toISOString(),
+        },
+      },
+    });
+
+    const fullTicket = await tx.ticket.findUniqueOrThrow({
+      where: { id: input.ticketId },
+      include: {
+        service: true,
+        counter: true,
+        calledByOfficer: { include: { user: true } },
+        events: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+
+    return { fullTicket, previousStatus, counter: fullTicket.counter };
+  });
+
+  const sseEventId = randomUUID();
+  const detail = mapTicketToDetail(result.fullTicket as unknown as Record<string, unknown>);
+
+  await broadcastEvent('global', 'TICKET_SERVED', {
+    ticketId: result.fullTicket.id,
+    ticketNumber: result.fullTicket.ticketNumber,
+    serviceId: result.fullTicket.serviceId,
+    serviceName: result.fullTicket.service.name,
+    counterId: officer.counterId,
+    counterName: result.counter?.name ?? '',
+    counterNumber: result.counter?.number ?? 0,
+    servedByOfficerId: officer.id,
+    servedByOfficerName: officer.userName,
+    servedAt: now.toISOString(),
+    previousStatus: result.previousStatus,
+  });
+
+  // Also broadcast to per-counter channel so officer dashboard updates live
+  broadcastEvent(`counter:${officer.counterId}`, 'TICKET_SERVED', {
+    ticketId: result.fullTicket.id,
+    ticketNumber: result.fullTicket.ticketNumber,
+    serviceId: result.fullTicket.serviceId,
+    serviceName: result.fullTicket.service.name,
+    counterId: officer.counterId,
+    counterName: result.counter?.name ?? '',
+    counterNumber: result.counter?.number ?? 0,
+    servedByOfficerId: officer.id,
+    servedByOfficerName: officer.userName,
+    servedAt: now.toISOString(),
+    previousStatus: result.previousStatus,
+  });
+
+  return {
+    ...detail,
+    sseEventId,
+    previousStatus: result.previousStatus,
   };
 }

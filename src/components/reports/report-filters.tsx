@@ -47,7 +47,13 @@ export function ReportFilters({
         }
       >
         <SelectTrigger className="w-52">
-          <SelectValue placeholder="All services" />
+          <SelectValue placeholder="All services">
+            {(val: string) => {
+              if (val === 'all') return 'All services';
+              const svc = services.find((s) => s.id === val);
+              return svc ? `${svc.code} — ${svc.name}` : val;
+            }}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All services</SelectItem>
@@ -69,13 +75,19 @@ export function ReportFilters({
         }
       >
         <SelectTrigger className="w-52">
-          <SelectValue placeholder="All counters" />
+          <SelectValue placeholder="All counters">
+            {(val: string) => {
+              if (val === 'all') return 'All counters';
+              const c = counters.find((c) => c.id === val);
+              return c ? c.name : val;
+            }}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All counters</SelectItem>
           {counters.map((c) => (
             <SelectItem key={c.id} value={c.id}>
-              Counter {c.number} — {c.name}
+              {c.name}
             </SelectItem>
           ))}
         </SelectContent>

@@ -42,6 +42,7 @@ export default async function EditUserPage({ params }: PageProps) {
       },
     }),
     prisma.role.findMany({
+      where: {},
       select: { id: true, name: true, displayName: true, description: true, isSystem: true },
     }),
   ]);

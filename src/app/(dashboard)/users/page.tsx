@@ -8,10 +8,9 @@ import { prisma } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { Can } from '@/components/can';
 import { PERMISSION_USER_CREATE } from '@/lib/permissions';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { UserPlus, Search } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { UserTableClient } from './_components/user-table-client';
+import { UserSearchBar } from './_components/user-search-bar';
 
 interface UsersPageProps {
   searchParams: Promise<{ search?: string; page?: string }>;
@@ -105,20 +104,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       </div>
 
       {/* Search */}
-      <form className="flex gap-2" method="GET" action="/users">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            name="search"
-            placeholder="Search by name or email..."
-            defaultValue={search}
-            className="pl-9"
-          />
-        </div>
-        <Button type="submit" variant="secondary">
-          Search
-        </Button>
-      </form>
+      <UserSearchBar defaultValue={search} />
 
       {/* Table */}
       <UserTableClient users={mappedUsers} roles={allRoles} />

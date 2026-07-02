@@ -79,6 +79,7 @@ export const POST = withPermission(async (req: Request) => {
       action: 'DAILY_RESET_MANUAL',
       actorId: session?.user?.userId ?? 'unknown',
       actorName: session?.user?.name ?? undefined,
+      entity: 'SystemSetting',
       description: `Manually triggered daily reset for business date ${previousBusinessDate.toISOString()}.`,
       metadata: {
         affectedServiceIds: result.affectedServices

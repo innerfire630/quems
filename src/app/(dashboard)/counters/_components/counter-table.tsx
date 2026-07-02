@@ -4,7 +4,7 @@
 
 'use client';
 
-import { MoreHorizontal, Pencil, Wrench } from 'lucide-react';
+import { MoreHorizontal, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -27,7 +27,6 @@ interface CounterTableProps {
   isLoading?: boolean;
   error?: string | null;
   onEdit?: (counterId: string) => void;
-  onManageServices?: (counterId: string) => void;
 }
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -65,13 +64,7 @@ function SkeletonRow() {
   );
 }
 
-export function CounterTable({
-  counters,
-  isLoading,
-  error,
-  onEdit,
-  onManageServices,
-}: CounterTableProps) {
+export function CounterTable({ counters, isLoading, error, onEdit }: CounterTableProps) {
   if (error) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
@@ -138,10 +131,6 @@ export function CounterTable({
                       <DropdownMenuItem onClick={() => onEdit?.(counter.id)}>
                         <Pencil className="mr-2 size-4" />
                         Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onManageServices?.(counter.id)}>
-                        <Wrench className="mr-2 size-4" />
-                        Manage Services
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

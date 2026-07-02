@@ -45,6 +45,7 @@ function buildInitialState(snapshot: DisplaySnapshot): DisplayState {
     nowServing,
     recentByCounter,
     counterStatus,
+    counterCloseReasons: {},
     broadcastMessage: null,
   };
 }
@@ -103,6 +104,7 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
       'TICKET_CALLED',
       'TICKET_RECALLED',
       'TICKET_NO_SHOW',
+      'TICKET_SERVED',
       'COUNTER_OPENED',
       'COUNTER_CLOSED',
       'DAILY_RESET',
@@ -139,13 +141,13 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
     );
   }
 
-  const maxDisplayedTickets = state.board?.maxDisplayedTickets ?? 10;
+  const maxDisplayedTickets = state.board?.maxDisplayedTickets ?? 5;
   const countersList = Object.values(state.counters);
 
   return (
     <div className="fixed inset-0 bg-display-bg overflow-hidden flex flex-col">
       {/* Top bar */}
-      <header className="h-12 flex items-center justify-between px-6 border-b border-slate-700 shrink-0">
+      <header className="h-12 flex items-center justify-between px-6 border-b border-gray-200 shrink-0">
         <div className="flex items-center gap-3">
           {state.board?.logoUrl && (
             <Image
@@ -158,7 +160,7 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
             />
           )}
           {!state.board?.logoUrl && state.board && (
-            <span className="text-display-text font-semibold text-lg">{state.board.name}</span>
+            <span className="text-gray-800 font-semibold text-lg">{state.board.name}</span>
           )}
         </div>
         <DisplayClock />
@@ -176,6 +178,7 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
         nowServing={state.nowServing}
         recentByCounter={state.recentByCounter}
         counterStatus={state.counterStatus}
+        counterCloseReasons={state.counterCloseReasons}
         maxDisplayedTickets={maxDisplayedTickets}
       />
 

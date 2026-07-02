@@ -108,6 +108,7 @@ export const PATCH = withPermission(async (req: Request) => {
         action: 'COUNTER_STATUS_CHANGED',
         actorId: session.user.userId,
         actorName: session.user.name ?? undefined,
+        entity: 'Counter',
         description: `Counter status changed to ${apiStatus.toLowerCase()}`,
         metadata: {
           counterId,
