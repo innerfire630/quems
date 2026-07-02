@@ -10,11 +10,13 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { withPermission } from '@/lib/guards';
 import { PERMISSION_COUNTER_CALL } from '@/lib/permissions';
-import { serveTicket } from '@/lib/ticket-service';
 import { resolveCallingOfficer } from '@/lib/ticket-officer';
 import { isCounterClosed } from '@/lib/counter-status';
-import { incrementServiceCounter } from '@/lib/analytics-service';
 import { serveTicketSchema, getTicketByIdParamsSchema } from '@/schemas/ticket.schema';
+import { prisma } from '@/lib/db';
+import { transitionTicket } from '@/lib/ticket-state-machine';
+import { broadcastEvent } from '@/lib/events';
+import { randomUUID } from 'node:crypto';
 
 export const POST = withPermission(async (req: Request) => {
   try {
@@ -93,16 +95,82 @@ export const POST = withPermission(async (req: Request) => {
       throw e;
     }
 
-    // Mark the ticket as served
-    const result = await serveTicket(
-      { ticketId: paramsResult.data.ticketId, counterId: bodyResult.data.counterId },
-      officer,
+    // Mark the ticket as completed (skip SERVING — go directly to COMPLETED)
+    const now = new Date();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await prisma.$transaction(async (tx: any) => {
+      const ticket = await tx.ticket.findUnique({
+        where: { id: paramsResult.data.ticketId },
+        include: { service: true },
+      });
+      if (!ticket) {
+        throw Object.assign(new Error('Ticket not found.'), { code: 'NOT_FOUND' });
+      }
+
+      const previousStatus = ticket.status;
+      transitionTicket(ticket.status, 'COMPLETE');
+
+      await tx.ticket.update({
+        where: { id: paramsResult.data.ticketId },
+        data: { status: 'COMPLETED', servedAt: now, completedAt: now },
+      });
+
+      await tx.ticketEvent.create({
+        data: {
+          ticketId: paramsResult.data.ticketId,
+          eventType: 'COMPLETED',
+          counterId: officer.counterId,
+          officerId: officer.id,
+          metadata: { previousStatus, servedAt: now.toISOString() },
+        },
+      });
+
+      return {
+        ticket,
+        previousStatus,
+        serviceId: ticket.serviceId,
+        serviceName: ticket.service.name,
+      };
+    });
+
+    // Broadcast SSE
+    const sseEventId = randomUUID();
+    const counter = await prisma.counter.findUnique({
+      where: { id: officer.counterId },
+      select: { name: true, number: true },
+    });
+
+    broadcastEvent('global', 'TICKET_SERVED', {
+      ticketId: result.ticket.id,
+      ticketNumber: result.ticket.ticketNumber,
+      serviceId: result.serviceId,
+      serviceName: result.serviceName,
+      counterId: officer.counterId,
+      counterName: counter?.name ?? '',
+      counterNumber: counter?.number ?? 0,
+      servedByOfficerId: officer.id,
+      servedByOfficerName: officer.userName,
+      servedAt: now.toISOString(),
+      previousStatus: result.previousStatus,
+    });
+    broadcastEvent(`counter:${officer.counterId}`, 'TICKET_SERVED', {
+      ticketId: result.ticket.id,
+      ticketNumber: result.ticket.ticketNumber,
+      serviceId: result.serviceId,
+      serviceName: result.serviceName,
+      counterId: officer.counterId,
+      counterName: counter?.name ?? '',
+      counterNumber: counter?.number ?? 0,
+      servedByOfficerId: officer.id,
+      servedByOfficerName: officer.userName,
+      servedAt: now.toISOString(),
+      previousStatus: result.previousStatus,
+    });
+
+    return NextResponse.json(
+      { success: true, data: { sseEventId, previousStatus: result.previousStatus } },
+      { status: 200 },
     );
-
-    // Increment in-memory analytics counter (best-effort, post-commit)
-    incrementServiceCounter(result.serviceId, 'SERVED');
-
-    return NextResponse.json({ success: true, data: result }, { status: 200 });
   } catch (e: unknown) {
     const err = e as { code?: string; message?: string; kind?: string };
     const code = err.code || err.kind;

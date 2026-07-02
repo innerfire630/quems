@@ -142,9 +142,11 @@ export const PATCH = withPermission(
 
       const input = parsed.data;
 
-      // Check for number conflict if being changed
+      // Check for number conflict if being changed (only active counters)
       if (input.number !== undefined && input.number !== existing.number) {
-        const conflict = await prisma.counter.findUnique({ where: { number: input.number } });
+        const conflict = await prisma.counter.findFirst({
+          where: { number: input.number, isActive: true },
+        });
         if (conflict) {
           return NextResponse.json(
             {
@@ -226,34 +228,25 @@ export const DELETE = withPermission(
         );
       }
 
-      // Defensive: warn if tickets reference this counter
-      const ticketCount = await prisma.ticket.count({ where: { counterId } });
-      if (ticketCount > 0) {
-        console.warn(
-          `[DELETE /api/counters/${counterId}] Soft-deleting counter "${existing.name}" with ${ticketCount} existing tickets.`,
-        );
-      }
-
-      await prisma.counter.update({
-        where: { id: counterId },
-        data: { isActive: false },
-      });
+      // Hard delete — cascade removes CounterService, CounterOfficer, CounterStatusEvent.
+      // Ticket.counterId is set to null (optional relation).
+      await prisma.counter.delete({ where: { id: counterId } });
 
       void writeAuditLog({
         action: 'COUNTER_DEACTIVATED',
         actorId: ctx.session.user.userId,
         targetUserId: counterId,
-        description: `Deactivated counter "${existing.name}" (#${existing.number}).`,
+        description: `Deleted counter "${existing.name}" (#${existing.number}).`,
         metadata: { name: existing.name, number: existing.number },
       });
 
-      return NextResponse.json({ success: true, data: { message: 'Counter deactivated.' } });
+      return NextResponse.json({ success: true, data: { message: 'Counter deleted.' } });
     } catch (error) {
       console.error('[DELETE /api/counters/[counterId]]', error);
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'INTERNAL_ERROR', message: 'Failed to deactivate counter' },
+          error: { code: 'INTERNAL_ERROR', message: 'Failed to delete counter' },
         },
         { status: 500 },
       );

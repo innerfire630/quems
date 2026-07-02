@@ -22,6 +22,8 @@ import type {
   TicketRecallResponse,
   TicketNoShowInput,
   TicketNoShowResponse,
+  TicketNoShowRecallInput,
+  TicketNoShowRecallResponse,
   TicketServeInput,
   TicketServeResponse,
 } from '@/types/ticket.types';
@@ -793,6 +795,221 @@ export async function recallTicket(
     sseEventId,
     previousStatus: result.previousStatus,
     recallCount: result.recallCount,
+  };
+}
+
+// =============================================================================
+// recallNoShowTicket — Recalls a no-show ticket directly to SERVING
+// =============================================================================
+// Atomically transitions NO_SHOW → RECALLED → SERVING in a single transaction.
+// Used by the No-Show Ticket Recall feature on the officer dashboard.
+// The officer must be idle (no current SERVING ticket) to recall.
+// =============================================================================
+
+/**
+ * Recalls a no-show ticket and immediately marks it as SERVING.
+ *
+ * Transition chain: NO_SHOW → (RECALL) → RECALLED → (SERVE) → SERVING
+ *
+ * Both transitions happen atomically inside one transaction. The caller
+ * is responsible for verifying that the counter has no active SERVING ticket
+ * before calling this function.
+ */
+export async function recallNoShowTicket(
+  input: TicketNoShowRecallInput,
+  officer: ResolvedOfficer,
+  autoCompleteTicketId?: string,
+): Promise<TicketNoShowRecallResponse> {
+  const now = new Date();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await db.$transaction(async (tx: any) => {
+    // 0. Auto-complete the current SERVING ticket if provided
+    let completedTicket: {
+      id: string;
+      ticketNumber: string;
+      serviceId: string;
+      serviceName: string;
+    } | null = null;
+    if (autoCompleteTicketId) {
+      const currentTicket = await tx.ticket.findUnique({
+        where: { id: autoCompleteTicketId },
+        include: { service: true },
+      });
+      if (currentTicket && currentTicket.status === 'SERVING') {
+        transitionTicket(currentTicket.status, 'COMPLETE');
+        await tx.ticket.update({
+          where: { id: autoCompleteTicketId },
+          data: { status: 'COMPLETED', completedAt: now },
+        });
+        await tx.ticketEvent.create({
+          data: {
+            ticketId: autoCompleteTicketId,
+            eventType: 'COMPLETED',
+            counterId: officer.counterId,
+            officerId: officer.id,
+            metadata: {
+              previousStatus: 'SERVING',
+              completedAt: now.toISOString(),
+              source: 'AUTO_COMPLETE_ON_RECALL',
+            },
+          },
+        });
+        completedTicket = {
+          id: currentTicket.id,
+          ticketNumber: currentTicket.ticketNumber,
+          serviceId: currentTicket.serviceId,
+          serviceName: currentTicket.service.name,
+        };
+      }
+    }
+    // 1. Fetch the ticket with service
+    const ticket = await tx.ticket.findUnique({
+      where: { id: input.ticketId },
+      include: { service: true },
+    });
+
+    if (!ticket) {
+      throw Object.assign(new Error('Ticket not found.'), { code: 'NOT_FOUND' });
+    }
+
+    // 2. Must be in NO_SHOW status
+    if (ticket.status !== 'NO_SHOW') {
+      throw Object.assign(
+        new Error(`Ticket is not in NO_SHOW status (current: ${ticket.status}).`),
+        { code: 'INVALID_TRANSITION' },
+      );
+    }
+
+    // 3. Verify ticket's service is assigned to the counter
+    const counterService = await tx.counterService.findUnique({
+      where: {
+        counterId_serviceId: {
+          counterId: officer.counterId,
+          serviceId: ticket.serviceId,
+        },
+      },
+    });
+
+    if (!counterService) {
+      throw Object.assign(new Error("This counter does not handle the ticket's service."), {
+        code: 'SERVICE_NOT_ASSIGNED_TO_COUNTER',
+      });
+    }
+
+    // 4. Verify counter is active
+    const counter = await tx.counter.findUnique({ where: { id: officer.counterId } });
+    if (!counter || !counter.isActive) {
+      throw Object.assign(new Error('Counter is not active.'), { code: 'COUNTER_INACTIVE' });
+    }
+
+    // 5. Transition NO_SHOW → RECALLED (state machine validates)
+    transitionTicket(ticket.status, 'RECALL');
+    const previousStatus = ticket.status;
+
+    // 6. Update ticket to RECALLED (preserve original calledAt in metadata)
+    const originalCalledAt = ticket.calledAt;
+    await tx.ticket.update({
+      where: { id: input.ticketId },
+      data: {
+        status: 'RECALLED',
+        counterId: officer.counterId,
+        calledByOfficerId: officer.id,
+        recalledAt: now,
+      },
+    });
+
+    // 7. Create TicketEvent for the recall
+    await tx.ticketEvent.create({
+      data: {
+        ticketId: input.ticketId,
+        eventType: 'RECALLED',
+        counterId: officer.counterId,
+        officerId: officer.id,
+        metadata: {
+          previousStatus,
+          recalledAt: now.toISOString(),
+          originalCalledAt: originalCalledAt?.toISOString() ?? null,
+          source: 'NO_SHOW_RECALL',
+        },
+      },
+    });
+
+    // 8. Re-fetch with relations for the response
+    const fullTicket = await tx.ticket.findUniqueOrThrow({
+      where: { id: input.ticketId },
+      include: {
+        service: true,
+        counter: true,
+        calledByOfficer: { include: { user: true } },
+        events: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+
+    return { fullTicket, previousStatus, counter: fullTicket.counter, completedTicket };
+  });
+
+  // Broadcast SSE events AFTER transaction commits
+  const sseEventId = randomUUID();
+  const detail = mapTicketToDetail(result.fullTicket as unknown as Record<string, unknown>);
+
+  // Broadcast completion of previous ticket if auto-completed
+  if (result.completedTicket) {
+    broadcastEvent('global', 'TICKET_SERVED', {
+      ticketId: result.completedTicket.id,
+      ticketNumber: result.completedTicket.ticketNumber,
+      serviceId: result.completedTicket.serviceId,
+      serviceName: result.completedTicket.serviceName,
+      counterId: officer.counterId,
+      counterName: result.counter?.name ?? '',
+      counterNumber: result.counter?.number ?? 0,
+      servedByOfficerId: officer.id,
+      servedByOfficerName: officer.userName,
+      servedAt: now.toISOString(),
+      previousStatus: 'SERVING',
+    });
+  }
+
+  // Broadcast TICKET_RECALLED to global + counter channels
+  const recallPayload = {
+    ticketId: result.fullTicket.id,
+    ticketNumber: result.fullTicket.ticketNumber,
+    serviceId: result.fullTicket.serviceId,
+    serviceName: result.fullTicket.service.name,
+    counterId: officer.counterId,
+    counterName: result.counter?.name ?? '',
+    counterNumber: result.counter?.number ?? 0,
+    calledByOfficerId: officer.id,
+    calledByOfficerName: officer.userName,
+    calledAt: result.fullTicket.calledAt?.toISOString() ?? '',
+    previousStatus: result.previousStatus,
+    recalledAt: now.toISOString(),
+    recallCount: 1,
+  };
+
+  await broadcastEvent('global', 'TICKET_RECALLED', recallPayload);
+  broadcastEvent(`counter:${officer.counterId}`, 'TICKET_RECALLED', recallPayload);
+
+  // Notify officers — best-effort
+  try {
+    await notifyOfficers({
+      ticketId: result.fullTicket.id,
+      ticketNumber: result.fullTicket.ticketNumber,
+      serviceId: result.fullTicket.serviceId,
+      serviceName: result.fullTicket.service.name,
+      counterId: officer.counterId,
+      counterName: result.counter?.name ?? null,
+      type: 'TICKET_RECALLED',
+      recipientCounterOfficerIds: [],
+    });
+  } catch (notifyError) {
+    console.error('[ticket-service] notifyOfficers (no-show recall) failed:', notifyError);
+  }
+
+  return {
+    ...detail,
+    sseEventId,
+    previousStatus: result.previousStatus,
   };
 }
 

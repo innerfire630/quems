@@ -140,6 +140,25 @@ export const POST = withPermission(
         );
       }
 
+      // Check if counter already has an officer (1 officer per counter limit)
+      const currentOfficer = await prisma.counterOfficer.findFirst({
+        where: { counterId },
+        include: { user: { select: { name: true } } },
+      });
+
+      if (currentOfficer) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'CONFLICT',
+              message: `This counter already has an officer assigned (${currentOfficer.user.name}). Only one officer per counter is allowed. Remove the current officer first.`,
+            },
+          },
+          { status: 409 },
+        );
+      }
+
       const assignment = await prisma.counterOfficer.create({
         data: { userId, counterId, isOnDuty: false, currentStatus: 'OFFLINE' },
         include: {

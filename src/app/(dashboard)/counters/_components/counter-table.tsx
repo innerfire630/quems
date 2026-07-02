@@ -4,7 +4,7 @@
 
 'use client';
 
-import { MoreHorizontal, Pencil } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -27,12 +27,14 @@ interface CounterTableProps {
   isLoading?: boolean;
   error?: string | null;
   onEdit?: (counterId: string) => void;
+  onDelete?: (counterId: string, counterName: string) => void;
 }
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   OPEN: 'default',
   CLOSED: 'secondary',
   OFFLINE: 'secondary',
+  OFF_DUTY: 'secondary',
   NO_OFFICER_ON_DUTY: 'outline',
 };
 
@@ -64,7 +66,7 @@ function SkeletonRow() {
   );
 }
 
-export function CounterTable({ counters, isLoading, error, onEdit }: CounterTableProps) {
+export function CounterTable({ counters, isLoading, error, onEdit, onDelete }: CounterTableProps) {
   if (error) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
@@ -131,6 +133,13 @@ export function CounterTable({ counters, isLoading, error, onEdit }: CounterTabl
                       <DropdownMenuItem onClick={() => onEdit?.(counter.id)}>
                         <Pencil className="mr-2 size-4" />
                         Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onDelete?.(counter.id, counter.name)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 size-4" />
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

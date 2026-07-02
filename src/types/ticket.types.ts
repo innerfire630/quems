@@ -168,6 +168,20 @@ export interface TicketNoShowResponse extends TicketDetail {
   autoAdvancedTicket: TicketListItem | null;
 }
 
+// =============================================================================
+// No-Show Recall types (recall from no-show list → serving)
+// =============================================================================
+
+export interface TicketNoShowRecallInput {
+  ticketId: string;
+  counterId: string;
+}
+
+export interface TicketNoShowRecallResponse extends TicketDetail {
+  sseEventId: string;
+  previousStatus: string;
+}
+
 export interface TicketServeInput {
   ticketId: string;
   counterId: string;

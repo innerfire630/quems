@@ -56,8 +56,7 @@ export const GET = withPermission(async (req) => {
         include: {
           services: { select: { service: { select: { id: true } } } },
           officers: {
-            where: { isOnDuty: true },
-            select: { currentStatus: true },
+            select: { isOnDuty: true, currentStatus: true },
           },
         },
       }),
@@ -66,13 +65,17 @@ export const GET = withPermission(async (req) => {
 
     const totalPages = Math.ceil(total / limit);
 
-    function computeStatus(officers: { currentStatus: string }[]): OperationalStatus {
+    function computeStatus(
+      officers: { isOnDuty: boolean; currentStatus: string }[],
+    ): OperationalStatus {
       if (officers.length === 0) return 'NO_OFFICER_ON_DUTY';
-      if (officers.some((o) => o.currentStatus === 'AVAILABLE' || o.currentStatus === 'SERVING'))
+      const onDuty = officers.filter((o) => o.isOnDuty);
+      if (onDuty.length === 0) return 'OFF_DUTY';
+      if (onDuty.some((o) => o.currentStatus === 'AVAILABLE' || o.currentStatus === 'SERVING'))
         return 'OPEN';
-      if (officers.some((o) => o.currentStatus === 'CLOSED')) return 'CLOSED';
-      if (officers.some((o) => o.currentStatus === 'OFFLINE')) return 'OFFLINE';
-      return 'NO_OFFICER_ON_DUTY';
+      if (onDuty.some((o) => o.currentStatus === 'CLOSED')) return 'CLOSED';
+      if (onDuty.some((o) => o.currentStatus === 'OFFLINE')) return 'OFFLINE';
+      return 'OFF_DUTY';
     }
 
     const data: CounterListItem[] = counters.map((c) => ({
@@ -125,8 +128,10 @@ export const POST = withPermission(async (req, ctx) => {
 
     const input = parsed.data;
 
-    // Check for number conflict
-    const existing = await prisma.counter.findUnique({ where: { number: input.number } });
+    // Check for number conflict (only active counters)
+    const existing = await prisma.counter.findFirst({
+      where: { number: input.number, isActive: true },
+    });
     if (existing) {
       return NextResponse.json(
         {

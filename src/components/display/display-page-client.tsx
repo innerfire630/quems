@@ -142,7 +142,26 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
   }
 
   const maxDisplayedTickets = state.board?.maxDisplayedTickets ?? 5;
-  const countersList = Object.values(state.counters);
+  const countersList = Object.values(state.counters).sort((a, b) => {
+    const ticketA = state.nowServing[a.id];
+    const ticketB = state.nowServing[b.id];
+    const aActive = !!ticketA;
+    const bActive = !!ticketB;
+
+    // Active counters first
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
+
+    // Among active counters, sort by calledAt descending (most recent first)
+    if (aActive && bActive) {
+      const timeA = new Date(ticketA!.calledAt).getTime();
+      const timeB = new Date(ticketB!.calledAt).getTime();
+      return timeB - timeA;
+    }
+
+    // Among idle counters, sort by number ascending
+    return a.number - b.number;
+  });
 
   return (
     <div className="fixed inset-0 bg-display-bg overflow-hidden flex flex-col">

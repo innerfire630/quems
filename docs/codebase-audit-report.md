@@ -1,227 +1,211 @@
-# Codebase Audit Report — quems
+# Codebase Audit Report — Smart Queue Management System (QUEMS)
 
-**Generated**: 2026-07-01  
-**Scope**: Full codebase scan for dead code, unwired integrations, and disconnected modules
-
----
-
-## 1. Dead Code — Unused Components & Files
-
-### 1.1 `LogoutButton` — Replaced by `ProfileDropdown`
-
-- **Issue Category**: Dead Code
-- **File**: `src/app/(dashboard)/_components/logout-button.tsx`
-- **Description**: This component was the original sign-out button. It was replaced by the `ProfileDropdown` component (which includes sign-out + change password + profile info). No file imports `LogoutButton` anymore.
-- **How to Fix**: Safe to delete `logout-button.tsx`.
+**Date:** 2026-07-02  
+**Auditor:** Automated Code Audit  
+**Codebase Version:** Latest (commit `64fc5aa` + working changes)
 
 ---
 
-### 1.2 `CounterServiceAssignment` — Replaced by `ServiceAssignment`
+## 1. Executive Summary
 
-- **Issue Category**: Dead Code
-- **File**: `src/app/(dashboard)/counters/_components/counter-service-assignment.tsx`
-- **Description**: This was the original service assignment widget for the standalone "Manage Services" page. That page was deleted, and a new `ServiceAssignment` component was created inline on the Edit Counter page. No file imports `CounterServiceAssignment` anymore.
-- **How to Fix**: Safe to delete `counter-service-assignment.tsx`.
+The QUEMS codebase is a **functionally complete** Next.js 16 queue management system with real-time SSE, push notifications, and analytics. The code quality is generally good — consistent patterns, proper TypeScript usage, and well-structured modules. However, several areas need attention:
 
----
+**Critical Issues (3):**
 
-### 1.3 `notification-reply.ts` — Orphaned Module
+- Auto-complete logic in `call-next` and `recall-no-show` routes operates **outside transactions**, risking orphaned state
+- Dashboard API endpoints (`current-ticket`, `next-ticket`) lack **counter assignment authorization** — any authenticated user can query any counter
+- SSE payload inconsistencies (`counterName` set to officer name instead of counter name)
 
-- **Issue Category**: Dead Code
-- **File**: `src/lib/notification-reply.ts`
-- **Description**: This module was created as a "single source of truth" for officer reply operations. However, the notification reply route (`src/app/api/notifications/[notificationId]/reply/route.ts`) implements all reply logic inline and never imports this file. All its exports (`createReplyForNotification`, `NotificationNotFoundError`, etc.) are unused.
-- **How to Fix**: Safe to delete `notification-reply.ts`. If the route handler logic ever needs to be shared, refactor the route to import from this module instead.
+**Code Health:**
 
----
+- ~117 source files across `src/`
+- 27 API routes, 5 Prisma migrations
+- 45 document DDD series (all completed)
+- No TODO/FIXME comments found
+- 33 `eslint-disable` comments (mostly Prisma 7 `any` casts — documented limitation)
 
-### 1.4 `PlaceholderPage` — Never Imported
+**Positive Observations:**
 
-- **Issue Category**: Dead Code
-- **File**: `src/components/shared/PlaceholderPage.tsx`
-- **Description**: A scaffold/placeholder component from early development. No file in the codebase imports it.
-- **How to Fix**: Safe to delete.
-
----
-
-### 1.5 `Overview` Page — Duplicate of Dashboard Root
-
-- **Issue Category**: Dead Code / Redundant
-- **File**: `src/app/(dashboard)/overview/page.tsx`
-- **Description**: This page is nearly identical to `src/app/(dashboard)/page.tsx` (the dashboard root). Both show stats cards, roles, and the same layout. The sidebar links to `/overview`, and `/` redirects to `/overview`. The root page (`page.tsx`) has the "Welcome, {name}" message while overview just says "Overview". Consider consolidating into a single page.
-- **How to Fix**: Delete `src/app/(dashboard)/overview/page.tsx` and update the sidebar to link to `/`. Or delete the root `page.tsx` and keep only `/overview`.
+- Consistent envelope pattern for API responses (`{ success, data | error }`)
+- Proper SSE architecture with channel isolation and heartbeat
+- Good Prisma schema with composite indexes for common queries
+- Clean separation of concerns (service layer, guards, state machine)
 
 ---
 
-### 1.6 `DisplayBoardForm` — Unused `handleSubmit` Result
+## 2. Unused & Dead Code Detection
 
-- **Issue Category**: Dead Code (partial)
-- **File**: `src/components/admin/display-board-form.tsx`
-- **Description**: The form component exists and is used by display board pages, but the `handleSubmit` function calls `router.push('/settings/display')` on success which is correct. No dead code here — included for completeness.
-- **How to Fix**: No action needed.
+### 🔴 Unused Export (Will Crash If Called)
 
----
+| #   | File                        | Line   | Item                                                        | Issue                                                                                                           |
+| --- | --------------------------- | ------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | `src/lib/ticket-service.ts` | 1141   | `serveTicket()`                                             | **Exported but never imported.** The serve route inlines its own COMPLETE logic. Dead code — should be removed. |
+| 2   | `src/lib/ticket-service.ts` | 61     | `calculateEstimatedWaitMinutes()`                           | Exported but only used internally by `resolveAndCalculateEstimatedWaitMinutes()`. Could be unexported.          |
+| 3   | `src/lib/ticket-service.ts` | 78     | `resolveAndCalculateEstimatedWaitMinutes()`                 | Exported but only used internally (line 311). Could be unexported.                                              |
+| 4   | `src/lib/display-state.ts`  | 18-200 | 8 individual reducer functions (`applyTICKET_CALLED`, etc.) | All exported but only consumed internally by `applyEvent()`. Only `applyEvent` is imported externally.          |
 
-## 2. Dev/Test/Debug Routes — Should Be Production-Gated
+### 🟡 Suppressed Lint Rules
 
-### 2.1 `_test/rate-limit` Route
+| #   | File                                         | Line           | Rule                                 | Risk                                                      |
+| --- | -------------------------------------------- | -------------- | ------------------------------------ | --------------------------------------------------------- |
+| 5   | `src/lib/ticket-service.ts`                  | 135, 298, 487+ | `@typescript-eslint/no-explicit-any` | Prisma 7 interactive tx requires `(tx: any)` — documented |
+| 6   | `src/components/admin/audit-log-filters.tsx` | 122            | `react-hooks/exhaustive-deps`        | May hide stale closure bugs                               |
+| 7   | `src/hooks/use-sse.ts`                       | 104+           | `react-hooks/exhaustive-deps`        | May hide stale closure bugs                               |
+| 8   | `src/lib/guards.ts`                          | 42, 134, 138+  | `@typescript-eslint/no-explicit-any` | 5+ occurrences — type guards need better typing           |
 
-- **Issue Category**: Dev/Test Route
-- **File**: `src/app/api/_test/rate-limit/route.ts`
-- **Description**: A test endpoint for exercising rate limiting. Only useful during development.
-- **How to Fix**: Already excluded from auth via proxy.ts matcher. Consider adding `NODE_ENV !== 'production'` check or deleting for production builds.
+### 🟢 No TODO/FIXME Comments
 
----
-
-### 2.2 `_dev/permission-check` Route
-
-- **Issue Category**: Dev/Test Route
-- **File**: `src/app/api/_dev/permission-check/route.ts`
-- **Description**: A dev-only endpoint for testing the `withPermission` guard. Not needed in production.
-- **How to Fix**: Already excluded from auth via proxy.ts. Safe to delete for production.
+Zero `TODO` or `FIXME` comments found in `src/`. ✅
 
 ---
 
-### 2.3 `auth/debug-session` Route
+## 3. Problematic Areas & Potential Bugs
 
-- **Issue Category**: Dev/Test Route
-- **File**: `src/app/api/auth/debug-session/route.ts`
-- **Description**: Development-only session inspector. Exposes session data.
-- **How to Fix**: Delete or gate behind `NODE_ENV !== 'production'`.
+### 🔴 HIGH — Race Conditions
 
----
+| #   | File                                                                    | Line     | Issue                                                                                                                                                                                                                                                                                                                                                                           |
+| --- | ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `src/app/api/tickets/call-next/route.ts`                                | ~100-130 | **Auto-complete outside transaction.** The current SERVING ticket is completed via raw `prisma.ticket.update` OUTSIDE the `callTicket()` transaction. If `callTicket()` throws, the previous ticket is already COMPLETED but no new ticket was called — **orphaned state**. The state machine is also **bypassed** (direct `status: 'COMPLETED'` without `transitionTicket()`). |
+| 2   | `src/app/api/officers/me/dashboard/[counterId]/recall-no-show/route.ts` | ~55-80   | **Same pattern** — auto-completes SERVING ticket outside transaction, then calls `recallNoShowTicket()`. Same orphaned-state risk.                                                                                                                                                                                                                                              |
 
-### 2.4 `debug/broadcast` Route
+**Fix:** Wrap auto-complete + callTicket/recallNoShow in a single Prisma `$transaction`.
 
-- **Issue Category**: Dev/Test Route
-- **File**: `src/app/api/debug/broadcast/route.ts`
-- **Description**: Temporary endpoint for triggering SSE events from curl/browser during development.
-- **How to Fix**: Delete or gate behind `NODE_ENV !== 'production'`.
+### 🔴 HIGH — Missing Authorization
 
----
+| #   | File                                                                    | Line   | Issue                                                                                                                                                                          |
+| --- | ----------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 3   | `src/app/api/officers/me/dashboard/[counterId]/current-ticket/route.ts` | ~30-50 | **Only checks `auth()` — does NOT verify the user is assigned to `counterId`.** Any authenticated user can query any counter's current serving ticket by guessing counter IDs. |
+| 4   | `src/app/api/officers/me/dashboard/[counterId]/next-ticket/route.ts`    | ~30-50 | **Same issue** — any authenticated user can see any counter's next waiting ticket.                                                                                             |
 
-### 2.5 Debug Route Group
+**Fix:** Add `resolveCallingOfficer()` or `findCounterOfficerForUserAndCounter()` check.
 
-- **Issue Category**: Dev/Test Route
-- **Files**: `src/app/(debug)/layout.tsx`, `src/app/(debug)/sse-test/page.tsx`
-- **Description**: The debug layout returns 404 in production, but the files still exist.
-- **How to Fix**: Safe to delete for production builds. Already gated by layout returning 404.
+### 🔴 HIGH — State Machine Bypassed
 
----
+| #   | File                                            | Line | Issue                                                                                                                                                                  |
+| --- | ----------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5   | `src/app/api/tickets/[ticketId]/serve/route.ts` | ~108 | The "serve" endpoint calls `transitionTicket(ticket.status, 'COMPLETE')` — not `'SERVE'`. The state machine defines `SERVE → SERVING` but it's never used via the API. |
+| 6   | `src/app/api/tickets/call-next/route.ts`        | ~115 | Auto-complete sets `status: 'COMPLETED'` directly without calling `transitionTicket()`.                                                                                |
 
-## 3. Scripts — Not Part of Runtime
+**Fix:** Use `transitionTicket()` consistently, or document the intentional bypass.
 
-### 3.1 `scripts/fix-auto-advance.js`
+### 🔴 HIGH — SSE Payload Bugs
 
-- **Issue Category**: Dead Script
-- **File**: `scripts/fix-auto-advance.js`
-- **Description**: A one-time migration script for fixing auto-advance settings. No longer needed since the auto-advance feature was removed.
-- **How to Fix**: Safe to delete.
+| #   | File                                               | Line | Issue                                                                                    |
+| --- | -------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------- |
+| 7   | `src/app/api/tickets/[ticketId]/complete/route.ts` | ~90  | `TICKET_SERVED` payload **missing `serviceName`**. Display board reducers may expect it. |
+| 8   | `src/app/api/tickets/[ticketId]/complete/route.ts` | ~105 | `counterName` set to `officer.userName` — should be counter name.                        |
+| 9   | `src/app/api/tickets/call-next/route.ts`           | ~115 | Same `counterName: officer.userName` bug.                                                |
 
----
+**Fix:** Fetch counter name from DB and include it in the payload.
 
-### 3.2 `scripts/load-test-sse.ts`
+### 🟡 MEDIUM — Input Validation
 
-- **Issue Category**: Dead Script
-- **File**: `scripts/load-test-sse.ts`
-- **Description**: A load testing script for SSE. Not part of the application runtime.
-- **How to Fix**: Keep if load testing is planned. Otherwise safe to delete.
+| #   | File                                                                    | Line   | Issue                                                                      |
+| --- | ----------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------- |
+| 10  | `src/app/api/tickets/[ticketId]/complete/route.ts`                      | ~55-65 | **No Zod validation** on body — raw `body as { counterId?: string }` cast. |
+| 11  | `src/app/api/officers/me/dashboard/[counterId]/recall-no-show/route.ts` | ~40-45 | **No Zod validation** — raw cast with only falsy check.                    |
+| 12  | `src/app/api/counters/[counterId]/officers/route.ts` (POST)             | ~100   | **No Zod validation** — raw cast with typeof check.                        |
 
----
+### 🟡 MEDIUM — Null Safety
 
-## 4. Unwired / Disconnected Integrations
+| #   | File                          | Line   | Issue                                                                                                                                |
+| --- | ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 13  | `src/lib/ticket-service.ts`   | ~85-90 | `getCurrentBusinessDate()` uses `!` non-null assertions on `formatToParts()` results. Exotic runtimes could return unexpected parts. |
+| 14  | `src/lib/reset-scheduler.ts`  | ~45-50 | Same `!` assertion pattern on `formatToParts()`.                                                                                     |
+| 15  | `src/lib/display-snapshot.ts` | ~110   | `evt.ticket` accessed without null check — if ticket was deleted (cascading), this crashes.                                          |
 
-### 4.1 `GET /api/notifications/devices` — Never Called from Frontend
+### 🟡 MEDIUM — Redundant Auth Calls
 
-- **Issue Category**: Unwired Endpoint
-- **File**: `src/app/api/notifications/devices/route.ts`
-- **Description**: This endpoint lists all device tokens. The frontend never calls it — device management happens through register (`/api/notifications/devices/register`) and remove (`/api/notifications/devices/[tokenId]`).
-- **How to Fix**: Either wire it up to a device management UI, or delete if not needed.
+| #   | File                                                                                  | Line    | Issue                                                                                            |
+| --- | ------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| 16  | `src/app/api/tickets/[ticketId]/call/route.ts`                                        | ~75-80  | Calls `auth()` inside `withPermission` handler — session already available via `GuardedContext`. |
+| 17  | Same in `recall/route.ts`, `no-show/route.ts`, `serve/route.ts`, `call-next/route.ts` | various | All call `auth()` redundantly.                                                                   |
 
----
+### 🟡 MEDIUM — Debug Endpoint
 
-### 4.2 `GET /api/officers/me` — Never Called from Frontend
-
-- **Issue Category**: Unwired Endpoint
-- **File**: `src/app/api/officers/me/route.ts`
-- **Description**: Returns the current officer's profile. The officer dashboard loads data via `/api/officers/me/dashboard/[counterId]/current-ticket` and `/next-ticket`, but never calls the base `/api/officers/me` endpoint.
-- **How to Fix**: Either wire it up to a profile/settings page for officers, or delete if the dashboard provides sufficient data.
-
----
-
-### 4.3 `POST /api/display-boards` — No Frontend Form
-
-- **Issue Category**: Unwired Endpoint (partially)
-- **File**: `src/app/api/display-boards/route.ts`
-- **Description**: The POST endpoint for creating display boards exists, and there IS a `DisplayBoardForm` component and a `/settings/display/new` page. This is wired up correctly. **No issue.**
-- **How to Fix**: N/A — already connected.
+| #   | File                                   | Line | Issue                                                                                                         |
+| --- | -------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------- |
+| 18  | `src/app/api/debug/broadcast/route.ts` | ~1   | Comment says "REMOVE or restrict in Phase 5.2" — still present. Has `NODE_ENV` guard but route is registered. |
 
 ---
 
-### 4.4 `GET /api/display-boards/snapshot/default` — Unclear Usage
+## 4. Performance & Code Quality Issues
 
-- **Issue Category**: Unwired Endpoint
-- **File**: `src/app/api/display-boards/snapshot/default/route.ts`
-- **Description**: Returns the default display board snapshot. Used by `src/app/display/page.tsx`. May also be called by external display screens. **Likely fine.**
-- **How to Fix**: N/A if external displays use it.
+### 🔴 N+1 Query Problems
 
----
+| #   | File                           | Line    | Issue                                                                                                                                                                                               | Impact                      |
+| --- | ------------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1   | `src/lib/display-snapshot.ts`  | 73-100  | `getServingTickets()` runs `findFirst` per counter (N+1). Each includes 3 relations.                                                                                                                | Display load: O(N) DB calls |
+| 2   | `src/lib/display-snapshot.ts`  | 198-203 | `getDisplaySnapshot()` calls `getRecentTicketsForCounter()` per counter (N+1). Each runs `findMany` with nested includes.                                                                           | Display load: O(N) DB calls |
+| 3   | `src/lib/analytics-service.ts` | 348-365 | `calculateServicePerformanceRows` iterates `services × days` calling `calculateServiceDailyMetrics()` sequentially. For 5 services × 30 days = **150 sequential DB calls**, each running 7 queries. | Reports page: 1050 DB calls |
 
-### 4.5 `src/app/(dashboard)/kiosk-config/page.tsx` — Kiosk Config Admin Page
+**Fix:** Batch queries using `findMany` with `counterId: { in: [...] }` and group in memory.
 
-- **Issue Category**: Unwired Route (potentially)
-- **File**: `src/app/(dashboard)/kiosk-config/page.tsx`
-- **Description**: An admin page for configuring kiosk settings. Not linked from the sidebar. Users would need to navigate directly to `/kiosk-config`.
-- **How to Fix**: Add a link in the sidebar or settings page, or consolidate into the Settings section.
+### 🔴 Missing Database Indexes
 
----
+| #   | Table            | Columns                             | Impact                                                                                           |
+| --- | ---------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 4   | `TicketEvent`    | `(counterId, eventType, createdAt)` | `getRecentTicketsForCounter` and `getRecentActivity` filter by these — full table scan           |
+| 5   | `Ticket`         | `(counterId, status, businessDate)` | `calculateCounterPerformanceRows` filters by these                                               |
+| 6   | `CounterService` | `(serviceId)`                       | `findEligibleRecipientsForIssuance` queries by `serviceId`-first but unique is `counterId`-first |
 
-## 5. Redundant / Overlapping Code
+### 🟡 Code Duplication (DRY Violations)
 
-### 5.1 Two Dashboard Pages
+| #   | Pattern                                  | Files                                                                        | Fix                              |
+| --- | ---------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------- |
+| 7   | `resolveTimezone()` duplicated 3 times   | `analytics-service.ts:47`, `ticket-service.ts:112`, `queue-reset.ts:32`      | Extract to `src/lib/timezone.ts` |
+| 8   | `getHourInTimezone()` duplicated 3 times | `analytics-service.ts:59`, `queue-reset.ts:48`, `ticket-service.ts` (inline) | Extract to `src/lib/timezone.ts` |
+| 9   | Auto-complete logic duplicated           | `call-next/route.ts:100-130`, `recall-no-show/route.ts:55-80`                | Extract to shared utility        |
 
-- **Issue Category**: Redundant Code
-- **Files**: `src/app/(dashboard)/page.tsx` and `src/app/(dashboard)/overview/page.tsx`
-- **Description**: Both pages show nearly identical content (stats cards, roles section). The root page has a "Welcome, {name}" greeting; the overview page just says "Overview". The sidebar links to `/overview`, and the root page is accessed via `/`.
-- **How to Fix**: Consolidate into one page. Keep the root `page.tsx` with the welcome message and delete `overview/page.tsx`, updating the sidebar link to `/`.
+### 🟡 SSE Heartbeat Mutation Risk
 
----
+| #   | File                     | Line    | Issue                                                                                                     |
+| --- | ------------------------ | ------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 10  | `src/lib/sse-manager.ts` | 125-138 | `tickHeartbeat` iterates `Set` and calls `removeClient` (mutates Set) during iteration. May skip entries. | Collect dead clients first, then remove. |
 
-### 5.2 `TopBar` vs `DashboardTopBar` — Two Top Bar Components
+### 🟢 Positive Observations
 
-- **Issue Category**: Redundant Code
-- **Files**: `src/components/layout/TopBar.tsx` and `src/app/(dashboard)/_components/dashboard-top-bar.tsx`
-- **Description**: `TopBar` is used by the officer layout. `DashboardTopBar` is used by the admin dashboard layout. Both now use `ProfileDropdown` and are very similar. Could be consolidated into a single component.
-- **How to Fix**: Consider merging into one `TopBar` component that accepts all needed props.
-
----
-
-## 6. Unused Exports in Library Files
-
-### 6.1 `src/lib/audit-log.ts` — `AuditLogEntry` Interface
-
-- **Issue Category**: Unused Export
-- **File**: `src/lib/audit-log.ts`
-- **Description**: The `AuditLogEntry` interface has `targetUserId` and `targetUserName` fields that are only used internally by `writeAuditLog`. The `entity` and `entityId` fields were added but many callers still use `targetUserId` as the entity ID fallback. Not strictly dead, but the API surface is confusing.
-- **How to Fix**: Consider simplifying the interface — remove `targetUserId`/`targetUserName` in favor of `entityId` and a generic `metadata` field.
+- `getRecentActivity` in `officer-dashboard.ts` uses batch name resolution ✅
+- `serviceDailyCounters` Map is bounded by service count and cleared on daily reset ✅
+- `use-sse.ts` cleanup properly unmounts and closes EventSource ✅
+- Ticket composite indexes cover most common query patterns ✅
 
 ---
 
-## Summary Table
+## 5. Action Item Checklist
 
-| #   | Category    | File                                                                      | Status                |
-| --- | ----------- | ------------------------------------------------------------------------- | --------------------- |
-| 1   | Dead Code   | `src/app/(dashboard)/_components/logout-button.tsx`                       | **Delete**            |
-| 2   | Dead Code   | `src/app/(dashboard)/counters/_components/counter-service-assignment.tsx` | **Delete**            |
-| 3   | Dead Code   | `src/lib/notification-reply.ts`                                           | **Delete**            |
-| 4   | Dead Code   | `src/components/shared/PlaceholderPage.tsx`                               | **Delete**            |
-| 5   | Redundant   | `src/app/(dashboard)/overview/page.tsx`                                   | **Consolidate**       |
-| 6   | Redundant   | `TopBar` vs `DashboardTopBar`                                             | **Consider merging**  |
-| 7   | Dev Route   | `src/app/api/_test/rate-limit/route.ts`                                   | **Gate or delete**    |
-| 8   | Dev Route   | `src/app/api/_dev/permission-check/route.ts`                              | **Gate or delete**    |
-| 9   | Dev Route   | `src/app/api/auth/debug-session/route.ts`                                 | **Gate or delete**    |
-| 10  | Dev Route   | `src/app/api/debug/broadcast/route.ts`                                    | **Gate or delete**    |
-| 11  | Dev Route   | `src/app/(debug)/` directory                                              | **Gate or delete**    |
-| 12  | Dead Script | `scripts/fix-auto-advance.js`                                             | **Delete**            |
-| 13  | Unwired     | `GET /api/notifications/devices`                                          | **Wire up or delete** |
-| 14  | Unwired     | `GET /api/officers/me`                                                    | **Wire up or delete** |
-| 15  | Unwired     | `/kiosk-config` admin page                                                | **Add sidebar link**  |
+### 🔴 High Priority
+
+- [ ] **H1.** Wrap auto-complete + `callTicket()` in a single Prisma `$transaction` in `call-next/route.ts`
+- [ ] **H2.** Wrap auto-complete + `recallNoShowTicket()` in a single `$transaction` in `recall-no-show/route.ts`
+- [ ] **H3.** Add `resolveCallingOfficer()` check to `current-ticket/route.ts` and `next-ticket/route.ts`
+- [ ] **H4.** Fix `counterName` in SSE payloads — use actual counter name, not `officer.userName` in `complete/route.ts` and `call-next/route.ts`
+- [ ] **H5.** Add `serviceName` to `TICKET_SERVED` payload in `complete/route.ts`
+- [ ] **H6.** Add composite index `@@index([counterId, eventType, createdAt])` to `TicketEvent` model
+- [ ] **H7.** Add composite index `@@index([counterId, status, businessDate])` to `Ticket` model
+- [ ] **H8.** Refactor `getServingTickets()` and `getDisplaySnapshot()` to batch queries instead of N+1
+
+### 🟡 Medium Priority
+
+- [ ] **M1.** Add Zod schemas for `complete`, `recall-no-show`, and `POST /officers` body validation
+- [ ] **M2.** Remove or gate `src/app/api/debug/broadcast/route.ts` for production
+- [ ] **M3.** Extract `resolveTimezone()` and `getHourInTimezone()` to shared `src/lib/timezone.ts`
+- [ ] **M4.** Remove dead `serveTicket()` export from `ticket-service.ts`
+- [ ] **M5.** Use `transitionTicket()` in auto-complete logic instead of bypassing state machine
+- [ ] **M6.** Remove redundant `auth()` calls inside `withPermission` handlers
+- [ ] **M7.** Add `@@index([serviceId])` to `CounterService` model
+- [ ] **M8.** Fix `sse-manager.ts` heartbeat to collect dead clients before removing
+- [ ] **M9.** Consolidate `calculateServiceDailyMetrics` from 7 queries to 1-2 using `groupBy`
+- [ ] **M10.** Add null check for `evt.ticket` in `getRecentTicketsForCounter()`
+
+### 🟢 Low Priority
+
+- [ ] **L1.** Unexport individual reducer functions in `display-state.ts` (only `applyEvent` needed)
+- [ ] **L2.** Unexport `calculateEstimatedWaitMinutes()` and `resolveAndCalculateEstimatedWaitMinutes()` from `ticket-service.ts`
+- [ ] **L3.** Add `!` assertion fallbacks in `getCurrentBusinessDate()` and `getDailyResetTimeToday()`
+- [ ] **L4.** Review `react-hooks/exhaustive-deps` suppressions in `audit-log-filters.tsx` and `use-sse.ts`
+- [ ] **L5.** Document the intentional SERVE → COMPLETE bypass in serve route
+
+---
+
+_Report generated automatically. All file paths are relative to the project root._

@@ -471,11 +471,11 @@ export async function calculateCounterPerformanceRows(
           createdAt: { gte: startDate, lte: endDate },
         },
       }),
-      db.ticketEvent.count({
+      db.ticket.count({
         where: {
-          eventType: 'NO_SHOW',
-          ticket: { counterId: counter.id },
-          createdAt: { gte: startDate, lte: endDate },
+          counterId: counter.id,
+          status: 'NO_SHOW',
+          businessDate: { gte: startDate, lte: endDate },
         },
       }),
       db.ticket.findMany({

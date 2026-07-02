@@ -67,10 +67,12 @@ export const LEGAL_TRANSITIONS: readonly TicketTransition[] = [
   { from: 'CALLED', action: 'RECALL', to: 'RECALLED' },
   { from: 'RECALLED', action: 'RECALL', to: 'RECALLED' },
   { from: 'NO_SHOW', action: 'RECALL', to: 'RECALLED' },
+  { from: 'SERVING', action: 'RECALL', to: 'RECALLED' },
 
   // NO_SHOW transitions (2.3.2 — listed here so the state machine is complete)
   { from: 'CALLED', action: 'NO_SHOW', to: 'NO_SHOW' },
   { from: 'RECALLED', action: 'NO_SHOW', to: 'NO_SHOW' },
+  { from: 'SERVING', action: 'NO_SHOW', to: 'NO_SHOW' },
 
   // SERVE transitions
   { from: 'CALLED', action: 'SERVE', to: 'SERVING' },
@@ -78,6 +80,8 @@ export const LEGAL_TRANSITIONS: readonly TicketTransition[] = [
 
   // COMPLETE transitions
   { from: 'SERVING', action: 'COMPLETE', to: 'COMPLETED' },
+  { from: 'CALLED', action: 'COMPLETE', to: 'COMPLETED' },
+  { from: 'RECALLED', action: 'COMPLETE', to: 'COMPLETED' },
 ];
 
 // ---------------------------------------------------------------------------

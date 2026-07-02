@@ -20,6 +20,7 @@ import RecentActivityFeed from '@/components/counter/recent-activity-feed';
 import CounterStatusToggle from '@/components/counter/counter-status-toggle';
 import NotificationToggle from '@/components/counter/notification-toggle';
 import TicketActionPanel from '@/components/counter/ticket-action-panel';
+import NoShowTicketsList from '@/components/counter/no-show-tickets-list';
 
 interface OfficerDashboardClientProps {
   initialData: OfficerDashboardData;
@@ -93,11 +94,21 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
 
         case 'TICKET_NO_SHOW':
           setData((prev) => ({ ...prev, currentServingTicket: null }));
-          refreshDashboard();
+          // Don't refresh — the ticket is still in DB as NO_SHOW and the API
+          // won't return it, but there's a race with the DB write. The next
+          // TICKET_CALLED or QUEUE_UPDATED event will refresh properly.
           break;
 
         case 'TICKET_SERVED':
-          refreshDashboard();
+          // Clear the served ticket. Don't re-fetch immediately — serveTicket()
+          // transitions to SERVING (not COMPLETED), so the API would return it
+          // again. The next TICKET_CALLED event will bring the new ticket.
+          setData((prev) => {
+            if (prev.currentServingTicket && p['ticketId'] === prev.currentServingTicket.id) {
+              return { ...prev, currentServingTicket: null };
+            }
+            return prev;
+          });
           break;
 
         case 'COUNTER_OPENED':
@@ -190,6 +201,18 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
           }}
         />
       </div>
+
+      {/* No-Show Ticket Recall list */}
+      <NoShowTicketsList
+        counterId={data.counter.id}
+        isCounterBusy={
+          data.currentServingTicket?.status === 'CALLED' ||
+          data.currentServingTicket?.status === 'RECALLED' ||
+          data.currentServingTicket?.status === 'SERVING'
+        }
+        isOffDuty={!data.officerContext.isOnDuty || isClosed}
+        onRecalled={refreshDashboard}
+      />
 
       {/* Fourth row: recent activity */}
       <RecentActivityFeed initialEntries={data.recentActivity} counterId={data.counter.id} />

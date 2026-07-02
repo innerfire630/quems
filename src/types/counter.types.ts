@@ -2,7 +2,7 @@
 // src/types/counter.types.ts — Counter API request/response types (2.1.2)
 // =============================================================================
 
-export type OperationalStatus = 'OPEN' | 'CLOSED' | 'OFFLINE' | 'NO_OFFICER_ON_DUTY';
+export type OperationalStatus = 'OPEN' | 'CLOSED' | 'OFFLINE' | 'OFF_DUTY' | 'NO_OFFICER_ON_DUTY';
 
 // ---------------------------------------------------------------------------
 // List item (returned by GET /api/counters)

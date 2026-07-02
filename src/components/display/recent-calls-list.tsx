@@ -30,8 +30,11 @@ export const RecentCallsList = React.memo(function RecentCallsList({
 
   return (
     <div className="flex flex-col gap-1 mt-2">
-      {visible.map((t) => (
-        <div key={t.id} className="flex justify-between items-center text-gray-700">
+      {visible.map((t, i) => (
+        <div
+          key={`${t.id}-${t.status}-${i}`}
+          className="flex justify-between items-center text-gray-700"
+        >
           <div className="flex items-center gap-2">
             <span
               className={`text-2xl font-bold ${

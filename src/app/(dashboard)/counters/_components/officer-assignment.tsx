@@ -5,7 +5,8 @@
 // =============================================================================
 
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, UserX, Loader2, AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { UserPlus, UserX, Loader2, AlertTriangle, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -40,6 +41,7 @@ interface OfficerAssignmentProps {
 }
 
 export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
+  const router = useRouter();
   const [officers, setOfficers] = useState<AssignedOfficer[]>([]);
   const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,46 +163,74 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
         )}
 
         {/* Assign new officer */}
-        <div className="flex items-end gap-3">
-          <div className="flex-1 space-y-2">
-            <Select
-              key={selectKey}
-              items={unassignedUsers.map((u) => ({ value: u.id, label: u.name }))}
-              onValueChange={(v) => setLastSelectedId(v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select an officer…" />
-              </SelectTrigger>
-              <SelectContent>
-                {unassignedUsers.length === 0 && (
-                  <div className="px-2 py-3 text-sm text-muted-foreground">
-                    {availableUsers.length === 0
-                      ? 'No COUNTER_OFFICER users available. Create a user with the COUNTER_OFFICER role first.'
-                      : 'All COUNTER_OFFICER users are already assigned.'}
-                  </div>
-                )}
-                {unassignedUsers.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {availableUsers.length === 0 && officers.length === 0 ? (
+          <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-950/30">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                No unassigned officers available
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                All COUNTER_OFFICER users are already assigned to other counters, or none exist yet.
+                Each officer can only be assigned to one counter.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-1 h-7 text-xs"
+                onClick={() => router.push('/users/new')}
+              >
+                <UserCircle className="mr-1.5 size-3.5" />
+                Create User
+              </Button>
+            </div>
           </div>
-          <Button
-            type="button"
-            onClick={handleAssign}
-            disabled={!lastSelectedId || assigning}
-            size="sm"
-          >
-            {assigning ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <UserPlus className="size-4" />
-            )}
-            <span className="ml-1.5">Assign</span>
-          </Button>
-        </div>
+        ) : availableUsers.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            All officers are assigned. No more available to assign.
+          </p>
+        ) : (
+          <div className="flex items-end gap-3">
+            <div className="flex-1 space-y-2">
+              <Select
+                key={selectKey}
+                items={unassignedUsers.map((u) => ({ value: u.id, label: u.name }))}
+                onValueChange={(v) => setLastSelectedId(v)}
+                disabled={unassignedUsers.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      unassignedUsers.length === 0
+                        ? 'No unassigned officers available'
+                        : 'Select an officer…'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {unassignedUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type="button"
+              onClick={handleAssign}
+              disabled={!lastSelectedId || assigning || unassignedUsers.length === 0}
+              size="sm"
+            >
+              {assigning ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <UserPlus className="size-4" />
+              )}
+              <span className="ml-1.5">Assign</span>
+            </Button>
+          </div>
+        )}
 
         {/* Assigned officers list */}
         {officers.length === 0 ? (

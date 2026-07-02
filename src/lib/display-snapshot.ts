@@ -118,7 +118,7 @@ export async function getRecentTicketsForCounter(
   const events = await prisma.ticketEvent.findMany({
     where: {
       counterId,
-      eventType: 'CALLED',
+      eventType: { in: ['CALLED', 'RECALLED'] },
     },
     orderBy: { createdAt: 'desc' },
     take: max,
@@ -173,6 +173,28 @@ export async function getDisplaySnapshot(boardId: string | null): Promise<Displa
 
   // Fetch counters, serving tickets, and recent tickets in parallel
   const [counters, servingTickets] = await Promise.all([getActiveCounters(), getServingTickets()]);
+
+  // Sort counters: active (serving) at top by calledAt desc, idle at bottom by number
+  counters.sort((a, b) => {
+    const ticketA = servingTickets[a.id];
+    const ticketB = servingTickets[b.id];
+    const aActive = !!ticketA;
+    const bActive = !!ticketB;
+
+    // Active counters first
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
+
+    // Among active counters, sort by calledAt descending (most recent first)
+    if (aActive && bActive) {
+      const timeA = new Date(ticketA.calledAt).getTime();
+      const timeB = new Date(ticketB.calledAt).getTime();
+      return timeB - timeA;
+    }
+
+    // Among idle counters, sort by number ascending
+    return a.number - b.number;
+  });
 
   // Fetch recent tickets per counter (in parallel)
   const recentTickets: Record<string, TicketDisplayData[]> = {};

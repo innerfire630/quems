@@ -9,7 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 import { canTransition } from '@/lib/ticket-state-machine';
 import type { TicketDetail } from '@/types/ticket.types';
 
@@ -29,7 +29,7 @@ interface TicketActionPanelProps {
 // API helpers
 // ---------------------------------------------------------------------------
 
-type TicketAction = 'call' | 'recall' | 'no-show' | 'serve';
+type TicketAction = 'call' | 'recall' | 'no-show' | 'serve' | 'complete';
 
 async function apiCall(
   ticketId: string,
@@ -114,6 +114,21 @@ export default function TicketActionPanel({
   const disabled = !officerOnDuty || loading !== null;
   const callNextDisabled = disabled || !hasNextTicket;
 
+  // --- Officer not on duty: show message to open counter ---
+  if (!officerOnDuty) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700 dark:border-blue-800/40 dark:bg-blue-950/30 dark:text-blue-400">
+          <Info className="size-4 shrink-0" />
+          <span>Open your counter using the toggle on the right to start serving tickets.</span>
+        </div>
+        <Button disabled className="w-full min-h-[56px] opacity-50">
+          Call Next Ticket
+        </Button>
+      </div>
+    );
+  }
+
   // --- No ticket in progress: show "Call Next" ---
   if (!ticket) {
     return (
@@ -144,33 +159,70 @@ export default function TicketActionPanel({
   const canCall = canTransition(ticket.status as never, 'CALLED', 'CALL');
   const canRecall = canTransition(ticket.status as never, 'RECALLED', 'RECALL');
   const canServe = canTransition(ticket.status as never, 'SERVING', 'SERVE');
+  const canComplete = canTransition(ticket.status as never, 'COMPLETED', 'COMPLETE');
   const canNoShow = canTransition(ticket.status as never, 'NO_SHOW', 'NO_SHOW');
   const isServing = ticket.status === 'SERVING';
   const isRecalled = ticket.status === 'RECALLED';
   const isNoShow = ticket.status === 'NO_SHOW';
 
-  // --- Ticket is SERVING: show "Call Next Ticket" to advance ---
+  // --- Ticket is SERVING: show Recall, Served, and No-Show ---
   if (isServing) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <p className="text-sm text-muted-foreground">
           Currently serving ticket{' '}
           <span className="font-mono font-medium">{ticket.ticketNumber}</span>.
         </p>
-        <Button
-          onClick={handleCallNext}
-          disabled={callNextDisabled}
-          className="w-full min-h-[48px]"
-        >
-          {loading === 'call-next' ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Calling...
-            </>
-          ) : (
-            'Call Next Ticket'
-          )}
-        </Button>
+        {canRecall && (
+          <Button
+            onClick={() => handleAction('recall')}
+            disabled={disabled}
+            variant="outline"
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'recall' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Recalling...
+              </>
+            ) : (
+              'Recall'
+            )}
+          </Button>
+        )}
+        {canComplete && (
+          <Button
+            onClick={() => handleAction('complete')}
+            disabled={disabled}
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'complete' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Completing...
+              </>
+            ) : (
+              'Served'
+            )}
+          </Button>
+        )}
+        {canNoShow && (
+          <Button
+            onClick={() => handleAction('no-show')}
+            disabled={disabled}
+            variant="destructive"
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'no-show' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Marking...
+              </>
+            ) : (
+              'No Show'
+            )}
+          </Button>
+        )}
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
     );
@@ -236,6 +288,68 @@ export default function TicketActionPanel({
     );
   }
 
+  // --- Ticket is RECALLED: show Recall, Served, No-Show (same as SERVING) ---
+  if (isRecalled) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Ticket <span className="font-mono font-medium">{ticket.ticketNumber}</span> recalled.
+        </p>
+        {canRecall && (
+          <Button
+            onClick={() => handleAction('recall')}
+            disabled={disabled}
+            variant="outline"
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'recall' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Recalling...
+              </>
+            ) : (
+              'Recall'
+            )}
+          </Button>
+        )}
+        {canServe && (
+          <Button
+            onClick={() => handleAction('serve')}
+            disabled={disabled}
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'serve' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Completing...
+              </>
+            ) : (
+              'Served'
+            )}
+          </Button>
+        )}
+        {canNoShow && (
+          <Button
+            onClick={() => handleAction('no-show')}
+            disabled={disabled}
+            variant="destructive"
+            className="w-full min-h-[48px]"
+          >
+            {loading === 'no-show' ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Marking...
+              </>
+            ) : (
+              'No Show'
+            )}
+          </Button>
+        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {canCall && !isRecalled && (
@@ -277,7 +391,6 @@ export default function TicketActionPanel({
         <Button
           onClick={() => handleAction('serve')}
           disabled={disabled || !canServe}
-          variant="secondary"
           className="w-full min-h-[48px]"
         >
           {loading === 'serve' ? (

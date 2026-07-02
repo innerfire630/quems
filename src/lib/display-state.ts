@@ -58,23 +58,30 @@ export function applyTICKET_RECALLED(state: DisplayState, envelope: SseEventPayl
   const counterId = p['counterId'] as string;
   const ticketId = p['ticketId'] as string;
 
-  const nowServing = state.nowServing[counterId];
-  // If the recalled ticket is the one currently shown as "now serving", update its status
-  if (nowServing && nowServing.id === ticketId) {
-    const updatedTicket: TicketDisplayData = {
-      ...nowServing,
-      status: 'RECALLED',
-    };
-    const recent = state.recentByCounter[counterId] ?? [];
-    const updatedRecent = recent.map((t) => (t.id === ticketId ? updatedTicket : t));
-    return {
-      ...state,
-      nowServing: { ...state.nowServing, [counterId]: updatedTicket },
-      recentByCounter: { ...state.recentByCounter, [counterId]: updatedRecent },
-    };
-  }
+  const ticket: TicketDisplayData = {
+    id: ticketId,
+    ticketNumber: p['ticketNumber'] as string,
+    serviceId: p['serviceId'] as string,
+    serviceName: p['serviceName'] as string,
+    counterId,
+    counterName: (p['counterName'] as string) ?? '',
+    counterNumber: (p['counterNumber'] as number) ?? 0,
+    officerName: (p['calledByOfficerName'] as string) ?? 'Unknown',
+    calledAt: (p['calledAt'] as string) ?? (p['recalledAt'] as string) ?? envelope.timestamp,
+    status: 'RECALLED',
+  };
 
-  return state;
+  const maxItems = state.board?.maxDisplayedTickets ?? 5;
+  const existingRecent = state.recentByCounter[counterId] ?? [];
+  // Deduplicate by ticket ID — remove any existing entry, then prepend
+  const dedupedRecent = existingRecent.filter((t) => t.id !== ticketId);
+  const recent = [ticket, ...dedupedRecent].slice(0, maxItems);
+
+  return {
+    ...state,
+    nowServing: { ...state.nowServing, [counterId]: ticket },
+    recentByCounter: { ...state.recentByCounter, [counterId]: recent },
+  };
 }
 
 export function applyTICKET_NO_SHOW(state: DisplayState, envelope: SseEventPayload): DisplayState {

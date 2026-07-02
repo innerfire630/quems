@@ -33,7 +33,12 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
   const skip = (page - 1) * limit;
 
   const where: Record<string, unknown> = {};
-  if (isActive) where.isActive = isActive === 'true';
+  if (isActive) {
+    where.isActive = isActive === 'true';
+  } else {
+    // Default: only show active counters
+    where.isActive = true;
+  }
   if (search) {
     where.OR = [
       { name: { contains: search } },
@@ -51,8 +56,7 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
       include: {
         services: { select: { service: { select: { id: true } } } },
         officers: {
-          where: { isOnDuty: true },
-          select: { currentStatus: true },
+          select: { isOnDuty: true, currentStatus: true },
         },
       },
     }),
@@ -61,13 +65,17 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
 
   const totalPages = Math.ceil(total / limit);
 
-  function computeStatus(officers: { currentStatus: string }[]): OperationalStatus {
+  function computeStatus(
+    officers: { isOnDuty: boolean; currentStatus: string }[],
+  ): OperationalStatus {
     if (officers.length === 0) return 'NO_OFFICER_ON_DUTY';
-    if (officers.some((o) => o.currentStatus === 'AVAILABLE' || o.currentStatus === 'SERVING'))
+    const onDuty = officers.filter((o) => o.isOnDuty);
+    if (onDuty.length === 0) return 'OFF_DUTY';
+    if (onDuty.some((o) => o.currentStatus === 'AVAILABLE' || o.currentStatus === 'SERVING'))
       return 'OPEN';
-    if (officers.some((o) => o.currentStatus === 'CLOSED')) return 'CLOSED';
-    if (officers.some((o) => o.currentStatus === 'OFFLINE')) return 'OFFLINE';
-    return 'NO_OFFICER_ON_DUTY';
+    if (onDuty.some((o) => o.currentStatus === 'CLOSED')) return 'CLOSED';
+    if (onDuty.some((o) => o.currentStatus === 'OFFLINE')) return 'OFFLINE';
+    return 'OFF_DUTY';
   }
 
   const mapped = counters.map((c) => ({

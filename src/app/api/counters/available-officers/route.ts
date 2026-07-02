@@ -14,6 +14,12 @@ export const runtime = 'nodejs';
 
 export const GET = withPermission(async () => {
   try {
+    // Get IDs of users already assigned to a counter
+    const assignedOfficers = await prisma.counterOfficer.findMany({
+      select: { userId: true },
+    });
+    const assignedUserIds = new Set(assignedOfficers.map((o) => o.userId));
+
     const users = await prisma.user.findMany({
       where: {
         status: 'ACTIVE',
@@ -22,6 +28,7 @@ export const GET = withPermission(async () => {
             role: { name: 'COUNTER_OFFICER' },
           },
         },
+        id: { notIn: Array.from(assignedUserIds) },
       },
       select: { id: true, name: true, email: true },
       orderBy: { name: 'asc' },
