@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { UserForm } from '@/app/(dashboard)/users/_components/user-form';
 
 interface PageProps {
@@ -68,10 +69,7 @@ export default async function EditUserPage({ params }: PageProps) {
         >
           <ArrowLeft className="size-4" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit User</h1>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
-        </div>
+        <PageHeader title="Edit User" description={user.email} />
       </div>
       <UserForm mode="edit" initialValues={initialValues} userId={userId} roles={allRoles} />
     </div>

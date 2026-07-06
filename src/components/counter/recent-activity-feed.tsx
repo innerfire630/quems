@@ -43,7 +43,11 @@ function relativeTime(date: Date): string {
   if (minutes < 60) return `${minutes} min ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  return date.toLocaleDateString();
+  // Use deterministic format to avoid SSR/client hydration mismatch from locale differences
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${month}/${day}/${year}`;
 }
 
 export default function RecentActivityFeed({ initialEntries, counterId }: RecentActivityFeedProps) {

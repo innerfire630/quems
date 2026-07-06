@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { ProfileDropdown } from '@/components/layout/profile-dropdown';
 
 interface TopBarProps {
@@ -9,22 +8,33 @@ interface TopBarProps {
   logoUrl?: string | null;
   title?: string;
   roles?: string[];
+  variant?: 'light' | 'dark';
 }
 
-export function TopBar({ userName, userEmail, logoUrl, title, roles }: TopBarProps) {
+export function TopBar({ userName, userEmail, logoUrl, title, roles, variant = 'light' }: TopBarProps) {
+  const isDark = variant === 'dark';
+
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+    <header className={`flex h-16 items-center justify-between border-b-2 px-6 ${
+      isDark
+        ? 'bg-zinc-800 border-zinc-700'
+        : 'bg-card border-border'
+    }`}>
       <div className="flex items-center gap-3">
         {logoUrl ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={logoUrl}
             alt={title ?? 'Logo'}
-            width={120}
-            height={32}
-            className="h-8 w-auto object-contain"
+            className="h-8 w-8 shrink-0 object-contain"
           />
         ) : null}
-        {title ? <span className="text-lg font-semibold text-foreground">{title}</span> : null}
+        {title ? <span className={`text-lg font-semibold ${isDark ? 'text-zinc-100' : 'text-foreground'}`}>{title}</span> : null}
+        {userName ? (
+          <span className={`text-sm font-medium ${isDark ? 'text-zinc-400' : 'text-muted-foreground'}`}>
+            — {userName}
+          </span>
+        ) : null}
       </div>
       <div className="flex items-center gap-4">
         {userName ? (

@@ -20,6 +20,7 @@ export interface DisplayBoardConfig {
   ttsVolume: number;
   announcementTemplate: string;
   themeColor: string | null;
+  displayTheme: string | null;
   logoUrl: string | null;
   customMessage: string | null;
 }
@@ -54,6 +55,8 @@ export interface DisplaySnapshot {
   counters: CounterDisplayData[];
   servingTickets: Record<string, TicketDisplayData>;
   recentTickets: Record<string, TicketDisplayData[]>;
+  /** Per-counter closed status fetched from CounterOfficer at snapshot time. */
+  counterClosedStatus: Record<string, { closed: boolean; reason?: string }>;
 }
 
 /** The live state held in React, used by reducers. */

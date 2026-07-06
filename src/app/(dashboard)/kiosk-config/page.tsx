@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { PERMISSION_SYSTEM_CONFIGURE } from '@/lib/permissions';
 import { KioskConfigCard } from './_components/kiosk-config-card';
+import { PageHeader } from '@/components/layout/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +29,7 @@ export default async function KioskConfigPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Kiosk Configuration</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage self-service kiosk instances. Each kiosk can have its own welcome message,
-          auto-reset timeout, restricted services, and printer settings.
-        </p>
-      </div>
+      <PageHeader title="Kiosk Configuration" description="Manage self-service kiosk instances. Each kiosk can have its own welcome message, auto-reset timeout, restricted services, and printer settings." />
 
       <div className="grid gap-4 lg:grid-cols-2">
         {configs.map((config) => (

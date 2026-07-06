@@ -12,6 +12,7 @@ import { PERMISSION_COUNTER_READ } from '@/lib/permissions';
 import { CounterTableWrapper } from './_components/counter-table-wrapper';
 import { CounterSearch } from './_components/counter-search';
 import { CounterPagination } from './_components/counter-pagination';
+import { PageHeader } from '@/components/layout/page-header';
 import type { OperationalStatus } from '@/types/counter.types';
 
 interface CountersPageProps {
@@ -95,13 +96,7 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Counters</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage serving counters and their operational status.
-          </p>
-        </div>
+      <PageHeader title="Counters" description="Manage serving counters and their operational status.">
         {hasCreate && (
           <Link
             href="/counters/new"
@@ -111,7 +106,7 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
             Create Counter
           </Link>
         )}
-      </div>
+      </PageHeader>
 
       <Suspense>
         <CounterSearch defaultValue={search} activeFilter={isActive} />

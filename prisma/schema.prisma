@@ -369,6 +369,7 @@ model DisplayBoard {
   ttsVolume             Float    @default(1.0)
   announcementTemplate  String   @default("Now serving ticket {number} at {counter}")
   themeColor            String?
+  displayTheme          String?  @default("dark")
   logoUrl               String?
   customMessage         String?
   createdAt             DateTime @default(now())

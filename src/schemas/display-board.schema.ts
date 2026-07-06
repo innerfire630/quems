@@ -31,6 +31,7 @@ export const displayBoardCreateSchema = z.object({
     .regex(hexColorRegex, 'Must be a valid hex color (e.g. #3B82F6)')
     .optional()
     .nullable(),
+  displayTheme: z.enum(['dark', 'light']).optional().nullable(),
   logoUrl: z.string().url('Must be a valid URL').optional().nullable().or(z.literal('')),
   customMessage: z.string().max(500).optional().nullable(),
 });
@@ -49,6 +50,7 @@ export const displayBoardUpdateSchema = z
     ttsVolume: z.number().min(0).max(1).optional(),
     announcementTemplate: z.string().min(1).max(500).optional(),
     themeColor: z.string().regex(hexColorRegex, 'Must be a valid hex color').optional().nullable(),
+    displayTheme: z.enum(['dark', 'light']).optional().nullable(),
     logoUrl: z.string().url().optional().nullable().or(z.literal('')),
     customMessage: z.string().max(500).optional().nullable(),
   })

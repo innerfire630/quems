@@ -30,23 +30,11 @@ export async function GET(
     const { counterId } = await params;
     const businessDate = getCurrentBusinessDate();
 
-    // Get service IDs assigned to this counter
-    const counterServices = await prisma.counterService.findMany({
-      where: { counterId },
-      select: { serviceId: true },
-    });
-    const serviceIds = counterServices.map((cs) => cs.serviceId);
-
-    if (serviceIds.length === 0) {
-      return NextResponse.json({ success: true, data: [] }, { status: 200 });
-    }
-
-    // Fetch today's NO_SHOW tickets for services handled by this counter
+    // Fetch ALL today's NO_SHOW tickets — any counter can recall any no-show ticket
     const tickets = await prisma.ticket.findMany({
       where: {
         status: 'NO_SHOW',
         businessDate,
-        serviceId: { in: serviceIds },
       },
       include: {
         service: true,

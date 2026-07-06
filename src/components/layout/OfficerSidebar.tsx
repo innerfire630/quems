@@ -10,9 +10,11 @@ interface OfficerSidebarProps {
   userName?: string | null;
   userEmail?: string;
   primaryCounterId?: string | null;
+  brandName?: string;
+  brandLogo?: string | null;
 }
 
-export function OfficerSidebar({ userName, userEmail, primaryCounterId }: OfficerSidebarProps) {
+export function OfficerSidebar({ userName, userEmail, primaryCounterId, brandName, brandLogo }: OfficerSidebarProps) {
   const dashboardHref = primaryCounterId ? `/counter/${primaryCounterId}` : '/counter';
 
   const handleLogout = async () => {
@@ -20,14 +22,14 @@ export function OfficerSidebar({ userName, userEmail, primaryCounterId }: Office
   };
 
   return (
-    <aside className="flex h-screen w-60 flex-col border-r border-border bg-card">
-      <SidebarBrand />
+    <aside className="flex h-screen w-60 flex-col border-r-2 border-zinc-700 bg-zinc-800">
+      <SidebarBrand name={brandName} logoUrl={brandLogo} />
 
       {/* User info */}
       {userName && (
-        <div className="px-4 py-3 border-b border-border">
-          <p className="text-sm font-medium truncate">{userName}</p>
-          {userEmail && <p className="text-xs text-muted-foreground truncate">{userEmail}</p>}
+        <div className="px-4 py-3 border-b border-zinc-700">
+          <p className="text-sm font-medium truncate text-white">{userName}</p>
+          {userEmail && <p className="text-xs text-zinc-400 truncate">{userEmail}</p>}
         </div>
       )}
 
@@ -39,11 +41,11 @@ export function OfficerSidebar({ userName, userEmail, primaryCounterId }: Office
         />
       </nav>
       <div className="flex-1" />
-      <div className="border-t border-border p-2">
+      <div className="border-t border-zinc-700 p-2">
         <Button
           type="button"
           variant="ghost"
-          className="w-full justify-start gap-3"
+          className="w-full justify-start gap-3 text-zinc-400 hover:text-white hover:bg-white/5"
           aria-label="Sign out"
           onClick={handleLogout}
         >

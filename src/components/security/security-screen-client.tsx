@@ -192,7 +192,7 @@ export function SecurityScreenClient({ initialData }: SecurityScreenClientProps)
   return (
     <div className="flex flex-col h-screen bg-zinc-950 text-zinc-100">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 shrink-0">
+      <header className="flex h-16 items-center justify-between px-6 border-b-2 border-zinc-700 bg-zinc-800 shrink-0">
         <div className="flex items-center gap-3">
           <Shield className="w-5 h-5 text-primary" />
           <span className="font-semibold text-lg">Security Officer</span>

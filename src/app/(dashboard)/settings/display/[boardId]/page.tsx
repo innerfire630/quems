@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { DisplayBoardForm } from '@/components/admin/display-board-form';
 import type { DisplayBoardConfig } from '@/types/display.types';
 
@@ -36,6 +37,7 @@ export default async function EditDisplayBoardPage({ params }: EditDisplayBoardP
     ttsVolume: board.ttsVolume,
     announcementTemplate: board.announcementTemplate,
     themeColor: board.themeColor,
+    displayTheme: board.displayTheme,
     logoUrl: board.logoUrl,
     customMessage: board.customMessage,
   };
@@ -49,7 +51,7 @@ export default async function EditDisplayBoardPage({ params }: EditDisplayBoardP
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-2xl font-bold">Edit Display Board: {board.name}</h1>
+        <PageHeader title={`Edit Display Board: ${board.name}`} />
       </div>
       <DisplayBoardForm mode="edit" initialValues={config} boardId={boardId} />
     </div>

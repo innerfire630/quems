@@ -17,8 +17,8 @@ interface KioskServiceGridProps {
 export function KioskServiceGrid({ services, onSelect, isLoading = false }: KioskServiceGridProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
             className="min-h-[120px] animate-pulse rounded-xl border border-border bg-muted p-6"
@@ -39,7 +39,7 @@ export function KioskServiceGrid({ services, onSelect, isLoading = false }: Kios
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {services.map((service) => (
         <ServiceCard key={service.id} service={service} onSelect={onSelect} />
       ))}

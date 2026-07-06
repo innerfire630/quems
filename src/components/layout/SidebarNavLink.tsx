@@ -21,8 +21,8 @@ export function SidebarNavLink({ href, label, icon }: SidebarNavLinkProps) {
       className={cn(
         'flex items-center gap-3 border-l-2 px-4 py-2 text-sm transition-colors',
         isActive
-          ? 'border-primary bg-primary/10 font-medium text-primary'
-          : 'border-transparent text-muted-foreground hover:bg-background hover:text-foreground',
+          ? 'border-white bg-white/10 font-medium text-white'
+          : 'border-transparent text-zinc-400 hover:bg-white/5 hover:text-white',
       )}
       aria-current={isActive ? 'page' : undefined}
     >

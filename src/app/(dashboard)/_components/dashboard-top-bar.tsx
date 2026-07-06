@@ -6,32 +6,18 @@
 // =============================================================================
 
 import type { Session } from 'next-auth';
-import Image from 'next/image';
 import { ProfileDropdown } from '@/components/layout/profile-dropdown';
 
 interface DashboardTopBarProps {
   session: Session;
-  logoUrl?: string | null;
-  title?: string;
 }
 
-export function DashboardTopBar({ session, logoUrl, title }: DashboardTopBarProps) {
+export function DashboardTopBar({ session }: DashboardTopBarProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 sm:px-6">
-      <div className="flex items-center gap-3 min-w-0">
-        {logoUrl ? (
-          <Image
-            src={logoUrl}
-            alt={title ?? 'Logo'}
-            width={120}
-            height={32}
-            className="h-8 w-auto object-contain shrink-0"
-          />
-        ) : null}
-        {title ? (
-          <span className="text-lg font-semibold text-foreground truncate md:hidden">{title}</span>
-        ) : null}
-      </div>
+    <header className="flex h-16 items-center justify-between border-b-2 border-border bg-card px-4 sm:px-6">
+      <span className="text-sm font-medium text-muted-foreground">
+        {session.user.name ?? 'User'}
+      </span>
       <div className="flex items-center gap-4">
         <ProfileDropdown
           userName={session.user.name ?? 'User'}

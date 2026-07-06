@@ -5,6 +5,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { PERMISSION_COUNTER_MANAGE } from '@/lib/permissions';
@@ -74,10 +75,7 @@ export default async function EditCounterPage({ params }: EditCounterPageProps) 
         </Link>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Edit Counter</h1>
-        <p className="text-sm text-muted-foreground">{counter.name}</p>
-      </div>
+      <PageHeader title="Edit Counter" description={counter.name} />
 
       <CounterForm mode="edit" initialValues={initialValues} counterId={counterId} />
 

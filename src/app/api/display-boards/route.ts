@@ -75,6 +75,7 @@ export const POST = withPermission(async (req, _ctx) => {
         ttsVolume: data.ttsVolume,
         announcementTemplate: data.announcementTemplate,
         themeColor: data.themeColor ?? null,
+        displayTheme: data.displayTheme ?? 'dark',
         logoUrl: data.logoUrl || null,
         customMessage: data.customMessage ?? null,
       },

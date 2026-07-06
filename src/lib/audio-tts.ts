@@ -12,6 +12,8 @@
 
 let cachedVoices: SpeechSynthesisVoice[] | null = null;
 
+const VOICE_STORAGE_KEY = 'quems:tts:selectedVoice';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -199,6 +201,22 @@ export function selectVoice(
 ): SpeechSynthesisVoice | null {
   if (voices.length === 0) return null;
 
+  // Try to recall the previously used voice from localStorage
+  let rememberedName: string | null = null;
+  try {
+    rememberedName = localStorage.getItem(VOICE_STORAGE_KEY);
+  } catch {
+    // localStorage may be unavailable (SSR, private browsing)
+  }
+
+  if (rememberedName) {
+    const remembered = voices.find((v) => v.name === rememberedName);
+    if (remembered) {
+      console.debug(`TTS: using remembered voice "${remembered.name}" (${remembered.lang})`);
+      return remembered;
+    }
+  }
+
   const langPrefix = language.split('-')[0];
 
   // Exact BCP-47 matches
@@ -209,31 +227,44 @@ export function selectVoice(
 
   const candidates = exactMatches.length > 0 ? exactMatches : langMatches;
 
+  let selected: SpeechSynthesisVoice | null = null;
+
   if (candidates.length > 0) {
     // Prefer female voice among candidates
     const female = candidates.find(isFemaleVoice);
     if (female) {
       console.debug(`TTS: selected female voice "${female.name}" (${female.lang})`);
-      return female;
+      selected = female;
+    } else {
+      console.debug(`TTS: selected voice "${candidates[0].name}" (${candidates[0].lang})`);
+      selected = candidates[0];
     }
-    console.debug(`TTS: selected voice "${candidates[0].name}" (${candidates[0].lang})`);
-    return candidates[0];
+  } else {
+    // No language match — try any female voice
+    const anyFemale = voices.find(isFemaleVoice);
+    if (anyFemale) {
+      console.warn(
+        `TTS: no voice for language "${language}", using female voice "${anyFemale.name}" (${anyFemale.lang})`,
+      );
+      selected = anyFemale;
+    } else {
+      console.warn(
+        `TTS: no matching voice for language "${language}", using first available voice "${voices[0].lang}"`,
+      );
+      selected = voices[0];
+    }
   }
 
-  // No language match — try any female voice
-  const anyFemale = voices.find(isFemaleVoice);
-  if (anyFemale) {
-    console.warn(
-      `TTS: no voice for language "${language}", using female voice "${anyFemale.name}" (${anyFemale.lang})`,
-    );
-    return anyFemale;
+  // Persist the selected voice name so it survives browser restarts
+  if (selected) {
+    try {
+      localStorage.setItem(VOICE_STORAGE_KEY, selected.name);
+    } catch {
+      // localStorage may be unavailable
+    }
   }
 
-  // Last resort: first available voice
-  console.warn(
-    `TTS: no matching voice for language "${language}", using first available voice "${voices[0].lang}"`,
-  );
-  return voices[0];
+  return selected;
 }
 
 /**

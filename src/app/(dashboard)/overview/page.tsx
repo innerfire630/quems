@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { Users, Layers, Monitor, Ticket, Clock, BarChart3 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,8 +77,7 @@ export default async function OverviewPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Overview</h1>
-      <p className="mt-2 text-muted-foreground">High-level system metrics and recent activity.</p>
+      <PageHeader title="Overview" description="High-level system metrics and recent activity." />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (

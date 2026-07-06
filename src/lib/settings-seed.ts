@@ -21,6 +21,18 @@ const QUEUE_DEFAULT_SETTINGS: {
   description: string;
 }[] = [
   {
+    key: 'system.name',
+    value: 'QUEMS',
+    type: 'STRING',
+    description: 'Display name of the system shown in sidebars, login page, kiosk header, and page titles.',
+  },
+  {
+    key: 'system.logo_url',
+    value: '',
+    type: 'STRING',
+    description: 'URL of the company logo image. Shown next to the system name in sidebars, headers, and the login page.',
+  },
+  {
     key: 'queue.daily_reset_time',
     value: '00:00',
     type: 'STRING',
@@ -38,6 +50,18 @@ const QUEUE_DEFAULT_SETTINGS: {
     type: 'INTEGER',
     description:
       'Fallback average service time (minutes) when a Service.averageServiceTime is null.',
+  },
+  {
+    key: 'display.theme',
+    value: 'dark',
+    type: 'STRING',
+    description: 'TV display theme. Use "dark" for dark background or "light" for white background.',
+  },
+  {
+    key: 'display.marquee_message',
+    value: '',
+    type: 'STRING',
+    description: 'Scrolling marquee text shown at the bottom of the TV display. Leave empty for default message.',
   },
 ];
 

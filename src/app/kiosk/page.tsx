@@ -9,6 +9,7 @@ import { loadKioskConfig, getActiveServicesForKiosk } from '@/lib/kiosk-config';
 import { KioskHeader } from './_components/kiosk-header';
 import { KioskHome } from './_components/kiosk-home';
 import { KioskNoConfig } from './_components/kiosk-no-config';
+import { getSystemBrand } from '@/lib/cached-data';
 
 interface KioskPageProps {
   searchParams: Promise<{ kioskId?: string }>;
@@ -22,11 +23,14 @@ export default async function KioskPage({ searchParams }: KioskPageProps) {
     return <KioskNoConfig />;
   }
 
-  const services = await getActiveServicesForKiosk(kioskConfig);
+  const [services, brand] = await Promise.all([
+    getActiveServicesForKiosk(kioskConfig),
+    getSystemBrand(),
+  ]);
 
   return (
     <>
-      <KioskHeader welcomeMessage={kioskConfig.welcomeMessage ?? 'Welcome!'} />
+      <KioskHeader welcomeMessage={kioskConfig.welcomeMessage ?? 'Welcome!'} brandName={brand.name} brandLogo={brand.logoUrl} />
       <KioskHome services={services} kioskConfig={kioskConfig} />
     </>
   );

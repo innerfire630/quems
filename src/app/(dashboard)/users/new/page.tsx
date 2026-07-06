@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { UserForm } from '@/app/(dashboard)/users/_components/user-form';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +37,7 @@ export default async function NewUserPage() {
         >
           <ArrowLeft className="size-4" />
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">Create User</h1>
+        <PageHeader title="Create User" />
       </div>
       <UserForm mode="create" roles={roles} />
     </div>

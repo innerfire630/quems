@@ -5,6 +5,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { PERMISSION_COUNTER_MANAGE } from '@/lib/permissions';
@@ -59,12 +60,7 @@ export default async function CounterServicesPage({ params }: CounterServicesPag
         Back to Counter
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Manage Counter Services</h1>
-        <p className="text-sm text-muted-foreground">
-          Counter #{counter.number} — {counter.name}
-        </p>
-      </div>
+      <PageHeader title="Manage Counter Services" description={`Counter #${counter.number} — ${counter.name}`} />
 
       <section className="rounded-lg border p-6">
         <h2 className="mb-1 text-lg font-semibold">Assigned Services</h2>

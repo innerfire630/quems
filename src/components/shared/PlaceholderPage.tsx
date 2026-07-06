@@ -16,8 +16,7 @@ export function PlaceholderPage({ title, description, implementedIn }: Placehold
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-muted-foreground">
-          This screen is part of the Smart Queue Management System scaffold and will be implemented
-          in a later phase of the project.
+          This screen will be implemented in a later phase of the project.
         </p>
         <Badge variant="outline">Implemented in {implementedIn}</Badge>
       </CardContent>

@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { PERMISSION_SERVICE_READ } from '@/lib/permissions';
@@ -73,13 +74,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Services</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage the services offered at your queue counters.
-          </p>
-        </div>
+      <PageHeader title="Services" description="Manage the services offered at your queue counters.">
         {hasCreate && (
           <Link
             href="/services/new"
@@ -89,7 +84,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
             Create Service
           </Link>
         )}
-      </div>
+      </PageHeader>
 
       <Suspense>
         <ServiceSearch defaultValue={search} activeFilter={isActive} />

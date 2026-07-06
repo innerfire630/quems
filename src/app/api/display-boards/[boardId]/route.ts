@@ -113,6 +113,7 @@ export const PATCH = withPermission(
             announcementTemplate: data.announcementTemplate,
           }),
           ...(data.themeColor !== undefined && { themeColor: data.themeColor }),
+          ...(data.displayTheme !== undefined && { displayTheme: data.displayTheme }),
           ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl || null }),
           ...(data.customMessage !== undefined && { customMessage: data.customMessage }),
         },

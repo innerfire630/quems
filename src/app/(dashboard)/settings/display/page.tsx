@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { DisplayBoardActions } from '@/components/admin/display-board-actions';
 
 export default async function DisplayBoardsListPage() {
@@ -23,8 +24,7 @@ export default async function DisplayBoardsListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Display Board Configuration</h1>
+      <PageHeader title="Display Board Configuration">
         <Link
           href="/settings/display/new"
           className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -32,7 +32,7 @@ export default async function DisplayBoardsListPage() {
           <Plus className="h-4 w-4" />
           Create Display Board
         </Link>
-      </div>
+      </PageHeader>
 
       {boards.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">

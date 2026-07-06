@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldInfo } from '@/components/ui/field-info';
+import { IconPicker } from '@/components/ui/icon-picker';
 import { createServiceSchema, updateServiceSchema } from '@/schemas/service.schema';
 import type { ServiceListItem } from '@/types/service.types';
 
@@ -185,15 +186,10 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
 
             <div className="space-y-2">
               <Label htmlFor="iconName" className="inline-flex items-center gap-1.5">
-                Icon Name
-                <FieldInfo text="A Lucide icon name (e.g. HelpCircle, FileText, Shield) shown next to the service on the kiosk and display board." />
+                Icon
+                <FieldInfo text="Choose a Lucide icon shown next to the service on the kiosk and display board." />
               </Label>
-              <Input
-                id="iconName"
-                value={iconName}
-                onChange={(e) => setIconName(e.target.value)}
-                placeholder="e.g. HelpCircle"
-              />
+              <IconPicker value={iconName} onChange={setIconName} />
               {errors.iconName && <p className="text-xs text-destructive">{errors.iconName}</p>}
             </div>
 

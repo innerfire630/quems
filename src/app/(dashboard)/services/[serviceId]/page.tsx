@@ -5,6 +5,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Monitor } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { PERMISSION_SERVICE_UPDATE } from '@/lib/permissions';
@@ -65,10 +66,7 @@ export default async function EditServicePage({ params }: EditServicePageProps) 
         Back to Services
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Edit Service</h1>
-        <p className="text-sm text-muted-foreground">{service.name}</p>
-      </div>
+      <PageHeader title="Edit Service" description={service.name} />
 
       <ServiceForm mode="edit" initialValues={initialValues} serviceId={serviceId} />
 

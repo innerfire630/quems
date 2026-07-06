@@ -10,13 +10,14 @@ import { auth } from '@/lib/auth';
 import { queryAuditLogs } from '@/lib/audit-log-queries';
 import { AuditLogPageClient } from '@/components/admin/audit-log-page-client';
 import { PERMISSION_SYSTEM_AUDIT } from '@/lib/permissions';
+import { PageHeader } from '@/components/layout/page-header';
 import type { Metadata } from 'next';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Audit Log — quems',
+  title: 'Audit Log — QUEMS',
 };
 
 export default async function AuditLogPage() {
@@ -36,7 +37,7 @@ export default async function AuditLogPage() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
+        <PageHeader title="Audit Log" description="System audit trail for all administrative actions." />
         <p className="text-sm text-muted-foreground">
           Every administrative action in the system is recorded here.
         </p>

@@ -40,7 +40,7 @@ export function AudioUnlockOverlay({ onUnlock, logoUrl, audioCtxRef }: AudioUnlo
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-display-bg flex items-center justify-center cursor-pointer select-none"
+      className="fixed inset-0 z-[100] flex items-center justify-center cursor-pointer select-none"
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -48,24 +48,25 @@ export function AudioUnlockOverlay({ onUnlock, logoUrl, audioCtxRef }: AudioUnlo
         if (e.key === 'Enter' || e.key === ' ') handleClick();
       }}
     >
-      <div className="flex flex-col items-center gap-8 text-center px-8">
+      <div className="flex flex-col items-center text-center" style={{ gap: 'clamp(1.5rem, 4vh, 3rem)', padding: '0 clamp(1.5rem, 4vw, 4rem)' }}>
         {logoUrl && (
           <Image
             src={logoUrl}
             alt="Logo"
             width={96}
             height={96}
-            className="max-h-24 object-contain"
+            className="object-contain"
+            style={{ maxHeight: 'clamp(3rem, 8vh, 6rem)', width: 'auto' }}
             priority
           />
         )}
         <div className="animate-pulse">
-          <svg className="w-20 h-20 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+          <svg className="text-blue-600" style={{ width: 'clamp(2.5rem, 5vw, 5rem)', height: 'clamp(2.5rem, 5vw, 5rem)' }} fill="currentColor" viewBox="0 0 24 24">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-gray-800">Click anywhere to enable audio</h1>
-        <p className="text-lg text-gray-500">
+        <h1 className="font-bold" style={{ fontSize: 'clamp(1.2rem, 3vw, 2.5rem)', color: 'var(--db-text)' }}>Click anywhere to enable audio</h1>
+        <p style={{ fontSize: 'clamp(0.8rem, 1.5vw, 1.5rem)', color: 'var(--db-text-muted)' }}>
           Audio announcements will play when tickets are called
         </p>
       </div>

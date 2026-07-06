@@ -70,7 +70,7 @@ export default function NotificationToggle({
   );
 
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-lg border-2 p-4">
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">

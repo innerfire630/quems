@@ -33,6 +33,7 @@ const DEFAULT_VALUES = {
   ttsVolume: 1.0,
   announcementTemplate: 'Ticket {number}, please proceed to {counter}',
   themeColor: '',
+  displayTheme: 'dark',
   logoUrl: '',
   customMessage: '',
 };
@@ -65,6 +66,7 @@ export function DisplayBoardForm({ mode, initialValues, boardId }: DisplayBoardF
         ttsVolume: initialValues.ttsVolume,
         announcementTemplate: initialValues.announcementTemplate,
         themeColor: initialValues.themeColor ?? '',
+        displayTheme: initialValues.displayTheme ?? 'dark',
         logoUrl: initialValues.logoUrl ?? '',
         customMessage: initialValues.customMessage ?? '',
       };
@@ -175,6 +177,34 @@ export function DisplayBoardForm({ mode, initialValues, boardId }: DisplayBoardF
               placeholder="#3B82F6"
               className="flex-1"
             />
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="displayTheme">Display Theme</Label>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => update('displayTheme', 'dark')}
+              className={`px-4 py-2 rounded-lg border-2 font-semibold transition-colors ${
+                form.displayTheme === 'dark'
+                  ? 'bg-zinc-900 text-white border-amber-500'
+                  : 'bg-zinc-100 text-zinc-700 border-zinc-300 hover:border-zinc-400'
+              }`}
+            >
+              🌙 Dark
+            </button>
+            <button
+              type="button"
+              onClick={() => update('displayTheme', 'light')}
+              className={`px-4 py-2 rounded-lg border-2 font-semibold transition-colors ${
+                form.displayTheme === 'light'
+                  ? 'bg-white text-zinc-900 border-amber-500'
+                  : 'bg-zinc-100 text-zinc-700 border-zinc-300 hover:border-zinc-400'
+              }`}
+            >
+              ☀️ Light
+            </button>
           </div>
         </div>
 

@@ -8,7 +8,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Kiosk — Queue Management System',
+  title: 'Kiosk — QUEMS',
   description: 'Self-service kiosk for ticket issuance',
 };
 

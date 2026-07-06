@@ -11,6 +11,7 @@ import { PERMISSION_USER_CREATE } from '@/lib/permissions';
 import { UserPlus } from 'lucide-react';
 import { UserTableClient } from './_components/user-table-client';
 import { UserSearchBar } from './_components/user-search-bar';
+import { PageHeader } from '@/components/layout/page-header';
 
 interface UsersPageProps {
   searchParams: Promise<{ search?: string; page?: string }>;
@@ -85,13 +86,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">User Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {total} user{total !== 1 ? 's' : ''} total
-          </p>
-        </div>
+      <PageHeader title="User Management" description={`${total} user${total !== 1 ? 's' : ''} total`}>
         <Can permission={PERMISSION_USER_CREATE}>
           <Link
             href="/users/new"
@@ -101,7 +96,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
             Create User
           </Link>
         </Can>
-      </div>
+      </PageHeader>
 
       {/* Search */}
       <UserSearchBar defaultValue={search} />

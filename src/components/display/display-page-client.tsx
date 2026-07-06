@@ -7,8 +7,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import Image from 'next/image';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useSSE } from '@/hooks/use-sse';
 import { applyEvent } from '@/lib/display-state';
 import { loadBellBuffer, getCachedBellBuffer } from '@/lib/audio-bell';
@@ -16,25 +15,36 @@ import { useAudioUnlock } from '@/hooks/use-audio-unlock';
 import { useAnnouncement } from '@/hooks/use-announcement';
 import { AudioUnlockOverlay } from './audio-unlock-overlay';
 import { DisplayClock } from './display-clock';
-import { DisplayCounterGrid } from './display-counter-grid';
+import { NowServingHero } from './now-serving-hero';
+import { RecentCallsList } from './recent-calls-list';
 import { MarqueeMessage } from './marquee-message';
 import { BroadcastBanner } from './broadcast-banner';
-import type { DisplaySnapshot, DisplayState } from '@/types/display.types';
+import type { DisplaySnapshot, DisplayState, TicketDisplayData } from '@/types/display.types';
 
 interface DisplayPageClientProps {
   initialSnapshot: DisplaySnapshot;
   boardId: string | null;
+  systemName?: string;
+  brandLogo?: string | null;
+  displayTheme?: string;
+  marqueeMessage?: string | null;
 }
 
 function buildInitialState(snapshot: DisplaySnapshot): DisplayState {
   const counters: DisplayState['counters'] = {};
   const counterStatus: DisplayState['counterStatus'] = {};
+  const counterCloseReasons: DisplayState['counterCloseReasons'] = {};
   const nowServing: DisplayState['nowServing'] = {};
   const recentByCounter: DisplayState['recentByCounter'] = {};
 
   for (const c of snapshot.counters) {
     counters[c.id] = c;
-    counterStatus[c.id] = 'open';
+    // Use real closed status from snapshot instead of hardcoding 'open'
+    const closedInfo = snapshot.counterClosedStatus[c.id];
+    counterStatus[c.id] = closedInfo?.closed ? 'closed' : 'open';
+    if (closedInfo?.closed && closedInfo.reason) {
+      counterCloseReasons[c.id] = closedInfo.reason;
+    }
     nowServing[c.id] = snapshot.servingTickets[c.id] ?? null;
     recentByCounter[c.id] = snapshot.recentTickets[c.id] ?? [];
   }
@@ -45,12 +55,12 @@ function buildInitialState(snapshot: DisplaySnapshot): DisplayState {
     nowServing,
     recentByCounter,
     counterStatus,
-    counterCloseReasons: {},
+    counterCloseReasons,
     broadcastMessage: null,
   };
 }
 
-export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: DisplayPageClientProps) {
+export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemName = 'QUEMS', brandLogo, displayTheme = 'dark', marqueeMessage: marqueeMessageProp }: DisplayPageClientProps) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [unlocked, setUnlocked] = useState(false);
@@ -130,6 +140,79 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
     };
   }, [state.broadcastMessage]);
 
+  // Compute the single most recently called ticket for the hero display
+  // Prefer active (CALLED/RECALLED) tickets — when the hero is served,
+  // automatically promote the next active ticket from history
+  const latestTicket = useMemo(() => {
+    const allServing = Object.values(state.nowServing).filter(
+      (t): t is TicketDisplayData => t !== null,
+    );
+    if (allServing.length === 0) return null;
+
+    const sorted = allServing.sort(
+      (a, b) => new Date(b.calledAt).getTime() - new Date(a.calledAt).getTime(),
+    );
+
+    // Prefer active tickets (CALLED/RECALLED) over served/no-show
+    const active = sorted.filter(
+      (t) => t.status === 'CALLED' || t.status === 'RECALLED',
+    );
+    return active.length > 0 ? active[0]! : sorted[0]!;
+  }, [state.nowServing]);
+
+  // Build flat sorted history: displaced serving tickets + recentByCounter, excluding hero
+  // Active (still-serving) tickets are sorted to the top so they blink first
+  const historyTickets = useMemo(() => {
+    const all: TicketDisplayData[] = [];
+    // Include other currently serving tickets that are NOT the hero (displaced)
+    for (const t of Object.values(state.nowServing)) {
+      if (t && t.id !== latestTicket?.id) {
+        all.push(t);
+      }
+    }
+    // Include recentByCounter history
+    for (const tickets of Object.values(state.recentByCounter)) {
+      all.push(...tickets);
+    }
+    const seen = new Set<string>();
+    // Exclude the hero ticket from history entirely
+    if (latestTicket) seen.add(latestTicket.id);
+    const deduped: TicketDisplayData[] = [];
+    for (const t of all.sort(
+      (a, b) => new Date(b.calledAt).getTime() - new Date(a.calledAt).getTime(),
+    )) {
+      if (!seen.has(t.id)) {
+        seen.add(t.id);
+        deduped.push(t);
+      }
+    }
+    // Sort: active (CALLED/RECALLED) tickets first, then by calledAt desc
+    return deduped.sort((a, b) => {
+      const aActive = a.status === 'CALLED' || a.status === 'RECALLED' ? 0 : 1;
+      const bActive = b.status === 'CALLED' || b.status === 'RECALLED' ? 0 : 1;
+      if (aActive !== bActive) return aActive - bActive;
+      return new Date(b.calledAt).getTime() - new Date(a.calledAt).getTime();
+    });
+  }, [state.nowServing, state.recentByCounter, latestTicket]);
+
+  // Compute counter notices (closed counters with reasons)
+  const counterNotices = useMemo(() => {
+    const notices: string[] = [];
+    for (const [counterId, status] of Object.entries(state.counterStatus)) {
+      if (status === 'closed') {
+        const counter = state.counters[counterId];
+        const counterNum = counter?.number ?? '?';
+        const reason = state.counterCloseReasons[counterId];
+        notices.push(
+          reason
+            ? `Counter ${counterNum} : ${reason}`
+            : `Counter ${counterNum} : temporarily closed`,
+        );
+      }
+    }
+    return notices;
+  }, [state.counterStatus, state.counterCloseReasons, state.counters]);
+
   // Show unlock overlay until dismissed
   if (!unlocked) {
     return (
@@ -141,68 +224,85 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId }: Displa
     );
   }
 
-  const maxDisplayedTickets = state.board?.maxDisplayedTickets ?? 5;
-  const countersList = Object.values(state.counters).sort((a, b) => {
-    const ticketA = state.nowServing[a.id];
-    const ticketB = state.nowServing[b.id];
-    const aActive = !!ticketA;
-    const bActive = !!ticketB;
-
-    // Active counters first
-    if (aActive && !bActive) return -1;
-    if (!aActive && bActive) return 1;
-
-    // Among active counters, sort by calledAt descending (most recent first)
-    if (aActive && bActive) {
-      const timeA = new Date(ticketA!.calledAt).getTime();
-      const timeB = new Date(ticketB!.calledAt).getTime();
-      return timeB - timeA;
-    }
-
-    // Among idle counters, sort by number ascending
-    return a.number - b.number;
-  });
+  // Theme CSS custom properties — all display components reference these vars
+  const isLight = displayTheme === 'light';
+  const themeVars: React.CSSProperties = isLight
+    ? {
+        '--db-bg': '#ffffff',
+        '--db-surface': '#f9fafb',
+        '--db-surface-2': '#f3f4f6',
+        '--db-border': '#e5e7eb',
+        '--db-border-light': '#d1d5db',
+        '--db-text': '#111827',
+        '--db-text-secondary': '#374151',
+        '--db-text-muted': '#6b7280',
+        '--db-text-dim': '#9ca3af',
+        '--db-accent': '#f59e0b',
+        '--db-accent-text': '#ffffff',
+        '--db-ticket': '#2563eb',
+        '--db-ticket-recalled': '#d97706',
+        '--db-ticket-served': '#059669',
+        '--db-ticket-noshow': '#dc2626',
+        '--db-gradient-from': '#f9fafb',
+        '--db-gradient-via': '#ffffff',
+        '--db-gradient-to': '#f9fafb',
+      }
+    : {
+        '--db-bg': '#09090b',
+        '--db-surface': '#18181b',
+        '--db-surface-2': '#27272a',
+        '--db-border': '#3f3f46',
+        '--db-border-light': '#27272a',
+        '--db-text': '#fafafa',
+        '--db-text-secondary': '#d4d4d8',
+        '--db-text-muted': '#a1a1aa',
+        '--db-text-dim': '#71717a',
+        '--db-accent': '#f59e0b',
+        '--db-accent-text': '#09090b',
+        '--db-ticket': '#3b82f6',
+        '--db-ticket-recalled': '#f59e0b',
+        '--db-ticket-served': '#10b981',
+        '--db-ticket-noshow': '#ef4444',
+        '--db-gradient-from': '#18181b',
+        '--db-gradient-via': '#09090b',
+        '--db-gradient-to': '#18181b',
+      };
 
   return (
-    <div className="fixed inset-0 bg-display-bg overflow-hidden flex flex-col">
-      {/* Top bar */}
-      <header className="h-12 flex items-center justify-between px-6 border-b border-gray-200 shrink-0">
-        <div className="flex items-center gap-3">
-          {state.board?.logoUrl && (
-            <Image
-              src={state.board.logoUrl}
-              alt={state.board.name}
-              width={120}
-              height={32}
-              className="h-8 object-contain"
-              priority
+    <div className="fixed inset-0 font-sans flex flex-col overflow-hidden" style={{ ...themeVars, backgroundColor: 'var(--db-bg)', color: 'var(--db-text)' }}>
+      {/* Header — 10vh */}
+      <header className="h-[10vh] border-b-2 flex items-center justify-between shrink-0" style={{ padding: '0 clamp(1.5rem, 3vw, 4rem)', backgroundColor: 'var(--db-surface)', borderColor: 'var(--db-border)' }}>
+        <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 1rem)' }}>
+          {brandLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={brandLogo}
+              alt={systemName}
+              className="object-contain"
+              style={{ width: 'clamp(1.5rem, 3vh, 3rem)', height: 'clamp(1.5rem, 3vh, 3rem)' }}
             />
-          )}
-          {!state.board?.logoUrl && state.board && (
-            <span className="text-gray-800 font-semibold text-lg">{state.board.name}</span>
-          )}
+          ) : null}
+          <span className="font-black tracking-wider uppercase" style={{ fontSize: 'clamp(1rem, 2.5vw, 2.5rem)', color: 'var(--db-text)' }}>
+            {systemName}
+          </span>
         </div>
         <DisplayClock />
       </header>
 
-      {/* Broadcast banner */}
+      {/* Broadcast banner overlay */}
       <BroadcastBanner
         message={state.broadcastMessage}
         onExpire={() => setState((prev) => ({ ...prev, broadcastMessage: null }))}
       />
 
-      {/* Main counter grid */}
-      <DisplayCounterGrid
-        counters={countersList}
-        nowServing={state.nowServing}
-        recentByCounter={state.recentByCounter}
-        counterStatus={state.counterStatus}
-        counterCloseReasons={state.counterCloseReasons}
-        maxDisplayedTickets={maxDisplayedTickets}
-      />
+      {/* Main content — 85vh, 70/30 split */}
+      <main className="h-[85vh] flex">
+        <NowServingHero ticket={latestTicket} notices={counterNotices} />
+        <RecentCallsList tickets={historyTickets} />
+      </main>
 
-      {/* Bottom marquee */}
-      <MarqueeMessage message={state.board?.customMessage ?? null} />
+      {/* Footer ticker — 5vh */}
+      <MarqueeMessage message={marqueeMessageProp ?? state.board?.customMessage ?? null} />
     </div>
   );
 }

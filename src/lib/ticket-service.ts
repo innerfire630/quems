@@ -881,21 +881,7 @@ export async function recallNoShowTicket(
       );
     }
 
-    // 3. Verify ticket's service is assigned to the counter
-    const counterService = await tx.counterService.findUnique({
-      where: {
-        counterId_serviceId: {
-          counterId: officer.counterId,
-          serviceId: ticket.serviceId,
-        },
-      },
-    });
-
-    if (!counterService) {
-      throw Object.assign(new Error("This counter does not handle the ticket's service."), {
-        code: 'SERVICE_NOT_ASSIGNED_TO_COUNTER',
-      });
-    }
+    // 3. Any counter can recall any no-show ticket — no service assignment check
 
     // 4. Verify counter is active
     const counter = await tx.counter.findUnique({ where: { id: officer.counterId } });

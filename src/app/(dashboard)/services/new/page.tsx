@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { PERMISSION_SERVICE_CREATE } from '@/lib/permissions';
 import { ServiceForm } from '@/app/(dashboard)/services/_components/service-form';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default async function NewServicePage() {
   const session = await auth();
@@ -16,12 +17,7 @@ export default async function NewServicePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Create Service</h1>
-        <p className="text-sm text-muted-foreground">
-          Add a new service category for the queue system.
-        </p>
-      </div>
+      <PageHeader title="Create Service" description="Add a new service category for the queue system." />
       <ServiceForm mode="create" />
     </div>
   );

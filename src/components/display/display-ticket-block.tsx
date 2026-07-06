@@ -22,23 +22,23 @@ export const DisplayTicketBlock = React.memo(function DisplayTicketBlock({
   recentTickets,
   counterStatus,
   closeReason = '',
-  maxItems = 5,
+  maxItems = 3,
 }: DisplayTicketBlockProps) {
   const isClosed = counterStatus === 'closed';
 
   return (
     <div
-      className={`bg-white rounded-lg p-6 border border-gray-400 flex flex-col gap-4 transition-opacity duration-300 ${
+      className={`rounded-lg border border-zinc-700 flex flex-col transition-opacity duration-300 ${
         isClosed ? 'opacity-50' : ''
       }`}
     >
       {/* Header */}
-      <div className="text-center text-lg font-semibold text-gray-700">
+      <div className="bg-white px-6 py-3 text-center text-lg font-semibold text-gray-700">
         {counter.displayLabel || counter.name}
       </div>
 
-      {/* "Now Serving" slot */}
-      <div className="flex-1 flex items-center justify-center min-h-[8rem]">
+      {/* "Now Serving" slot - white background for visibility */}
+      <div className="bg-white flex-1 flex items-center justify-center min-h-[8rem] px-6 py-4">
         {isClosed ? (
           <div className="flex flex-col items-center gap-1">
             <span className="text-2xl font-semibold text-gray-400">
@@ -51,9 +51,9 @@ export const DisplayTicketBlock = React.memo(function DisplayTicketBlock({
               <span
                 className={`text-8xl font-black tracking-tight ${
                   nowServing.status === 'RECALLED'
-                    ? 'text-amber-400 animate-pulse'
+                    ? 'text-amber-500 animate-pulse'
                     : nowServing.status === 'SERVED'
-                      ? 'text-green-400'
+                      ? 'text-green-500'
                       : nowServing.status === 'CALLED'
                         ? 'text-display-accent animate-pulse'
                         : 'text-gray-900'
@@ -68,12 +68,12 @@ export const DisplayTicketBlock = React.memo(function DisplayTicketBlock({
               </span>
             )}
             {nowServing.status === 'RECALLED' && (
-              <span className="text-xs font-medium text-amber-400 uppercase tracking-wider">
+              <span className="text-xs font-medium text-amber-500 uppercase tracking-wider">
                 Recalling...
               </span>
             )}
             {nowServing.status === 'SERVED' && (
-              <span className="text-xs font-medium text-green-400 uppercase tracking-wider">
+              <span className="text-xs font-medium text-green-500 uppercase tracking-wider">
                 Served ✓
               </span>
             )}
@@ -83,8 +83,10 @@ export const DisplayTicketBlock = React.memo(function DisplayTicketBlock({
         )}
       </div>
 
-      {/* Recent calls */}
-      <RecentCallsList tickets={recentTickets} maxItems={maxItems} />
+      {/* Recent calls - dark gray */}
+      <div className="bg-zinc-800 px-6 py-3">
+        <RecentCallsList tickets={recentTickets} maxItems={maxItems} />
+      </div>
     </div>
   );
 });

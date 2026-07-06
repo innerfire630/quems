@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { PERMISSION_COUNTER_CREATE } from '@/lib/permissions';
 import { CounterForm } from '@/app/(dashboard)/counters/_components/counter-form';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default async function NewCounterPage() {
   const session = await auth();
@@ -16,12 +17,7 @@ export default async function NewCounterPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Create Counter</h1>
-        <p className="text-sm text-muted-foreground">
-          Add a new serving counter to the queue system.
-        </p>
-      </div>
+      <PageHeader title="Create Counter" description="Add a new serving counter to the queue system." />
       <CounterForm mode="create" />
     </div>
   );

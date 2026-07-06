@@ -22,9 +22,11 @@ function formatDateTime(date: Date): string {
 
 interface KioskHeaderProps {
   welcomeMessage: string;
+  brandName?: string;
+  brandLogo?: string | null;
 }
 
-export function KioskHeader({ welcomeMessage }: KioskHeaderProps) {
+export function KioskHeader({ welcomeMessage, brandName = 'QUEMS', brandLogo }: KioskHeaderProps) {
   const [now, setNow] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -33,9 +35,19 @@ export function KioskHeader({ welcomeMessage }: KioskHeaderProps) {
   }, []);
 
   return (
-    <header className="mb-12">
-      <div className="flex items-center justify-between">
-        <div className="text-2xl font-bold text-primary">QUEMS</div>
+    <header className="mb-8">
+      <div className="flex h-16 items-center justify-between">
+        <div className="flex items-center gap-3">
+          {brandLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={brandLogo}
+              alt={brandName}
+              className="h-10 w-10 shrink-0 object-contain"
+            />
+          ) : null}
+          <span className="text-2xl font-bold text-primary">{brandName}</span>
+        </div>
         <div className="text-lg font-mono text-muted-foreground" suppressHydrationWarning>
           {formatDateTime(now)}
         </div>

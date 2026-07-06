@@ -106,7 +106,7 @@ export default function CounterStatusToggle({
 
   return (
     <>
-      <div className="flex items-center justify-between rounded-md border px-3 py-2">
+      <div className="flex items-center justify-between rounded-md border-2 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Counter Status</span>
           <Badge variant={isOpen ? 'default' : 'secondary'} className="text-[10px]">

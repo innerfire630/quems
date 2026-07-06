@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { DisplayBoardForm } from '@/components/admin/display-board-form';
+import { PageHeader } from '@/components/layout/page-header';
 
 export default function CreateDisplayBoardPage() {
   return (
@@ -16,7 +17,7 @@ export default function CreateDisplayBoardPage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-2xl font-bold">Create Display Board</h1>
+        <PageHeader title="Create Display Board" />
       </div>
       <DisplayBoardForm mode="create" />
     </div>

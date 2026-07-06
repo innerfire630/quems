@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { PERMISSION_SYSTEM_CONFIGURE } from '@/lib/permissions';
 import { SettingsClient } from '@/components/admin/settings-client';
+import { PageHeader } from '@/components/layout/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,12 +29,7 @@ export default async function SystemSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          Global system configuration values. Changes take effect immediately.
-        </p>
-      </div>
+      <PageHeader title="System Settings" description="Global system configuration values. Changes take effect immediately." />
       <SettingsClient settings={settings} />
     </div>
   );

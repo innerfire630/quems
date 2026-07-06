@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Smart Queue Management System',
+  title: 'QUEMS',
   description:
     'Production-grade web-based queue management system for digital queue issuance, counter operations, live display, audio announcements, push notifications, and reporting.',
 };

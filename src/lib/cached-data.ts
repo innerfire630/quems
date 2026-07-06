@@ -70,6 +70,45 @@ export const getDisplayBoardConfigurations = unstable_cache(
 );
 
 // ---------------------------------------------------------------------------
+// System name (from system.name setting)
+// ---------------------------------------------------------------------------
+
+export const SYSTEM_NAME_TAG = 'system-name';
+
+export const getSystemName = unstable_cache(
+  async (): Promise<string> => {
+    const setting = await prisma.systemSetting.findUnique({
+      where: { key: 'system.name' },
+      select: { value: true },
+    });
+    return setting?.value ?? 'QUEMS';
+  },
+  ['system-name'],
+  { tags: [SYSTEM_NAME_TAG, SETTINGS_TAG], revalidate: 3600 },
+);
+
+export interface SystemBrand {
+  name: string;
+  logoUrl: string | null;
+}
+
+export const getSystemBrand = unstable_cache(
+  async (): Promise<SystemBrand> => {
+    const settings = await prisma.systemSetting.findMany({
+      where: { key: { in: ['system.name', 'system.logo_url'] } },
+      select: { key: true, value: true },
+    });
+    const map = new Map(settings.map((s) => [s.key, s.value]));
+    return {
+      name: map.get('system.name') ?? 'QUEMS',
+      logoUrl: map.get('system.logo_url') || null,
+    };
+  },
+  ['system-brand'],
+  { tags: [SYSTEM_NAME_TAG, SETTINGS_TAG], revalidate: 3600 },
+);
+
+// ---------------------------------------------------------------------------
 // System setting (single key)
 // ---------------------------------------------------------------------------
 

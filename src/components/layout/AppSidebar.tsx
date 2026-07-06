@@ -38,10 +38,15 @@ const NAV_ITEMS = [
   { href: '/settings', label: 'Settings', icon: Settings, permission: PERMISSION_SYSTEM_CONFIGURE },
 ] as const;
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  brandName?: string;
+  brandLogo?: string | null;
+}
+
+export function AppSidebar({ brandName, brandLogo }: AppSidebarProps) {
   return (
-    <aside className="hidden h-screen w-60 flex-col border-r border-border bg-card md:flex shrink-0">
-      <SidebarBrand />
+    <aside className="hidden h-screen w-60 flex-col border-r-2 border-zinc-700 bg-zinc-800 md:flex shrink-0">
+      <SidebarBrand name={brandName} logoUrl={brandLogo} />
       <nav className="flex flex-col gap-0.5 py-2" aria-label="Primary">
         {NAV_ITEMS.map((item) =>
           item.permission ? (

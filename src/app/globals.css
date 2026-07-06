@@ -47,10 +47,21 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Display board color tokens (Phase 3.2 — light theme, like kiosk) */
-  --color-display-bg: #ffffff;
-  --color-display-accent: #111827;
-  --color-display-text: #111827;
+  /* Display board color tokens (dark TV theme) */
+  --color-display-bg: #09090b;
+  --color-display-accent: #3b82f6;
+  --color-display-text: #f4f4f5;
+}
+
+/* Custom pulse animation for "NOW SERVING" banner */
+@keyframes pulse-custom {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 :root {

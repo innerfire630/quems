@@ -1,5 +1,9 @@
 // =============================================================================
-// src/components/display/recent-calls-list.tsx — Recent calls history (3.2.2)
+// src/components/display/recent-calls-list.tsx — Recall history panel
+// =============================================================================
+// Right panel showing recent ticket calls with visual style matching the
+// hero "Now Serving" display. Supports blinking highlight for newly
+// displaced tickets that were just moved from the hero display.
 // =============================================================================
 
 import React from 'react';
@@ -7,71 +11,100 @@ import type { TicketDisplayData } from '@/types/display.types';
 
 interface RecentCallsListProps {
   tickets: TicketDisplayData[];
-  maxItems: number;
-}
-
-function relativeTime(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const seconds = Math.floor(diff / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  maxItems?: number;
 }
 
 export const RecentCallsList = React.memo(function RecentCallsList({
   tickets,
-  maxItems,
+  maxItems = 7,
 }: RecentCallsListProps) {
   const visible = tickets.slice(0, maxItems);
-  const placeholdersNeeded = maxItems - visible.length;
 
   return (
-    <div className="flex flex-col gap-1 mt-2">
-      {visible.map((t, i) => (
-        <div
-          key={`${t.id}-${t.status}-${i}`}
-          className="flex justify-between items-center text-gray-700"
-        >
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-2xl font-bold ${
-                t.status === 'NO_SHOW'
-                  ? 'text-red-400 line-through'
-                  : t.status === 'RECALLED'
-                    ? 'text-amber-400'
-                    : ''
-              }`}
-            >
-              {t.ticketNumber}
-            </span>
-            {t.status === 'NO_SHOW' && (
-              <span className="text-[10px] font-medium text-red-400 uppercase bg-red-400/10 px-1.5 py-0.5 rounded">
-                No-Show
-              </span>
-            )}
-            {t.status === 'RECALLED' && (
-              <span className="text-[10px] font-medium text-amber-400 uppercase bg-amber-400/10 px-1.5 py-0.5 rounded">
-                Recalled
-              </span>
-            )}
-            {t.status === 'SERVED' && (
-              <span className="text-[10px] font-medium text-green-400 uppercase bg-green-400/10 px-1.5 py-0.5 rounded">
-                Served
-              </span>
-            )}
+    <section className="w-[30%] min-w-[260px] flex flex-col border-l overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--db-gradient-from), var(--db-gradient-via), var(--db-gradient-to))', borderColor: 'var(--db-border)' }}>
+      {/* Blink animation for actively serving tickets */}
+      <style>{`
+        @keyframes history-blink {
+          0%, 100% { border-color: var(--db-border); background-color: var(--db-bg); }
+          50% { border-color: var(--db-accent); background-color: color-mix(in srgb, var(--db-accent) 8%, var(--db-bg)); }
+        }
+        .history-highlight {
+          animation: history-blink 1s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* History items — centered vertically */}
+      <div className="flex-1 overflow-y-auto flex flex-col justify-center" style={{ padding: 'clamp(0.4rem, 1vh, 1rem)', gap: 'clamp(0.4rem, 0.8vh, 0.8rem)' }}>
+        {visible.length === 0 ? (
+          <div className="flex items-center justify-center h-full" style={{ fontSize: 'clamp(0.65rem, 1.2vw, 1.2rem)', color: 'var(--db-text-muted)' }}>
+            No recent calls
           </div>
-          <span className="text-xs text-gray-400">{relativeTime(t.calledAt)}</span>
-        </div>
-      ))}
-      {Array.from({ length: placeholdersNeeded }, (_, i) => (
-        <div key={`placeholder-${i}`} className="flex justify-between items-center text-gray-700">
-          <span className="text-2xl font-bold text-gray-300">&mdash;</span>
-          <span className="text-xs text-gray-300">&nbsp;</span>
-        </div>
-      ))}
-    </div>
+        ) : (
+          visible.map((t, i) => {
+            const isServing = t.status === 'CALLED' || t.status === 'RECALLED';
+            return (
+              <div
+                key={`${t.id}-${t.status}-${i}`}
+                className={`flex items-center justify-between rounded-xl border-2 transition-all duration-300 ${isServing ? 'history-highlight' : ''}`}
+                style={{
+                  padding: 'clamp(0.35rem, 0.8vh, 0.8rem) clamp(0.5rem, 1vw, 1.2rem)',
+                  backgroundColor: 'var(--db-bg)',
+                  borderColor: isServing ? 'var(--db-accent)' : 'var(--db-border)',
+                }}
+              >
+                {/* Ticket box */}
+                <div className="flex flex-col items-center flex-1 min-w-0">
+                  <span className="uppercase tracking-wider font-semibold" style={{ fontSize: 'clamp(0.45rem, 0.7vw, 0.8rem)', color: 'var(--db-text-muted)' }}>Ticket No.</span>
+                  <span
+                    className="font-black text-center truncate"
+                    style={{
+                      fontSize: 'clamp(1rem, 2.2vw, 2.4rem)',
+                      color:
+                        t.status === 'NO_SHOW'
+                          ? 'var(--db-ticket-noshow)'
+                          : t.status === 'RECALLED'
+                            ? 'var(--db-ticket-recalled)'
+                            : t.status === 'SERVED'
+                              ? 'var(--db-ticket-served)'
+                              : 'var(--db-ticket)',
+                    }}
+                  >
+                    {t.ticketNumber}
+                  </span>
+                </div>
+
+                {/* Arrow */}
+                <span className="font-black shrink-0" style={{ fontSize: 'clamp(0.8rem, 1.4vw, 1.4rem)', padding: '0 clamp(0.2rem, 0.4vw, 0.5rem)', color: 'var(--db-text-dim)' }}>➔</span>
+
+                {/* Counter / Status box */}
+                <div className="flex flex-col items-center flex-1 min-w-0">
+                  {t.status === 'NO_SHOW' ? (
+                    <>
+                      <span className="font-bold uppercase tracking-widest" style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.8rem)', color: 'var(--db-ticket-noshow)' }}>
+                        ✗ No-Show
+                      </span>
+                    </>
+                  ) : t.status === 'SERVED' ? (
+                    <>
+                      <span className="uppercase tracking-wider font-semibold" style={{ fontSize: 'clamp(0.45rem, 0.7vw, 0.8rem)', color: 'var(--db-text-muted)' }}>Counter</span>
+                      <span className="font-black text-center uppercase truncate" style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.8rem)', color: 'var(--db-ticket-served)' }}>
+                        ✓ Served
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="uppercase tracking-wider font-semibold" style={{ fontSize: 'clamp(0.45rem, 0.7vw, 0.8rem)', color: 'var(--db-text-muted)' }}>Proceed to</span>
+                      <span className="font-black text-center uppercase truncate" style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.8rem)', color: 'var(--db-accent)' }}>
+                        {t.counterName || `Counter ${t.counterNumber}`}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </section>
   );
 });

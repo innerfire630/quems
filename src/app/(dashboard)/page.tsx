@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ShieldX, Users, Layers, Monitor, Ticket, Clock, BarChart3 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,10 +115,7 @@ export default async function DashboardHomePage({ searchParams }: DashboardHomeP
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Welcome, {session.user.name}</h1>
-      <p className="mt-2 text-muted-foreground">
-        Here&apos;s a quick overview of your queue management system.
-      </p>
+      <PageHeader title={`Welcome, ${session.user.name}`} description="Here&apos;s a quick overview of your queue management system." />
 
       {params.error === 'forbidden' && (
         <Alert variant="destructive" className="mt-6">

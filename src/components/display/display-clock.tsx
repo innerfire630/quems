@@ -16,7 +16,11 @@ export function DisplayClock() {
     return () => clearInterval(interval);
   }, []);
 
-  const timeStr = new Intl.DateTimeFormat(undefined, {
+  const dateTimeStr = new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -24,18 +28,10 @@ export function DisplayClock() {
     timeZone: APP_TIMEZONE,
   }).format(now);
 
-  const dateStr = new Intl.DateTimeFormat(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: APP_TIMEZONE,
-  }).format(now);
-
   return (
-    <div className="flex flex-col items-end text-gray-700 select-none" suppressHydrationWarning>
-      <span className="text-xl font-semibold tabular-nums tracking-wide">{timeStr}</span>
-      <span className="text-sm text-gray-500">{dateStr}</span>
+    <div className="flex flex-col select-none" suppressHydrationWarning>
+      <span className="uppercase tracking-widest font-semibold" style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.9rem)', color: 'var(--db-text-muted)' }}>Current Date &amp; Time</span>
+      <span className="font-bold tabular-nums" style={{ fontSize: 'clamp(0.8rem, 1.8vw, 1.8rem)', color: 'var(--db-accent)' }}>{dateTimeStr}</span>
     </div>
   );
 }

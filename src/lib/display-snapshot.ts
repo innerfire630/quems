@@ -33,6 +33,7 @@ function mapDisplayBoard(record: Record<string, unknown>): DisplayBoardConfig {
     announcementTemplate:
       (record['announcementTemplate'] as string) ?? 'Ticket {number}, please proceed to {counter}',
     themeColor: (record['themeColor'] as string) ?? null,
+    displayTheme: (record['displayTheme'] as string) ?? 'dark',
     logoUrl: (record['logoUrl'] as string) ?? null,
     customMessage: (record['customMessage'] as string) ?? null,
   };
@@ -103,6 +104,7 @@ export async function getServingTickets(): Promise<Record<string, TicketDisplayD
           counterNumber: ticket.counter?.number ?? 0,
           officerName: ticket.calledByOfficer?.user?.name ?? 'Unknown',
           calledAt: ticket.calledAt?.toISOString() ?? ticket.createdAt.toISOString(),
+          status: ticket.status,
         };
       }
     }),
@@ -145,6 +147,7 @@ export async function getRecentTicketsForCounter(
       counterNumber: t.counter?.number ?? 0,
       officerName: t.calledByOfficer?.user?.name ?? 'Unknown',
       calledAt: evt.createdAt.toISOString(),
+      status: t.status,
     };
   });
 }
@@ -168,11 +171,32 @@ export async function getDisplaySnapshot(boardId: string | null): Promise<Displa
       counters: [],
       servingTickets: {},
       recentTickets: {},
+      counterClosedStatus: {},
     };
   }
 
   // Fetch counters, serving tickets, and recent tickets in parallel
   const [counters, servingTickets] = await Promise.all([getActiveCounters(), getServingTickets()]);
+
+  // Fetch counter closed status from CounterOfficer
+  // Use currentStatus instead of isClosed — setCounterStatus updates currentStatus
+  const closedOfficers = await prisma.counterOfficer.findMany({
+    where: {
+      currentStatus: 'CLOSED',
+    },
+    select: {
+      counterId: true,
+      closureReason: true,
+    },
+  });
+
+  const counterClosedStatus: Record<string, { closed: boolean; reason?: string }> = {};
+  for (const co of closedOfficers) {
+    counterClosedStatus[co.counterId] = {
+      closed: true,
+      reason: co.closureReason ?? undefined,
+    };
+  }
 
   // Sort counters: active (serving) at top by calledAt desc, idle at bottom by number
   counters.sort((a, b) => {
@@ -209,5 +233,6 @@ export async function getDisplaySnapshot(boardId: string | null): Promise<Displa
     counters,
     servingTickets,
     recentTickets,
+    counterClosedStatus,
   };
 }

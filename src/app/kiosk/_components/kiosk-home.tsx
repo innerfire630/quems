@@ -1,19 +1,22 @@
 // =============================================================================
 // src/app/kiosk/_components/kiosk-home.tsx — Main kiosk interaction (2.2.2)
 // =============================================================================
-// Manages the kiosk state machine: grid → loading → confirmation → error.
-// Handles the issuance API call and the auto-reset timer.
+// Manages the kiosk state machine: grid → [confirm popup] → loading → confirmation → error.
+// Step 1: user taps a service card → confirmation dialog pops up over the grid.
+// Step 2: 15 s auto-cancel countdown in the dialog.
+// Step 3: on confirm, issues the ticket via the API.
 // =============================================================================
 'use client';
 
 import { useState, useCallback } from 'react';
 import { KioskServiceGrid } from './kiosk-service-grid';
+import { ServiceConfirmation } from './service-confirmation';
 import { TicketConfirmation } from './ticket-confirmation';
 import { useKioskReset } from '@/hooks/use-kiosk-reset';
 import type { ServiceForKiosk, LoadedKioskConfig } from '@/lib/kiosk-config';
 import type { IssuedTicketResponse } from '@/types/ticket.types';
 
-type KioskView = 'grid' | 'loading' | 'confirmation' | 'error';
+type KioskView = 'grid' | 'confirm' | 'loading' | 'confirmation' | 'error';
 
 interface KioskHomeProps {
   services: ServiceForKiosk[];
@@ -22,12 +25,14 @@ interface KioskHomeProps {
 
 export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
   const [currentView, setCurrentView] = useState<KioskView>('grid');
+  const [selectedService, setSelectedService] = useState<ServiceForKiosk | null>(null);
   const [currentTicket, setCurrentTicket] = useState<IssuedTicketResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isIssuing, setIsIssuing] = useState(false);
 
   const handleReset = useCallback(() => {
     setCurrentView('grid');
+    setSelectedService(null);
     setCurrentTicket(null);
     setErrorMessage(null);
   }, []);
@@ -38,7 +43,27 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
     paused: isIssuing,
   });
 
-  const handleServiceSelect = useCallback(async (serviceId: string) => {
+  // Step 1: user taps a service card → show confirmation overlay
+  const handleServiceSelect = useCallback(
+    (serviceId: string) => {
+      const svc = services.find((s) => s.id === serviceId);
+      if (!svc) return;
+      setSelectedService(svc);
+      setCurrentView('confirm');
+      setErrorMessage(null);
+    },
+    [services],
+  );
+
+  // Step 2a: user cancels → back to grid
+  const handleConfirmCancel = useCallback(() => {
+    handleReset();
+  }, [handleReset]);
+
+  // Step 2b: user confirms → issue the ticket
+  const handleConfirmProceed = useCallback(async () => {
+    if (!selectedService) return;
+
     setIsIssuing(true);
     setCurrentView('loading');
     setErrorMessage(null);
@@ -47,7 +72,7 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
       const res = await fetch('/api/tickets/issue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serviceId }),
+        body: JSON.stringify({ serviceId: selectedService.id }),
       });
 
       const json = await res.json();
@@ -67,7 +92,7 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
     } finally {
       setIsIssuing(false);
     }
-  }, []);
+  }, [selectedService]);
 
   if (currentView === 'loading') {
     return (
@@ -75,12 +100,6 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
         <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         <p className="text-lg text-muted-foreground">Issuing your ticket...</p>
       </div>
-    );
-  }
-
-  if (currentView === 'confirmation' && currentTicket) {
-    return (
-      <TicketConfirmation ticket={currentTicket} kioskConfig={kioskConfig} onDone={handleReset} />
     );
   }
 
@@ -102,5 +121,26 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
     );
   }
 
-  return <KioskServiceGrid services={services} onSelect={handleServiceSelect} />;
+  return (
+    <>
+      <KioskServiceGrid services={services} onSelect={handleServiceSelect} />
+      {selectedService && (
+        <ServiceConfirmation
+          service={selectedService}
+          timeoutSeconds={15}
+          open={currentView === 'confirm'}
+          onConfirm={handleConfirmProceed}
+          onCancel={handleConfirmCancel}
+        />
+      )}
+      {currentTicket && (
+        <TicketConfirmation
+          ticket={currentTicket}
+          kioskConfig={kioskConfig}
+          open={currentView === 'confirmation'}
+          onDone={handleReset}
+        />
+      )}
+    </>
+  );
 }
