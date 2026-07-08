@@ -151,7 +151,7 @@ export const config = {
      * Match all request paths EXCEPT:
      * - /login (auth pages)
      * - /display/* (public display)
-     * - /kiosk/* (public kiosk)
+     * - /kiosk/* (public kiosk — NOT /kiosk-config)
      * - /sse-test (SSE test page, dev only)
      * - /sounds/* (public static audio/assets directory)
      * - /uploads/* (uploaded files — logos, etc.)
@@ -164,6 +164,6 @@ export const config = {
      * - /api/debug/* (development-only debug routes)
      * - _next/static, _next/image, favicon.ico (static assets)
      */
-    '/((?!login|display|kiosk|sse-test|sounds|uploads|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
+    '/((?!login|display|kiosk(?!-)|sse-test|sounds|uploads|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
   ],
 };

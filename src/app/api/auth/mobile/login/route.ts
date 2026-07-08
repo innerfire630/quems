@@ -1,7 +1,7 @@
 // =============================================================================
 // src/app/api/auth/mobile/login/route.ts — Mobile credential login endpoint
 // =============================================================================
-// Accepts { email, password } in the JSON body, verifies credentials, and
+// Accepts { username, password } in the JSON body, verifies credentials, and
 // returns access + refresh tokens in the response body. Does NOT set cookies
 // — mobile clients store tokens in their platform's secure storage.
 // =============================================================================
@@ -36,15 +36,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { username, password } = parsed.data;
 
     // 2. Verify credentials
-    const user = await verifyCredentials(email, password);
+    const user = await verifyCredentials(username, password);
     if (!user) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Invalid email or password' },
+          error: { code: 'UNAUTHORIZED', message: 'Invalid username or password' },
         },
         { status: 401 },
       );

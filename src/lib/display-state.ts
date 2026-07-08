@@ -123,23 +123,28 @@ export function applyTICKET_SERVED(state: DisplayState, envelope: SseEventPayloa
   const p = inner(envelope) as Record<string, unknown>;
   const counterId = p['counterId'] as string;
   const ticketId = p['ticketId'] as string;
+  const previousStatus = p['previousStatus'] as string;
+
+  // If previousStatus was SERVING, the ticket was completed (COMPLETED status)
+  // If previousStatus was CALLED/RECALLED, the ticket is now being served (SERVING status)
+  const newStatus = previousStatus === 'SERVING' ? 'SERVED' : 'SERVING';
 
   const nowServing = state.nowServing[counterId];
   if (nowServing && nowServing.id === ticketId) {
-    const servedTicket: TicketDisplayData = {
+    const updatedTicket: TicketDisplayData = {
       ...nowServing,
-      status: 'SERVED',
+      status: newStatus,
     };
     const recent = state.recentByCounter[counterId] ?? [];
     // Deduplicate — update existing entry or prepend
     const dedupedRecent = recent.filter((t) => t.id !== ticketId);
-    const updatedRecent = [servedTicket, ...dedupedRecent].slice(
+    const updatedRecent = [updatedTicket, ...dedupedRecent].slice(
       0,
       state.board?.maxDisplayedTickets ?? 5,
     );
     return {
       ...state,
-      nowServing: { ...state.nowServing, [counterId]: servedTicket },
+      nowServing: { ...state.nowServing, [counterId]: updatedTicket },
       recentByCounter: { ...state.recentByCounter, [counterId]: updatedRecent },
     };
   }

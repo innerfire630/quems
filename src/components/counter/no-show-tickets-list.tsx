@@ -173,9 +173,21 @@ export default function NoShowTicketsList({
     );
   }
 
-  // Empty state — don't render the card at all
+  // Empty state — show a minimal card
   if (tickets.length === 0) {
-    return null;
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <RotateCcw className="size-4" />
+            No-Show Tickets
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No no-show tickets to recall.</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

@@ -100,15 +100,18 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
           break;
 
         case 'TICKET_SERVED':
-          // Clear the served ticket. Don't re-fetch immediately — serveTicket()
-          // transitions to SERVING (not COMPLETED), so the API would return it
-          // again. The next TICKET_CALLED event will bring the new ticket.
+          // Update ticket to COMPLETED status for display, then clear after delay
           setData((prev) => {
             if (prev.currentServingTicket && p['ticketId'] === prev.currentServingTicket.id) {
-              return { ...prev, currentServingTicket: null };
+              return { ...prev, currentServingTicket: { ...prev.currentServingTicket, status: 'COMPLETED' } };
             }
             return prev;
           });
+          // Clear after 3s and refresh
+          setTimeout(() => {
+            setData((prev) => ({ ...prev, currentServingTicket: null }));
+            refreshDashboard();
+          }, 3000);
           break;
 
         case 'COUNTER_OPENED':
@@ -135,7 +138,7 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
   const isClosed = data.officerContext.currentStatus === 'CLOSED';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Top row: Counter header */}
       <CounterHeader
         counter={data.counter}
@@ -149,13 +152,24 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
         </div>
       )}
 
-      {/* Second row: ticket display + controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CurrentServingTicketCard
-          ticket={data.currentServingTicket}
-          counterStatus={data.officerContext.currentStatus}
-        />
-        <div className="space-y-4">
+      {/* Main content: 2-column layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+        {/* Left: Currently Serving + Action Buttons */}
+        <div className="space-y-3">
+          <CurrentServingTicketCard
+            ticket={data.currentServingTicket}
+            counterStatus={data.officerContext.currentStatus}
+          />
+          <TicketActionPanel
+            ticket={data.currentServingTicket}
+            counterId={data.counter.id}
+            officerOnDuty={data.officerContext.isOnDuty && !isClosed}
+            hasNextTicket={data.nextTicket !== null}
+            onActionComplete={refreshDashboard}
+          />
+        </div>
+        {/* Right: Queue info + Counter status */}
+        <div className="space-y-3">
           <QueueDepthIndicator initialCount={data.queueDepth.count} counterId={data.counter.id} />
           <NextTicketPreview initialTicket={data.nextTicket} counterId={data.counter.id} />
           {data.notificationsState.length > 0 && (
@@ -172,34 +186,23 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
               }}
             />
           )}
+          <CounterStatusToggle
+            counterId={data.counter.id}
+            counterName={data.counter.name}
+            currentStatus={data.officerContext.currentStatus}
+            currentReason={null}
+            onStatusChange={(newStatus) => {
+              setData((prev) => ({
+                ...prev,
+                officerContext: {
+                  ...prev.officerContext,
+                  currentStatus: newStatus,
+                  isOnDuty: newStatus === 'OPENED' ? true : prev.officerContext.isOnDuty,
+                },
+              }));
+            }}
+          />
         </div>
-      </div>
-
-      {/* Third row: actions + counter status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <TicketActionPanel
-          ticket={data.currentServingTicket}
-          counterId={data.counter.id}
-          officerOnDuty={data.officerContext.isOnDuty && !isClosed}
-          hasNextTicket={data.nextTicket !== null}
-          onActionComplete={refreshDashboard}
-        />
-        <CounterStatusToggle
-          counterId={data.counter.id}
-          counterName={data.counter.name}
-          currentStatus={data.officerContext.currentStatus}
-          currentReason={null}
-          onStatusChange={(newStatus) => {
-            setData((prev) => ({
-              ...prev,
-              officerContext: {
-                ...prev.officerContext,
-                currentStatus: newStatus,
-                isOnDuty: newStatus === 'OPENED' ? true : prev.officerContext.isOnDuty,
-              },
-            }));
-          }}
-        />
       </div>
 
       {/* No-Show Ticket Recall list */}

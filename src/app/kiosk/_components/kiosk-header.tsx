@@ -21,12 +21,11 @@ function formatDateTime(date: Date): string {
 }
 
 interface KioskHeaderProps {
-  welcomeMessage: string;
   brandName?: string;
   brandLogo?: string | null;
 }
 
-export function KioskHeader({ welcomeMessage, brandName = 'QUEMS', brandLogo }: KioskHeaderProps) {
+export function KioskHeader({ brandName = 'QUEMS', brandLogo }: KioskHeaderProps) {
   const [now, setNow] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -35,24 +34,23 @@ export function KioskHeader({ welcomeMessage, brandName = 'QUEMS', brandLogo }: 
   }, []);
 
   return (
-    <header className="mb-8">
-      <div className="flex h-16 items-center justify-between">
+    <header className="bg-zinc-800 px-8 py-3">
+      <div className="flex h-10 items-center justify-between">
         <div className="flex items-center gap-3">
           {brandLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={brandLogo}
               alt={brandName}
-              className="h-10 w-10 shrink-0 object-contain"
+              className="h-8 w-8 shrink-0 object-contain"
             />
           ) : null}
-          <span className="text-2xl font-bold text-primary">{brandName}</span>
+          <span className="text-xl font-bold text-white">{brandName}</span>
         </div>
-        <div className="text-lg font-mono text-muted-foreground" suppressHydrationWarning>
+        <div className="text-sm font-mono text-zinc-400" suppressHydrationWarning>
           {formatDateTime(now)}
         </div>
       </div>
-      <h1 className="mt-6 text-center text-3xl font-bold text-foreground">{welcomeMessage}</h1>
     </header>
   );
 }

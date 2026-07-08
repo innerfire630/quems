@@ -1,13 +1,13 @@
 // =============================================================================
 // src/components/counter/ticket-action-panel.tsx — Action Panel (2.3.2 / extended)
 // =============================================================================
-// Renders Call Next, Call, Recall, Served, and No-Show buttons depending on
+// Renders Call Next, Call, Recall, Serving, Complete, and No-Show buttons depending on
 // the current ticket status.
 // =============================================================================
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Info } from 'lucide-react';
 import { canTransition } from '@/lib/ticket-state-machine';
@@ -76,6 +76,30 @@ export default function TicketActionPanel({
 }: TicketActionPanelProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recallCooldown, setRecallCooldown] = useState(0);
+  const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (recallCooldown > 0) {
+      cooldownTimerRef.current = setInterval(() => {
+        setRecallCooldown((prev) => {
+          if (prev <= 1) {
+            if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+    };
+  }, [recallCooldown > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startRecallCooldown = useCallback(() => {
+    setRecallCooldown(15);
+  }, []);
 
   const handleAction = useCallback(
     async (action: TicketAction) => {
@@ -89,6 +113,10 @@ export default function TicketActionPanel({
       if (!result.success) {
         setError(result.error?.message ?? 'Action failed.');
         return;
+      }
+
+      if (action === 'recall') {
+        startRecallCooldown();
       }
 
       onActionComplete();
@@ -165,7 +193,7 @@ export default function TicketActionPanel({
   const isRecalled = ticket.status === 'RECALLED';
   const isNoShow = ticket.status === 'NO_SHOW';
 
-  // --- Ticket is SERVING: show Recall, Served, and No-Show ---
+  // --- Ticket is SERVING: show Complete and Complete & Call Next ---
   if (isServing) {
     return (
       <div className="space-y-3">
@@ -173,27 +201,11 @@ export default function TicketActionPanel({
           Currently serving ticket{' '}
           <span className="font-mono font-medium">{ticket.ticketNumber}</span>.
         </p>
-        {canRecall && (
-          <Button
-            onClick={() => handleAction('recall')}
-            disabled={disabled}
-            variant="outline"
-            className="w-full min-h-[48px]"
-          >
-            {loading === 'recall' ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Recalling...
-              </>
-            ) : (
-              'Recall'
-            )}
-          </Button>
-        )}
         {canComplete && (
           <Button
             onClick={() => handleAction('complete')}
             disabled={disabled}
+            variant="outline"
             className="w-full min-h-[48px]"
           >
             {loading === 'complete' ? (
@@ -202,24 +214,27 @@ export default function TicketActionPanel({
                 Completing...
               </>
             ) : (
-              'Served'
+              'Complete'
             )}
           </Button>
         )}
-        {canNoShow && (
+        {hasNextTicket && (
           <Button
-            onClick={() => handleAction('no-show')}
-            disabled={disabled}
-            variant="destructive"
+            onClick={async () => {
+              await handleAction('complete');
+              await handleCallNext();
+            }}
+            disabled={disabled || !canComplete}
+            variant="default"
             className="w-full min-h-[48px]"
           >
-            {loading === 'no-show' ? (
+            {loading === 'complete' ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
-                Marking...
+                Completing...
               </>
             ) : (
-              'No Show'
+              'Complete & Call Next'
             )}
           </Button>
         )}
@@ -253,7 +268,7 @@ export default function TicketActionPanel({
         {canRecall && (
           <Button
             onClick={() => handleAction('recall')}
-            disabled={disabled}
+            disabled={disabled || recallCooldown > 0}
             className="w-full min-h-[48px]"
           >
             {loading === 'recall' ? (
@@ -261,6 +276,8 @@ export default function TicketActionPanel({
                 <Loader2 className="mr-2 size-4 animate-spin" />
                 Recalling...
               </>
+            ) : recallCooldown > 0 ? (
+              `Wait ${recallCooldown}s...`
             ) : (
               'Recall This Ticket'
             )}
@@ -288,7 +305,7 @@ export default function TicketActionPanel({
     );
   }
 
-  // --- Ticket is RECALLED: show Recall, Served, No-Show (same as SERVING) ---
+  // --- Ticket is RECALLED: show Recall, Serving, No-Show (same as SERVING) ---
   if (isRecalled) {
     return (
       <div className="space-y-3">
@@ -298,7 +315,7 @@ export default function TicketActionPanel({
         {canRecall && (
           <Button
             onClick={() => handleAction('recall')}
-            disabled={disabled}
+            disabled={disabled || recallCooldown > 0}
             variant="outline"
             className="w-full min-h-[48px]"
           >
@@ -307,6 +324,8 @@ export default function TicketActionPanel({
                 <Loader2 className="mr-2 size-4 animate-spin" />
                 Recalling...
               </>
+            ) : recallCooldown > 0 ? (
+              `Wait ${recallCooldown}s...`
             ) : (
               'Recall'
             )}
@@ -321,10 +340,10 @@ export default function TicketActionPanel({
             {loading === 'serve' ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
-                Completing...
+                Starting service...
               </>
             ) : (
-              'Served'
+              'Serving'
             )}
           </Button>
         )}
@@ -396,10 +415,10 @@ export default function TicketActionPanel({
           {loading === 'serve' ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Marking served...
+              Marking serving...
             </>
           ) : (
-            'Served'
+            'Serving'
           )}
         </Button>
       )}

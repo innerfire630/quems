@@ -285,13 +285,20 @@ export const DELETE = withPermission(
 
     const existing = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, status: true },
+      select: { id: true, username: true, email: true, name: true, status: true },
     });
 
     if (!existing) {
       return NextResponse.json(
         { success: false, error: { code: 'NOT_FOUND', message: 'User not found.' } },
         { status: 404 },
+      );
+    }
+
+    if (existing.username === 'admin') {
+      return NextResponse.json(
+        { success: false, error: { code: 'FORBIDDEN', message: 'The default admin account cannot be deactivated.' } },
+        { status: 403 },
       );
     }
 

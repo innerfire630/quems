@@ -39,67 +39,75 @@ export const NowServingHero = React.memo(function NowServingHero({
   const currentNotice = notices.length > 0 ? notices[noticeIndex % notices.length] : null;
 
   return (
-    <section className="w-[70%] flex flex-col justify-between border-r-2" style={{ padding: 'clamp(1rem, 2vw, 2.5rem)', background: 'linear-gradient(135deg, var(--db-gradient-from), var(--db-gradient-via), var(--db-gradient-to))', borderColor: 'var(--db-border)' }}>
-      {/* NOW SERVING banner */}
-      <div className="text-center font-black uppercase tracking-widest animate-pulse rounded-2xl" style={{ padding: 'clamp(0.5rem, 1vh, 1.2rem) 0', fontSize: 'clamp(1rem, 2.5vw, 2.5rem)', backgroundColor: 'var(--db-accent)', color: 'var(--db-accent-text)' }}>
-        --- NOW SERVING ---
+    <section className="flex flex-col justify-between border-b-2 md:border-b-0 md:border-r-2 overflow-hidden min-h-0" style={{ padding: 'clamp(0.4rem, 1vmin, 1.5rem)', background: 'linear-gradient(135deg, var(--db-gradient-from), var(--db-gradient-via), var(--db-gradient-to))', borderColor: 'var(--db-border)' }}>
+      {/* NOW SERVING / RECALLING banner */}
+      <div
+        className={`text-center font-black uppercase tracking-widest rounded-2xl ${ticket?.status === 'RECALLED' ? 'bg-amber-500 text-black animate-recall-pulse' : 'animate-pulse'}`}
+        style={{
+          padding: 'clamp(0.4rem, 0.8vmin, 1rem) 0',
+          fontSize: 'clamp(0.8rem, 2.2vmin, 2rem)',
+          ...(ticket?.status !== 'RECALLED' ? { backgroundColor: 'var(--db-accent)', color: 'var(--db-accent-text)' } : {}),
+        }}
+      >
+        {ticket?.status === 'RECALLED' ? '--- RECALLING ---' : '--- NOW SERVING ---'}
       </div>
 
       {/* Center content */}
-      <div className="flex-1 flex flex-col items-center justify-center" style={{ padding: 'clamp(0.5rem, 1.5vh, 2rem) 0' }}>
+      <div className="flex-1 flex flex-col items-center justify-center" style={{ padding: 'clamp(0.3rem, 1vmin, 1.5rem) 0' }}>
         {ticket ? (
           <>
-            <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'clamp(1rem, 2vw, 2rem)', marginBottom: 'clamp(0.25rem, 0.5vh, 0.75rem)', color: 'var(--db-text-muted)' }}>
+            <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'clamp(0.9rem, 2.2vmin, 2rem)', marginBottom: 'clamp(0.15rem, 0.4vmin, 0.5rem)', color: 'var(--db-text-muted)' }}>
               TICKET NO.
             </span>
             <TransitionWrapper ticketId={ticket.id}>
-              <span
-                className="font-extrabold tracking-tight drop-shadow-md"
-                style={{
-                  fontSize: 'clamp(4rem, 12vw, 12rem)',
-                  lineHeight: 1,
-                  color:
-                    ticket.status === 'RECALLED'
-                      ? 'var(--db-ticket-recalled)'
-                      : ticket.status === 'SERVED'
-                        ? 'var(--db-ticket-served)'
-                        : 'var(--db-ticket)',
-                  animation: ticket.status === 'RECALLED' ? undefined : undefined,
-                }}
-              >
-                {ticket.ticketNumber}
-              </span>
-            </TransitionWrapper>
+              <div className={`flex flex-col items-center ${ticket.status === 'RECALLED' ? 'animate-recall-pulse' : ''}`}>
+                <span
+                  className="font-extrabold tracking-tight drop-shadow-md"
+                  style={{
+                    fontSize: 'clamp(4rem, 12vmin, 12rem)',
+                    lineHeight: 1,
+                    color:
+                      ticket.status === 'RECALLED'
+                        ? 'var(--db-ticket-recalled)'
+                        : ticket.status === 'SERVED'
+                          ? 'var(--db-ticket-served)'
+                          : 'var(--db-ticket)',
+                  }}
+                >
+                  {ticket.ticketNumber}
+                </span>
 
-            {ticket.status === 'RECALLED' && (
-              <span className="font-bold uppercase tracking-widest animate-pulse" style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.8rem)', marginTop: 'clamp(0.25rem, 0.5vh, 0.75rem)', color: 'var(--db-ticket-recalled)' }}>
-                — Recalling —
-              </span>
-            )}
+                {ticket.status === 'RECALLED' && (
+                  <span className="font-bold uppercase tracking-widest" style={{ fontSize: 'clamp(0.8rem, 1.8vmin, 1.6rem)', marginTop: 'clamp(0.15rem, 0.4vmin, 0.5rem)', color: 'var(--db-ticket-recalled)' }}>
+                    — Recalling —
+                  </span>
+                )}
+              </div>
+            </TransitionWrapper>
             {ticket.status === 'SERVED' && (
-              <span className="font-bold uppercase tracking-widest" style={{ fontSize: 'clamp(0.9rem, 1.8vw, 1.8rem)', marginTop: 'clamp(0.25rem, 0.5vh, 0.75rem)', color: 'var(--db-ticket-served)' }}>
+              <span className="font-bold uppercase tracking-widest" style={{ fontSize: 'clamp(0.8rem, 1.8vmin, 1.6rem)', marginTop: 'clamp(0.15rem, 0.4vmin, 0.5rem)', color: 'var(--db-ticket-served)' }}>
                 ✓ Served
               </span>
             )}
 
-            <div className="w-2/3" style={{ height: 'clamp(2px, 0.2vh, 4px)', margin: 'clamp(1rem, 2vh, 2.5rem) 0', backgroundColor: 'var(--db-border)' }} />
+            <div className="w-2/3" style={{ height: 'clamp(1px, 0.15vmin, 3px)', margin: 'clamp(0.5rem, 1.5vmin, 2rem) 0', backgroundColor: 'var(--db-border)' }} />
 
-            <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)', marginBottom: 'clamp(0.25rem, 0.5vh, 0.5rem)', color: 'var(--db-text-muted)' }}>
+            <span className="font-bold uppercase tracking-wider" style={{ fontSize: 'clamp(0.9rem, 1.8vmin, 1.6rem)', marginBottom: 'clamp(0.15rem, 0.3vmin, 0.4rem)', color: 'var(--db-text-muted)' }}>
               PROCEED TO
             </span>
             <TransitionWrapper ticketId={ticket.id}>
               <span
                 className="font-black uppercase tracking-wide"
-                style={{ fontSize: 'clamp(2rem, 7vw, 6rem)', lineHeight: 1.1, color: 'var(--db-accent)' }}
+                style={{ fontSize: 'clamp(2rem, 8vmin, 7rem)', lineHeight: 1.1, color: 'var(--db-accent)' }}
               >
                 {ticket.counterName || `Counter ${ticket.counterNumber}`}
               </span>
             </TransitionWrapper>
           </>
         ) : (
-          <div className="flex flex-col items-center" style={{ gap: 'clamp(0.5rem, 1vh, 1.5rem)' }}>
-            <span className="font-bold uppercase" style={{ fontSize: 'clamp(2rem, 5vw, 4rem)', color: 'var(--db-text-dim)' }}>Waiting</span>
-            <span style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)', color: 'var(--db-text-muted)' }}>No tickets being served</span>
+          <div className="flex flex-col items-center" style={{ gap: 'clamp(0.3rem, 0.8vmin, 1rem)' }}>
+            <span className="font-bold uppercase" style={{ fontSize: 'clamp(1.5rem, 4vmin, 3.5rem)', color: 'var(--db-text-dim)' }}>Waiting</span>
+            <span style={{ fontSize: 'clamp(0.7rem, 1.3vmin, 1.2rem)', color: 'var(--db-text-muted)' }}>No tickets being served</span>
           </div>
         )}
       </div>

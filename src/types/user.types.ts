@@ -9,8 +9,9 @@
 /** Shape of a user in the listing response. */
 export interface UserListItem {
   id: string;
+  username: string;
   name: string;
-  email: string;
+  email: string | null;
   status: string;
   roles: { id: string; name: string; description: string | null }[];
   createdAt: string;

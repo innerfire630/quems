@@ -11,6 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { updateKioskConfig } from '@/actions/update-kiosk-config';
 
@@ -21,6 +28,7 @@ interface KioskConfigData {
   welcomeMessage: string | null;
   footerMessage: string | null;
   printerName: string | null;
+  printerSheetSize: string | null;
   autoResetSeconds: number;
   showEstimatedWait: boolean;
 }
@@ -30,6 +38,7 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
   const [welcomeMessage, setWelcomeMessage] = useState(config.welcomeMessage ?? '');
   const [footerMessage, setFooterMessage] = useState(config.footerMessage ?? '');
   const [printerName, setPrinterName] = useState(config.printerName ?? '');
+  const [printerSheetSize, setPrinterSheetSize] = useState(config.printerSheetSize ?? '80mm');
   const [autoResetSeconds, setAutoResetSeconds] = useState(config.autoResetSeconds.toString());
   const [showEstimatedWait, setShowEstimatedWait] = useState(config.showEstimatedWait);
   const [isPending, startTransition] = useTransition();
@@ -40,6 +49,7 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
     welcomeMessage !== (config.welcomeMessage ?? '') ||
     footerMessage !== (config.footerMessage ?? '') ||
     printerName !== (config.printerName ?? '') ||
+    printerSheetSize !== (config.printerSheetSize ?? '80mm') ||
     autoResetSeconds !== config.autoResetSeconds.toString() ||
     showEstimatedWait !== config.showEstimatedWait;
 
@@ -51,6 +61,7 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
           welcomeMessage,
           footerMessage,
           printerName,
+          printerSheetSize,
           autoResetSeconds: Number(autoResetSeconds),
           showEstimatedWait,
         });
@@ -89,40 +100,6 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
           {saved ? 'Saved' : 'Save Changes'}
         </Button>
       </div>
-
-      {/* General */}
-      <section className="space-y-4">
-        <div>
-          <h3 className="text-sm font-medium">General</h3>
-          <p className="text-xs text-muted-foreground">Basic kiosk identity and behaviour.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor={`name-${config.id}`}>Name</Label>
-            <Input
-              id={`name-${config.id}`}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor={`reset-${config.id}`}>Auto-reset (seconds)</Label>
-            <Input
-              id={`reset-${config.id}`}
-              type="number"
-              value={autoResetSeconds}
-              onChange={(e) => setAutoResetSeconds(e.target.value)}
-              min={0}
-              className="font-mono"
-            />
-            <p className="text-xs text-muted-foreground">
-              Idle timeout before the kiosk returns to the welcome screen.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="border-t" />
 
       {/* Display */}
       <section className="space-y-4">
@@ -169,14 +146,32 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
           <h3 className="text-sm font-medium">Printer</h3>
           <p className="text-xs text-muted-foreground">Configure the receipt printer for this kiosk.</p>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor={`printer-${config.id}`}>Printer Name</Label>
-          <Input
-            id={`printer-${config.id}`}
-            value={printerName}
-            onChange={(e) => setPrinterName(e.target.value)}
-            placeholder="e.g. Receipt Printer"
-          />
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor={`printer-${config.id}`}>Printer Name</Label>
+            <Input
+              id={`printer-${config.id}`}
+              value={printerName}
+              onChange={(e) => setPrinterName(e.target.value)}
+              placeholder="e.g. Receipt Printer"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Sheet Size</Label>
+            <Select value={printerSheetSize} onValueChange={setPrinterSheetSize}>
+              <SelectTrigger>
+                <SelectValue>{(val) => val}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="58mm">58mm (Small)</SelectItem>
+                <SelectItem value="80mm">80mm (Standard)</SelectItem>
+                <SelectItem value="A4">A4 (Full Page)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Paper size for the receipt printer.
+            </p>
+          </div>
         </div>
       </section>
     </div>

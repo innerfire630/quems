@@ -37,7 +37,7 @@ export default async function NewUserPage() {
         >
           <ArrowLeft className="size-4" />
         </Link>
-        <PageHeader title="Create User" />
+        <PageHeader title="Create User Form" />
       </div>
       <UserForm mode="create" roles={roles} />
     </div>

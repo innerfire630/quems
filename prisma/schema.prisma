@@ -98,7 +98,8 @@ enum SettingType {
 
 model User {
   id        String     @id @default(cuid())
-  email     String     @unique
+  username  String     @unique
+  email     String?
   password  String
   name      String
   avatar    String?
@@ -114,7 +115,7 @@ model User {
   auditLogs     AuditLog[]
   updatedSettings   SystemSetting[]    @relation("SettingsUpdatedBy")
 
-  @@index([email])
+  @@index([username])
 }
 
 model Role {
@@ -386,6 +387,7 @@ model KioskConfig {
   welcomeMessage    String?
   footerMessage     String?
   printerName       String?
+  printerSheetSize  String?  @default("80mm")
   autoResetSeconds  Int      @default(30)
   showEstimatedWait Boolean  @default(true)
   restrictedServiceIds Json?

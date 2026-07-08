@@ -30,8 +30,8 @@ export function DisplayClock() {
 
   return (
     <div className="flex flex-col select-none" suppressHydrationWarning>
-      <span className="uppercase tracking-widest font-semibold" style={{ fontSize: 'clamp(0.5rem, 0.9vw, 0.9rem)', color: 'var(--db-text-muted)' }}>Current Date &amp; Time</span>
-      <span className="font-bold tabular-nums" style={{ fontSize: 'clamp(0.8rem, 1.8vw, 1.8rem)', color: 'var(--db-accent)' }}>{dateTimeStr}</span>
+      <span className="uppercase tracking-widest font-semibold" style={{ fontSize: 'clamp(0.35rem, 0.6vw, 0.6rem)', color: 'var(--db-text-muted)' }}>Current Date &amp; Time</span>
+      <span className="font-bold tabular-nums" style={{ fontSize: 'clamp(0.6rem, 1.2vw, 1.2rem)', color: 'var(--db-accent)' }}>{dateTimeStr}</span>
     </div>
   );
 }

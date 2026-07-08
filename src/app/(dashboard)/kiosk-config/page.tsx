@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { PERMISSION_SYSTEM_CONFIGURE } from '@/lib/permissions';
-import { KioskConfigCard } from './_components/kiosk-config-card';
+import { KioskConfigForm } from './_components/kiosk-config-form';
 import { PageHeader } from '@/components/layout/page-header';
 
 export const dynamic = 'force-dynamic';
@@ -27,21 +27,24 @@ export default async function KioskConfigPage() {
     orderBy: { name: 'asc' },
   });
 
+  if (configs.length === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Kiosk Configuration" description="Manage self-service kiosk instances." />
+        <p className="py-12 text-center text-muted-foreground">
+          No kiosk configurations found. Run the seed script or create one via the database.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader title="Kiosk Configuration" description="Manage self-service kiosk instances. Each kiosk can have its own welcome message, auto-reset timeout, restricted services, and printer settings." />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {configs.map((config) => (
-          <KioskConfigCard key={config.id} config={config} />
-        ))}
-
-        {configs.length === 0 && (
-          <p className="col-span-2 py-12 text-center text-muted-foreground">
-            No kiosk configurations found. Run the seed script or create one via the database.
-          </p>
-        )}
-      </div>
+      {configs.map((config) => (
+        <KioskConfigForm key={config.id} config={config} />
+      ))}
     </div>
   );
 }

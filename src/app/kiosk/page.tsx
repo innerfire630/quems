@@ -30,8 +30,15 @@ export default async function KioskPage({ searchParams }: KioskPageProps) {
 
   return (
     <>
-      <KioskHeader welcomeMessage={kioskConfig.welcomeMessage ?? 'Welcome!'} brandName={brand.name} brandLogo={brand.logoUrl} />
-      <KioskHome services={services} kioskConfig={kioskConfig} />
+      <KioskHeader brandName={brand.name} brandLogo={brand.logoUrl} />
+      <div className="flex flex-1 flex-col items-center justify-center overflow-hidden px-8">
+        <h1 className="mb-6 text-center text-3xl font-bold text-foreground">
+          {kioskConfig.welcomeMessage ?? 'Welcome!'}
+        </h1>
+        <div className="w-full max-w-6xl">
+          <KioskHome services={services} kioskConfig={kioskConfig} />
+        </div>
+      </div>
     </>
   );
 }

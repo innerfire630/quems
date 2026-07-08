@@ -20,8 +20,9 @@ import type { UserListItem } from '@/types/user.types';
 
 function mapUserToListRow(user: {
   id: string;
+  username: string;
   name: string;
-  email: string;
+  email: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -32,6 +33,7 @@ function mapUserToListRow(user: {
 }): UserListItem {
   return {
     id: user.id,
+    username: user.username,
     name: user.name,
     email: user.email,
     status: user.status,
@@ -71,7 +73,7 @@ const getHandler = withPermission(async (req: Request): Promise<Response> => {
   const skip = (page - 1) * limit;
 
   const where = search
-    ? { OR: [{ name: { contains: search } }, { email: { contains: search } }] }
+    ? { OR: [{ name: { contains: search } }, { username: { contains: search } }, { email: { contains: search } }] }
     : {};
 
   const [users, total] = await Promise.all([
@@ -82,6 +84,7 @@ const getHandler = withPermission(async (req: Request): Promise<Response> => {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        username: true,
         name: true,
         email: true,
         status: true,
@@ -143,15 +146,15 @@ const postHandler = withPermission(
       );
     }
 
-    const { name, email, password, status, roleId } = parsed.data;
+    const { username, name, email, password, status, roleId } = parsed.data;
 
-    // Check for duplicate email
-    const existing = await prisma.user.findUnique({ where: { email } });
+    // Check for duplicate username
+    const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'CONFLICT', message: 'A user with this email already exists.' },
+          error: { code: 'CONFLICT', message: 'A user with this username already exists.' },
         },
         { status: 409 },
       );
@@ -164,13 +167,15 @@ const postHandler = withPermission(
     const user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
         data: {
+          username,
           name,
-          email,
+          email: email || null,
           password: hashedPassword,
           status: status ?? 'ACTIVE',
         },
         select: {
           id: true,
+          username: true,
           name: true,
           email: true,
           status: true,
@@ -209,8 +214,8 @@ const postHandler = withPermission(
       entity: 'User',
       targetUserId: user.id,
       targetUserName: user.name,
-      description: `Created user ${email}.`,
-      metadata: { email, name, roleId: roleId ?? null, status: status ?? 'ACTIVE' },
+      description: `Created user ${username}.`,
+      metadata: { username, email: email || null, name, roleId: roleId ?? null, status: status ?? 'ACTIVE' },
     });
 
     // Re-fetch with roles for the response
@@ -218,6 +223,7 @@ const postHandler = withPermission(
       where: { id: user.id },
       select: {
         id: true,
+        username: true,
         name: true,
         email: true,
         status: true,

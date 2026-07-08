@@ -32,15 +32,15 @@ export function ServiceCard({ service, onSelect }: ServiceCardProps) {
     <button
       type="button"
       onClick={() => onSelect(service.id)}
-      className="flex w-full items-center gap-6 rounded-2xl bg-zinc-800 px-8 py-6 text-left font-semibold shadow-lg transition-all hover:bg-zinc-700 hover:shadow-xl active:scale-[0.97] active:bg-zinc-900"
+      className="flex w-full items-center gap-5 rounded-2xl bg-zinc-800 px-7 py-5 text-left font-semibold shadow-lg transition-all hover:bg-zinc-700 hover:shadow-xl active:scale-[0.97] active:bg-zinc-900"
     >
-      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/15">
-        <Icon className="h-9 w-9 text-white" />
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/15">
+        <Icon className="h-8 w-8 text-white" />
       </div>
       <div className="flex flex-col gap-0.5">
-        <span className="text-4xl font-bold text-white">{service.name}</span>
+        <span className="text-3xl font-bold text-white">{service.name}</span>
         {service.description && (
-          <span className="text-lg text-zinc-400">{service.description}</span>
+          <span className="text-base text-zinc-400">{service.description}</span>
         )}
       </div>
     </button>

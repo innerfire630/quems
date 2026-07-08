@@ -22,6 +22,20 @@ import { createUserSchema, updateUserSchema } from '@/schemas/user.schema';
 import type { UserListItem } from '@/types/user.types';
 import { toast } from 'sonner';
 
+/** Format raw role name like "COUNTER_OFFICER" into "Counter Officer". */
+function formatRoleName(name: string): string {
+  return name
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  SUSPENDED: 'Suspended',
+};
+
 interface RoleOption {
   id: string;
   name: string;
@@ -41,6 +55,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
   const router = useRouter();
 
   const [name, setName] = useState(initialValues?.name ?? '');
+  const [username, setUsername] = useState(initialValues?.username ?? '');
   const [email, setEmail] = useState(initialValues?.email ?? '');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState(initialValues?.status ?? 'ACTIVE');
@@ -50,6 +65,10 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const roleLabels = Object.fromEntries(
+    roles.map((r) => [r.id, formatRoleName(r.displayName || r.name)]),
+  );
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrors({});
@@ -58,6 +77,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
     // Client-side validation
     if (mode === 'create') {
       const parsed = createUserSchema.safeParse({
+        username,
         name,
         email,
         password,
@@ -95,7 +115,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
       const url = mode === 'create' ? '/api/users' : `/api/users/${userId}`;
       const method = mode === 'create' ? 'POST' : 'PATCH';
 
-      const body: Record<string, unknown> = { name, email, status, roleId: selectedRoleId || null };
+      const body: Record<string, unknown> = { username, name, email: email || null, status, roleId: selectedRoleId || null };
       if (mode === 'create') body.password = password;
 
       const res = await fetch(url, {
@@ -135,7 +155,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
     }
   }
 
-  const title = mode === 'create' ? 'Create User' : 'Edit User';
+  const title = mode === 'create' ? 'Create User Form' : 'Edit User';
 
   return (
     <Card className="overflow-visible">
@@ -156,6 +176,18 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
           )}
 
           <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. john.doe"
+              disabled={mode === 'edit'}
+            />
+            {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
               id="name"
@@ -167,7 +199,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email (optional)</Label>
             <Input
               id="email"
               type="email"
@@ -196,7 +228,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
             <Label htmlFor="status">Status</Label>
             <Select value={status} onValueChange={(val) => val && setStatus(val)}>
               <SelectTrigger id="status">
-                <SelectValue />
+                <SelectValue>{(val) => STATUS_LABELS[val as string] ?? val}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ACTIVE">Active</SelectItem>
@@ -211,12 +243,14 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
             <Label>Role</Label>
             <Select value={selectedRoleId} onValueChange={(val) => setSelectedRoleId(val ?? '')}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
+                <SelectValue placeholder="Select a role">
+                  {(val) => (val ? roleLabels[val as string] ?? val : 'Select a role')}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {roles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
-                    {role.displayName || role.name}
+                    {formatRoleName(role.displayName || role.name)}
                   </SelectItem>
                 ))}
               </SelectContent>

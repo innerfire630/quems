@@ -20,11 +20,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   session: {
     strategy: 'jwt',
-    maxAge: 15 * 60, // 15 minutes — matches access-token expiry (Master Plan §10.1)
+    maxAge: 8 * 60 * 60, // 8 hours — matches a full work shift
   },
 
   jwt: {
-    maxAge: 15 * 60,
+    maxAge: 8 * 60 * 60,
   },
 
   secret: process.env['NEXTAUTH_SECRET'],
@@ -37,22 +37,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        username: { label: 'Username', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const email = credentials?.email as string | undefined;
+        const username = credentials?.username as string | undefined;
         const password = credentials?.password as string | undefined;
 
-        if (!email || !password) return null;
+        if (!username || !password) return null;
 
-        const user = await verifyCredentials(email, password);
+        const user = await verifyCredentials(username, password);
         if (!user) return null;
 
         // Return user for NextAuth — the jwt callback will enrich with roles/permissions
         return {
           id: user.id,
-          email: user.email,
+          email: user.email ?? undefined,
           name: user.name,
           image: user.avatar,
         };

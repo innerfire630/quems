@@ -12,11 +12,18 @@ import { z } from 'zod';
 // ---------------------------------------------------------------------------
 
 export const createUserSchema = z.object({
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters.')
+    .max(50, 'Username must be 50 characters or less.')
+    .regex(/^[a-zA-Z0-9_.-]+$/, 'Username can only contain letters, numbers, dots, dashes, and underscores.'),
   name: z.string().min(1, 'Name is required.').max(100, 'Name must be 100 characters or less.'),
   email: z
     .string()
     .email('Invalid email address.')
-    .max(255, 'Email must be 255 characters or less.'),
+    .max(255, 'Email must be 255 characters or less.')
+    .optional()
+    .or(z.literal('')),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters.')
@@ -33,8 +40,9 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z
   .object({
+    username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_.-]+$/).optional(),
     name: z.string().min(1).max(100).optional(),
-    email: z.string().email().max(255).optional(),
+    email: z.string().email().max(255).optional().or(z.literal('')),
     status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
     roleId: z.string().min(1).nullable().optional(),
   })

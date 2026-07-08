@@ -95,7 +95,7 @@ export const POST = withPermission(async (req: Request) => {
       throw e;
     }
 
-    // Mark the ticket as completed (skip SERVING — go directly to COMPLETED)
+    // Mark the ticket as SERVING
     const now = new Date();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await prisma.$transaction(async (tx: any) => {
@@ -108,17 +108,17 @@ export const POST = withPermission(async (req: Request) => {
       }
 
       const previousStatus = ticket.status;
-      transitionTicket(ticket.status, 'COMPLETE');
+      transitionTicket(ticket.status, 'SERVE');
 
       await tx.ticket.update({
         where: { id: paramsResult.data.ticketId },
-        data: { status: 'COMPLETED', servedAt: now, completedAt: now },
+        data: { status: 'SERVING', servedAt: now },
       });
 
       await tx.ticketEvent.create({
         data: {
           ticketId: paramsResult.data.ticketId,
-          eventType: 'COMPLETED',
+          eventType: 'SERVED',
           counterId: officer.counterId,
           officerId: officer.id,
           metadata: { previousStatus, servedAt: now.toISOString() },

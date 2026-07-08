@@ -48,10 +48,10 @@ export interface ValidRefreshToken extends RefreshToken {
  * Rejects INACTIVE and SUSPENDED users as if they don't exist (no user enum).
  */
 export async function verifyCredentials(
-  email: string,
+  username: string,
   password: string,
 ): Promise<Omit<User, 'password'> | null> {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { username } });
 
   if (!user) return null;
   if (user.status === 'INACTIVE' || user.status === 'SUSPENDED') return null;

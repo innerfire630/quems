@@ -33,15 +33,15 @@ export function MarqueeMessage({ message }: MarqueeMessageProps) {
           }
         }
       `}</style>
-      <footer className="h-[5vh] border-t-2 flex items-center overflow-hidden shrink-0" style={{ backgroundColor: 'var(--db-bg)', borderColor: 'var(--db-border)' }}>
-        <div className="font-black h-full flex items-center z-10 uppercase" style={{ padding: '0 clamp(0.8rem, 1.5vw, 2rem)', fontSize: 'clamp(0.6rem, 1vw, 1rem)', backgroundColor: 'var(--db-accent)', color: 'var(--db-accent-text)' }}>
+      <footer className="shrink-0 border-t-2 flex items-center overflow-hidden" style={{ height: 'clamp(2rem, 5.5vmin, 4.5rem)', backgroundColor: 'var(--db-bg)', borderColor: 'var(--db-border)' }}>
+        <div className="font-black h-full flex items-center z-10 uppercase" style={{ padding: '0 clamp(1rem, 2vmin, 2.5rem)', fontSize: 'clamp(0.8rem, 1.8vmin, 1.5rem)', backgroundColor: 'var(--db-accent)', color: 'var(--db-accent-text)' }}>
           Info
         </div>
         <div className="flex-1 whitespace-nowrap overflow-hidden relative">
           <div
             className="marquee-animate inline-block font-medium pl-[100%]"
             style={{
-              fontSize: 'clamp(0.6rem, 1vw, 1rem)',
+              fontSize: 'clamp(0.8rem, 1.8vmin, 1.5em)',
               color: 'var(--db-text-secondary)',
               animationName: 'marquee-scroll',
               animationDuration: `${duration}s`,

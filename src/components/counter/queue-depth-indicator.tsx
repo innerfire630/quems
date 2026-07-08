@@ -31,10 +31,12 @@ export default function QueueDepthIndicator({ initialCount, counterId }: QueueDe
   const [count, setCount] = useState(initialCount);
 
   useSSE(`counter:${counterId}`, {
-    filter: ['TICKET_ISSUED', 'QUEUE_UPDATED'] as readonly SseEventType[],
+    filter: ['TICKET_ISSUED', 'TICKET_CALLED', 'QUEUE_UPDATED'] as readonly SseEventType[],
     onEvent: (envelope) => {
       if (envelope.type === 'TICKET_ISSUED') {
         setCount((prev) => prev + 1);
+      } else if (envelope.type === 'TICKET_CALLED') {
+        setCount((prev) => Math.max(0, prev - 1));
       } else if (envelope.type === 'QUEUE_UPDATED') {
         const payload = envelope.payload as { waitingCount?: number };
         if (typeof payload.waitingCount === 'number') {

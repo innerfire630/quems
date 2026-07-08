@@ -138,7 +138,7 @@ export const POST = withPermission(async (req, ctx) => {
           success: false,
           error: {
             code: 'CONFLICT',
-            message: `A counter with number #${input.number} already exists.`,
+            message: `A counter with number ${input.number} already exists.`,
           },
         },
         { status: 409 },

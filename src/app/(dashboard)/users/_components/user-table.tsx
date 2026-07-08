@@ -101,7 +101,7 @@ export function UserTable({
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
+            <TableHead>Username</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Roles</TableHead>
             <TableHead>Updated</TableHead>
@@ -130,7 +130,7 @@ export function UserTable({
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
+          <TableHead>Username</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Roles</TableHead>
           <TableHead>Updated</TableHead>
@@ -141,7 +141,7 @@ export function UserTable({
         {users.map((user) => (
           <TableRow key={user.id}>
             <TableCell className="font-medium">{user.name}</TableCell>
-            <TableCell className="text-muted-foreground">{user.email}</TableCell>
+            <TableCell className="text-muted-foreground">{user.username}</TableCell>
             <TableCell>
               <Badge variant={statusVariant(user.status)}>{user.status}</Badge>
             </TableCell>

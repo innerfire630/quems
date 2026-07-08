@@ -22,7 +22,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(initialError ?? null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +32,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
     setError(null);
 
     // Client-side validation
-    const result = loginSchema.safeParse({ email, password });
+    const result = loginSchema.safeParse({ username, password });
     if (!result.success) {
       const firstIssue = result.error.issues[0];
       setError(firstIssue?.message ?? 'Invalid input');
@@ -43,7 +43,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
     try {
       const res = await signIn('credentials', {
-        email,
+        username,
         password,
         redirect: false,
         callbackUrl,
@@ -52,7 +52,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
       if (!res || res.error) {
         const errorMessage =
           res?.error === 'CredentialsSignin'
-            ? 'Invalid email or password'
+            ? 'Invalid username or password'
             : (res?.error ?? 'Sign-in failed');
         setError(errorMessage);
         setIsSubmitting(false);
@@ -73,7 +73,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
       const isCredentialsError = (err as Record<string, unknown>)?.type === 'CredentialsSignin';
       setError(
         isCredentialsError
-          ? 'Invalid email or password'
+          ? 'Invalid username or password'
           : 'An unexpected error occurred. Please try again.',
       );
       setIsSubmitting(false);
@@ -90,13 +90,13 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
       )}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="login-email">Email</Label>
+        <Label htmlFor="login-username">Username</Label>
         <Input
-          id="login-email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          id="login-username"
+          type="text"
+          placeholder="Enter your username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           autoFocus
           required
           disabled={isSubmitting}

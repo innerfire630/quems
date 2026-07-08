@@ -161,21 +161,17 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
   }, [state.nowServing]);
 
   // Build flat sorted history: displaced serving tickets + recentByCounter, excluding hero
-  // Active (still-serving) tickets are sorted to the top so they blink first
   const historyTickets = useMemo(() => {
     const all: TicketDisplayData[] = [];
-    // Include other currently serving tickets that are NOT the hero (displaced)
     for (const t of Object.values(state.nowServing)) {
       if (t && t.id !== latestTicket?.id) {
         all.push(t);
       }
     }
-    // Include recentByCounter history
     for (const tickets of Object.values(state.recentByCounter)) {
       all.push(...tickets);
     }
     const seen = new Set<string>();
-    // Exclude the hero ticket from history entirely
     if (latestTicket) seen.add(latestTicket.id);
     const deduped: TicketDisplayData[] = [];
     for (const t of all.sort(
@@ -186,7 +182,6 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
         deduped.push(t);
       }
     }
-    // Sort: active (CALLED/RECALLED) tickets first, then by calledAt desc
     return deduped.sort((a, b) => {
       const aActive = a.status === 'CALLED' || a.status === 'RECALLED' ? 0 : 1;
       const bActive = b.status === 'CALLED' || b.status === 'RECALLED' ? 0 : 1;
@@ -271,7 +266,7 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
   return (
     <div className="fixed inset-0 font-sans flex flex-col overflow-hidden" style={{ ...themeVars, backgroundColor: 'var(--db-bg)', color: 'var(--db-text)' }}>
       {/* Header — 10vh */}
-      <header className="h-[10vh] border-b-2 flex items-center justify-between shrink-0" style={{ padding: '0 clamp(1.5rem, 3vw, 4rem)', backgroundColor: 'var(--db-surface)', borderColor: 'var(--db-border)' }}>
+      <header className="shrink-0 border-b-2 flex items-center justify-between" style={{ height: 'clamp(2rem, 6vmin, 4rem)', padding: '0 clamp(0.8rem, 1.5vmin, 2rem)', backgroundColor: 'var(--db-surface)', borderColor: 'var(--db-border)' }}>
         <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 1rem)' }}>
           {brandLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -279,10 +274,10 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
               src={brandLogo}
               alt={systemName}
               className="object-contain"
-              style={{ width: 'clamp(1.5rem, 3vh, 3rem)', height: 'clamp(1.5rem, 3vh, 3rem)' }}
+              style={{ width: 'clamp(1rem, 2vmin, 2rem)', height: 'clamp(1rem, 2vmin, 2rem)' }}
             />
           ) : null}
-          <span className="font-black tracking-wider uppercase" style={{ fontSize: 'clamp(1rem, 2.5vw, 2.5rem)', color: 'var(--db-text)' }}>
+          <span className="font-black tracking-wider uppercase" style={{ fontSize: 'clamp(0.7rem, 1.5vmin, 1.5rem)', color: 'var(--db-text)' }}>
             {systemName}
           </span>
         </div>
@@ -295,8 +290,8 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
         onExpire={() => setState((prev) => ({ ...prev, broadcastMessage: null }))}
       />
 
-      {/* Main content — 85vh, 70/30 split */}
-      <main className="h-[85vh] flex">
+      {/* Main content — fills remaining space, responsive layout */}
+      <main className="flex-1 grid grid-rows-[55%_45%] md:grid-rows-none md:grid-cols-[65%_35%] min-h-0 overflow-hidden">
         <NowServingHero ticket={latestTicket} notices={counterNotices} />
         <RecentCallsList tickets={historyTickets} />
       </main>

@@ -19,6 +19,7 @@ export async function updateKioskConfig(
     welcomeMessage?: string;
     footerMessage?: string;
     printerName?: string;
+    printerSheetSize?: string;
     autoResetSeconds?: number;
     showEstimatedWait?: boolean;
   },
@@ -43,6 +44,7 @@ export async function updateKioskConfig(
       ...(data.welcomeMessage !== undefined && { welcomeMessage: data.welcomeMessage }),
       ...(data.footerMessage !== undefined && { footerMessage: data.footerMessage }),
       ...(data.printerName !== undefined && { printerName: data.printerName || null }),
+      ...(data.printerSheetSize !== undefined && { printerSheetSize: data.printerSheetSize || null }),
       ...(data.autoResetSeconds !== undefined && { autoResetSeconds: data.autoResetSeconds }),
       ...(data.showEstimatedWait !== undefined && { showEstimatedWait: data.showEstimatedWait }),
     },

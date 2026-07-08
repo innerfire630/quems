@@ -695,12 +695,14 @@ export async function recallTicket(
     });
     const recallCount = existingRecalls + 1;
 
-    // 6. Update the ticket
+    // 6. Update the ticket — also update calledAt so the recalled ticket
+    // becomes the "latest" and shows on the TV hero display
     await tx.ticket.update({
       where: { id: input.ticketId },
       data: {
         status: 'RECALLED',
         recalledAt: now,
+        calledAt: now,
       },
     });
 
@@ -893,7 +895,8 @@ export async function recallNoShowTicket(
     transitionTicket(ticket.status, 'RECALL');
     const previousStatus = ticket.status;
 
-    // 6. Update ticket to RECALLED (preserve original calledAt in metadata)
+    // 6. Update ticket to RECALLED — also update calledAt so the recalled ticket
+    // becomes the "latest" and shows on the TV hero display
     const originalCalledAt = ticket.calledAt;
     await tx.ticket.update({
       where: { id: input.ticketId },
@@ -902,6 +905,7 @@ export async function recallNoShowTicket(
         counterId: officer.counterId,
         calledByOfficerId: officer.id,
         recalledAt: now,
+        calledAt: now,
       },
     });
 

@@ -13,5 +13,9 @@ export const metadata: Metadata = {
 };
 
 export default function KioskLayout({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-white p-8">{children}</div>;
+  return (
+    <div className="flex h-screen flex-col overflow-hidden bg-zinc-300">
+      {children}
+    </div>
+  );
 }

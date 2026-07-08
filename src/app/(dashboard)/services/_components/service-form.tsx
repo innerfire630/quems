@@ -34,7 +34,7 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
   const [ticketPrefix, setTicketPrefix] = useState(initialValues?.ticketPrefix ?? '');
   const [description, setDescription] = useState(initialValues?.description ?? '');
   const [iconName, setIconName] = useState(initialValues?.iconName ?? '');
-  const [color, setColor] = useState(initialValues?.color ?? '');
+
   const [isActive, setIsActive] = useState(initialValues?.isActive ?? true);
   const [averageServiceTime, setAverageServiceTime] = useState(
     initialValues?.averageServiceTime?.toString() ?? '',
@@ -52,7 +52,6 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
       ticketPrefix: ticketPrefix || undefined,
       description: description || undefined,
       iconName: iconName || undefined,
-      color: color || undefined,
       isActive,
       averageServiceTime: averageServiceTime ? Number(averageServiceTime) : undefined,
       sortOrder: sortOrder ? Number(sortOrder) : undefined,
@@ -124,7 +123,7 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>{mode === 'create' ? 'Create Service' : 'Edit Service'}</CardTitle>
         </CardHeader>
@@ -191,20 +190,6 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
               </Label>
               <IconPicker value={iconName} onChange={setIconName} />
               {errors.iconName && <p className="text-xs text-destructive">{errors.iconName}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="color" className="inline-flex items-center gap-1.5">
-                Color
-                <FieldInfo text="Hex color code (e.g. #3B82F6) used to visually distinguish this service on the kiosk buttons, tickets, and display board." />
-              </Label>
-              <Input
-                id="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                placeholder="#3B82F6"
-              />
-              {errors.color && <p className="text-xs text-destructive">{errors.color}</p>}
             </div>
 
             <div className="space-y-2">

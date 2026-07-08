@@ -73,6 +73,7 @@ const KEY_LABELS: Record<string, string> = {
   'system.logo_url': 'Company Logo',
   'queue.daily_reset_time': 'Daily Reset Time',
   'queue.no_show_grace_period_seconds': 'No-Show Grace Period',
+  'queue.default_average_service_time_minutes': 'Default Service Time',
   'display.theme': 'TV Display Theme',
   'display.marquee_message': 'Marquee Message',
 };

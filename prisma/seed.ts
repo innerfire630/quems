@@ -24,6 +24,7 @@ import type { Permission, Role } from '@/lib/permissions';
 // Constants
 // ---------------------------------------------------------------------------
 
+const DEFAULT_USERNAME = 'admin';
 const DEFAULT_EMAIL = 'admin@example.com';
 const DEFAULT_PASSWORD = 'Admin@123';
 const BCRYPT_ROUNDS = 10;
@@ -129,11 +130,12 @@ async function seedRolePermissions(): Promise<{ created: number; deleted: number
 async function seedAdminUser(): Promise<void> {
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, BCRYPT_ROUNDS);
 
-  let user = await prisma.user.findUnique({ where: { email: DEFAULT_EMAIL } });
+  let user = await prisma.user.findUnique({ where: { username: DEFAULT_USERNAME } });
 
   if (!user) {
     user = await prisma.user.create({
       data: {
+        username: DEFAULT_USERNAME,
         email: DEFAULT_EMAIL,
         name: 'Default Admin',
         password: passwordHash,
@@ -141,7 +143,7 @@ async function seedAdminUser(): Promise<void> {
       },
     });
   } else {
-    // Update existing user password & name (not email — operator may have changed it)
+    // Update existing user password & name (not username — operator may have changed it)
     user = await prisma.user.update({
       where: { id: user.id },
       data: { password: passwordHash, name: 'Default Admin' },
