@@ -9,6 +9,7 @@ import {
   FileText,
   Settings,
   Tablet,
+  X,
 } from 'lucide-react';
 import { SidebarBrand } from './SidebarBrand';
 import { SidebarNavLink } from './SidebarNavLink';
@@ -41,12 +42,30 @@ const NAV_ITEMS = [
 interface AppSidebarProps {
   brandName?: string;
   brandLogo?: string | null;
+  className?: string;
+  onClose?: () => void;
 }
 
-export function AppSidebar({ brandName, brandLogo }: AppSidebarProps) {
+export function AppSidebar({ brandName, brandLogo, className, onClose }: AppSidebarProps) {
   return (
-    <aside className="hidden h-screen w-60 flex-col border-r-2 border-zinc-700 bg-zinc-800 md:flex shrink-0 sticky top-0">
-      <SidebarBrand name={brandName} logoUrl={brandLogo} />
+    <aside
+      className={`h-screen w-60 flex-col border-r-2 border-zinc-700 bg-zinc-800 shrink-0 sticky top-0 ${className ?? 'hidden md:flex'}`}
+    >
+      <div className="flex items-center">
+        <div className="flex-1">
+          <SidebarBrand name={brandName} logoUrl={brandLogo} />
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="mr-2 flex size-8 items-center justify-center rounded-md text-zinc-400 hover:text-white hover:bg-white/10 md:hidden"
+            aria-label="Close navigation menu"
+          >
+            <X className="size-5" />
+          </button>
+        )}
+      </div>
       <nav className="flex flex-col gap-0.5 py-2" aria-label="Primary">
         {NAV_ITEMS.map((item) =>
           item.permission ? (

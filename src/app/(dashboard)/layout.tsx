@@ -7,8 +7,7 @@
 
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { AppSidebar } from '@/components/layout/AppSidebar';
-import { DashboardTopBar } from '@/app/(dashboard)/_components/dashboard-top-bar';
+import { MobileShell } from '@/components/layout/mobile-shell';
 import { AuthProvider } from '@/components/layout/AuthProvider';
 import { getServerSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
@@ -40,13 +39,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <AuthProvider>
-      <div className="flex min-h-screen bg-background">
-        <AppSidebar brandName={brand.name} brandLogo={brand.logoUrl} />
-        <div className="flex flex-1 flex-col min-w-0">
-          <DashboardTopBar session={session} />
-          <main className="flex-1 p-4 sm:p-6 min-w-0">{children}</main>
-        </div>
-      </div>
+      <MobileShell brandName={brand.name} brandLogo={brand.logoUrl} session={session}>
+        {children}
+      </MobileShell>
     </AuthProvider>
   );
 }

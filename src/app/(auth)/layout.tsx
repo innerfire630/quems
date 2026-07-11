@@ -23,9 +23,9 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-5xl overflow-hidden bg-white p-0">
-        <div className="flex">
-          {/* Left side — hero image */}
-          <div className="relative hidden w-[45%] items-center justify-center overflow-hidden bg-zinc-900 md:flex">
+        <div className="flex flex-col md:flex-row">
+          {/* Hero image — banner on mobile, side panel on desktop */}
+          <div className="relative h-40 w-full items-center justify-center overflow-hidden bg-zinc-900 md:h-auto md:w-[45%] md:flex">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/login-hero.jpeg"
@@ -35,7 +35,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
           </div>
 
           {/* Right side — login form */}
-          <div className="flex w-full flex-col items-center justify-center p-12 md:w-[55%]">
+          <div className="flex w-full flex-col items-center justify-center p-6 sm:p-8 md:w-[55%] md:p-12">
             <div className="w-full max-w-sm">
               <div className="mb-6 text-center">
                 <div className="flex flex-col items-center gap-2">
@@ -44,12 +44,12 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
                     <img
                       src={brand.logoUrl}
                       alt={brand.name}
-                      className="h-12 w-12 object-contain"
+                      className="h-10 w-10 sm:h-12 sm:w-12 object-contain"
                     />
                   ) : null}
-                  <h2 className="text-2xl font-bold">{brand.name}</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">{brand.name}</h2>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                   Sign in to access the queue control panel
                 </p>
               </div>
