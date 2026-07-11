@@ -25,8 +25,8 @@ import {
 const NAV_ITEMS = [
   { href: '/overview', label: 'Overview', icon: LayoutDashboard, permission: undefined },
   { href: '/users', label: 'Users', icon: Users, permission: PERMISSION_USER_MANAGE },
-  { href: '/counters', label: 'Counters', icon: Monitor, permission: PERMISSION_COUNTER_READ },
   { href: '/services', label: 'Services', icon: Briefcase, permission: PERMISSION_SERVICE_READ },
+  { href: '/counters', label: 'Counters', icon: Monitor, permission: PERMISSION_COUNTER_READ },
   { href: '/reports', label: 'Reports', icon: BarChart3, permission: PERMISSION_REPORT_VIEW },
   { href: '/audit-log', label: 'Audit Log', icon: FileText, permission: PERMISSION_SYSTEM_AUDIT },
   {
@@ -45,7 +45,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ brandName, brandLogo }: AppSidebarProps) {
   return (
-    <aside className="hidden min-h-screen w-60 flex-col border-r-2 border-zinc-700 bg-zinc-800 md:flex shrink-0">
+    <aside className="hidden h-screen w-60 flex-col border-r-2 border-zinc-700 bg-zinc-800 md:flex shrink-0 sticky top-0">
       <SidebarBrand name={brandName} logoUrl={brandLogo} />
       <nav className="flex flex-col gap-0.5 py-2" aria-label="Primary">
         {NAV_ITEMS.map((item) =>

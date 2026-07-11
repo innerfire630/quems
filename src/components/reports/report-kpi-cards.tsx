@@ -40,9 +40,9 @@ export function ReportKPICards({ summary }: ReportKPICardsProps) {
           key={kpi.label}
           className="relative overflow-hidden rounded-lg border border-border bg-card p-5 transition-colors hover:bg-accent/50"
         >
-          {/* Subtle background icon */}
+          {/* Right-centered icon */}
           <kpi.icon
-            className="pointer-events-none absolute -bottom-4 -right-2 size-28 text-foreground"
+            className="pointer-events-none absolute right-4 top-1/2 size-20 -translate-y-1/2 text-foreground"
             style={{ opacity: 0.08 }}
             aria-hidden
           />

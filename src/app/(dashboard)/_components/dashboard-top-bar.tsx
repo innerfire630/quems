@@ -14,7 +14,7 @@ interface DashboardTopBarProps {
 
 export function DashboardTopBar({ session }: DashboardTopBarProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b-2 border-border bg-card px-4 sm:px-6">
+    <header className="flex h-16 items-center justify-between border-b-2 border-border bg-card px-4 sm:px-6 sticky top-0 z-10">
       <span className="text-sm font-medium text-muted-foreground">
         {session.user.name ?? 'User'}
       </span>
