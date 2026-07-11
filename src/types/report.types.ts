@@ -42,6 +42,8 @@ export interface ServicePerformanceRow {
   serviceId: string;
   serviceCode: string;
   serviceName: string;
+  /** Date string (YYYY-MM-DD) when byDay is true; undefined for aggregated rows. */
+  date?: string;
   totalIssued: number;
   totalServed: number;
   totalNoShow: number;

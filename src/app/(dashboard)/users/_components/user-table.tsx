@@ -35,17 +35,21 @@ interface UserTableProps {
   onResetPassword?: (userId: string) => void;
 }
 
-function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+function statusClasses(status: string): string {
   switch (status) {
     case 'ACTIVE':
-      return 'default';
+      return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400';
     case 'INACTIVE':
-      return 'secondary';
+      return 'bg-amber-500/15 text-amber-700 dark:text-amber-400';
     case 'SUSPENDED':
-      return 'destructive';
+      return 'bg-red-500/15 text-red-700 dark:text-red-400';
     default:
-      return 'outline';
+      return '';
   }
+}
+
+function statusLabel(status: string): string {
+  return status.charAt(0) + status.slice(1).toLowerCase();
 }
 
 function relativeTime(dateStr: string): string {
@@ -97,23 +101,25 @@ export function UserTable({
 
   if (isLoading) {
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Username</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Roles</TableHead>
-            <TableHead>Updated</TableHead>
-            <TableHead className="w-12" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <SkeletonRow key={i} />
-          ))}
-        </TableBody>
-      </Table>
+      <div className="rounded-lg border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Username</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Roles</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead className="w-12" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonRow key={i} />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     );
   }
 
@@ -126,80 +132,84 @@ export function UserTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Username</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Roles</TableHead>
-          <TableHead>Updated</TableHead>
-          <TableHead className="w-12" />
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell className="font-medium">{user.name}</TableCell>
-            <TableCell className="text-muted-foreground">{user.username}</TableCell>
-            <TableCell>
-              <Badge variant={statusVariant(user.status)}>{user.status}</Badge>
-            </TableCell>
-            <TableCell>
-              <div className="flex flex-wrap gap-1">
-                {user.roles.map((role) => (
-                  <Badge key={role.id} variant="outline" className="text-xs">
-                    {role.name}
-                  </Badge>
-                ))}
-              </div>
-            </TableCell>
-            <TableCell className="text-muted-foreground text-sm">
-              {relativeTime(user.updatedAt)}
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-accent">
-                  <MoreHorizontal className="size-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit?.(user.id)}>
-                    <Pencil className="mr-2 size-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onResetPassword?.(user.id)}>
-                    <KeyRound className="mr-2 size-4" />
-                    Reset Password
-                  </DropdownMenuItem>
-                  {!user.roles.some((r) => r.name === 'ADMIN') && (
-                    <>
-                      <Can permission={PERMISSION_USER_DELETE}>
-                        <DropdownMenuItem
-                          onClick={() => onDeactivate?.(user.id)}
-                          disabled={user.status === 'INACTIVE'}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <UserX className="mr-2 size-4" />
-                          Deactivate
-                        </DropdownMenuItem>
-                      </Can>
-                      <Can permission={PERMISSION_USER_MANAGE}>
-                        <DropdownMenuItem
-                          onClick={() => onDelete?.(user.id)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 size-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </Can>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+    <div className="rounded-lg border border-border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Username</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Roles</TableHead>
+            <TableHead>Updated</TableHead>
+            <TableHead className="w-12" />
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {users.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell className="font-medium">{user.name}</TableCell>
+              <TableCell className="text-muted-foreground">{user.username}</TableCell>
+              <TableCell>
+                <Badge variant="secondary" className={statusClasses(user.status)}>
+                  {statusLabel(user.status)}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-1">
+                  {user.roles.map((role) => (
+                    <Badge key={role.id} variant="outline" className="text-xs">
+                      {role.name}
+                    </Badge>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell className="text-muted-foreground text-sm">
+                {relativeTime(user.updatedAt)}
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="inline-flex size-8 items-center justify-center rounded-lg hover:bg-accent">
+                    <MoreHorizontal className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit?.(user.id)}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onResetPassword?.(user.id)}>
+                      <KeyRound className="mr-2 size-4" />
+                      Reset Password
+                    </DropdownMenuItem>
+                    {!user.roles.some((r) => r.name === 'ADMIN') && (
+                      <>
+                        <Can permission={PERMISSION_USER_DELETE}>
+                          <DropdownMenuItem
+                            onClick={() => onDeactivate?.(user.id)}
+                            disabled={user.status === 'INACTIVE'}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <UserX className="mr-2 size-4" />
+                            Deactivate
+                          </DropdownMenuItem>
+                        </Can>
+                        <Can permission={PERMISSION_USER_MANAGE}>
+                          <DropdownMenuItem
+                            onClick={() => onDelete?.(user.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </Can>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

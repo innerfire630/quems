@@ -104,6 +104,7 @@ model User {
   name      String
   avatar    String?
   status    UserStatus @default(ACTIVE)
+  mustChangePassword Boolean @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 

@@ -43,25 +43,35 @@ export interface ValidRefreshToken extends RefreshToken {
 // ---------------------------------------------------------------------------
 
 /**
+ * Result of credential verification.
+ * - { ok: true, user } — valid credentials, active user
+ * - { ok: false, reason: 'invalid' } — wrong username or password
+ * - { ok: false, reason: 'deactivated' | 'suspended' } — account disabled
+ */
+export type CredentialResult =
+  | { ok: true; user: Omit<User, 'password'> }
+  | { ok: false; reason: 'invalid' | 'deactivated' | 'suspended' };
+
+/**
  * Verifies email + password against the User table.
- * Returns the user (without password) on success, null on failure.
- * Rejects INACTIVE and SUSPENDED users as if they don't exist (no user enum).
+ * Returns a discriminated result so callers can show specific error messages.
  */
 export async function verifyCredentials(
   username: string,
   password: string,
-): Promise<Omit<User, 'password'> | null> {
+): Promise<CredentialResult> {
   const user = await prisma.user.findUnique({ where: { username } });
 
-  if (!user) return null;
-  if (user.status === 'INACTIVE' || user.status === 'SUSPENDED') return null;
+  if (!user) return { ok: false, reason: 'invalid' };
+  if (user.status === 'INACTIVE') return { ok: false, reason: 'deactivated' };
+  if (user.status === 'SUSPENDED') return { ok: false, reason: 'suspended' };
 
   const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) return null;
+  if (!isValid) return { ok: false, reason: 'invalid' };
 
   // Strip password before returning
   const { password: _pw, ...safeUser } = user;
-  return safeUser;
+  return { ok: true, user: safeUser };
 }
 
 // ---------------------------------------------------------------------------
@@ -178,6 +188,9 @@ export async function validateRefreshToken(
   if (!record) return null;
   if (record.isRevoked) return null;
   if (record.expiresAt <= new Date()) return null;
+
+  // Reject inactive or suspended users — their status may have changed after login
+  if (record.user.status === 'INACTIVE' || record.user.status === 'SUSPENDED') return null;
 
   // Attach roles/permissions to the user
   const { roles, permissions } = await fetchUserRolesAndPermissions(record.userId);

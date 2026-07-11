@@ -30,12 +30,12 @@ interface CounterTableProps {
   onDelete?: (counterId: string, counterName: string) => void;
 }
 
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  OPEN: 'default',
-  CLOSED: 'secondary',
-  OFFLINE: 'secondary',
-  OFF_DUTY: 'secondary',
-  NO_OFFICER_ON_DUTY: 'outline',
+const STATUS_VARIANT: Record<string, string> = {
+  OPEN: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  CLOSED: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+  OFFLINE: 'bg-zinc-500/15 text-zinc-700 dark:text-zinc-400',
+  OFF_DUTY: 'bg-zinc-500/15 text-zinc-700 dark:text-zinc-400',
+  NO_OFFICER_ON_DUTY: 'bg-red-500/15 text-red-700 dark:text-red-400',
 };
 
 function SkeletonRow() {
@@ -111,13 +111,23 @@ export function CounterTable({ counters, isLoading, error, onEdit, onDelete }: C
                   {counter.displayLabel ?? '—'}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={counter.isActive ? 'default' : 'secondary'}>
+                  <Badge
+                    variant="secondary"
+                    className={
+                      counter.isActive
+                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                    }
+                  >
                     {counter.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>
                 <TableCell className="font-mono">{counter.assignedServicesCount}</TableCell>
                 <TableCell>
-                  <Badge variant={STATUS_VARIANT[counter.operationalStatus] ?? 'outline'}>
+                  <Badge
+                    variant="secondary"
+                    className={STATUS_VARIANT[counter.operationalStatus] ?? ''}
+                  >
                     {counter.operationalStatus.replace(/_/g, ' ')}
                   </Badge>
                 </TableCell>

@@ -18,8 +18,9 @@ export const createServiceSchema = z.object({
     .trim(),
   ticketPrefix: z
     .string()
-    .length(1, 'Ticket prefix must be exactly 1 character')
-    .regex(/^[A-Z]$/, 'Ticket prefix must be a single uppercase letter A-Z'),
+    .min(1, 'Ticket prefix must be 1-2 characters')
+    .max(2, 'Ticket prefix must be 1-2 characters')
+    .regex(/^[A-Z]{1,2}$/, 'Ticket prefix must be 1-2 uppercase letters A-Z'),
   description: z.string().max(500, 'Description is too long').optional(),
   iconName: z.string().max(50).optional(),
   color: z
@@ -55,8 +56,9 @@ export const updateServiceSchema = z
       .optional(),
     ticketPrefix: z
       .string()
-      .length(1, 'Ticket prefix must be exactly 1 character')
-      .regex(/^[A-Z]$/, 'Ticket prefix must be a single uppercase letter A-Z')
+      .min(1, 'Ticket prefix must be 1-2 characters')
+      .max(2, 'Ticket prefix must be 1-2 characters')
+      .regex(/^[A-Z]{1,2}$/, 'Ticket prefix must be 1-2 uppercase letters A-Z')
       .optional(),
     description: z.string().max(500).optional(),
     iconName: z.string().max(50).optional(),

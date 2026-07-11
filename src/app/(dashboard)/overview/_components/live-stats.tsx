@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, Layers, Monitor, Ticket, Clock, Activity } from 'lucide-react';
+import { useSSE } from '@/hooks/use-sse';
 
 interface LiveStatsProps {
   initialTotalUsers: number;
@@ -22,11 +23,36 @@ interface LiveStatsProps {
 
 const CARDS_BASE = [
   { key: 'totalUsers', label: 'Users', icon: Users, color: 'text-blue-600 dark:text-blue-400' },
-  { key: 'totalServices', label: 'Active Services', icon: Layers, color: 'text-emerald-600 dark:text-emerald-400' },
-  { key: 'totalCounters', label: 'Counters', icon: Monitor, color: 'text-purple-600 dark:text-purple-400' },
-  { key: 'ticketsToday', label: 'Tickets Today', icon: Ticket, color: 'text-amber-600 dark:text-amber-400' },
-  { key: 'waitingTickets', label: 'Waiting', icon: Clock, color: 'text-rose-600 dark:text-rose-400' },
-  { key: 'servingTickets', label: 'Now Serving', icon: Activity, color: 'text-emerald-600 dark:text-emerald-400' },
+  {
+    key: 'totalServices',
+    label: 'Active Services',
+    icon: Layers,
+    color: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    key: 'totalCounters',
+    label: 'Counters',
+    icon: Monitor,
+    color: 'text-purple-600 dark:text-purple-400',
+  },
+  {
+    key: 'ticketsToday',
+    label: 'Tickets Today',
+    icon: Ticket,
+    color: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    key: 'waitingTickets',
+    label: 'Waiting',
+    icon: Clock,
+    color: 'text-rose-600 dark:text-rose-400',
+  },
+  {
+    key: 'servingTickets',
+    label: 'Now Serving',
+    icon: Activity,
+    color: 'text-emerald-600 dark:text-emerald-400',
+  },
 ] as const;
 
 export function LiveStats({
@@ -47,8 +73,9 @@ export function LiveStats({
     servingTickets: initialServingTickets,
   });
 
-  // Sync when server re-renders with new props
+  // Sync when server re-renders with new props (from router.refresh())
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate sync of server-rendered props to client state
     setStats({
       totalUsers: initialTotalUsers,
       totalServices: initialTotalServices,
@@ -57,13 +84,70 @@ export function LiveStats({
       waitingTickets: initialWaitingTickets,
       servingTickets: initialServingTickets,
     });
-  }, [initialTotalUsers, initialTotalServices, initialTotalCounters, initialTicketsToday, initialWaitingTickets, initialServingTickets]);
+  }, [
+    initialTotalUsers,
+    initialTotalServices,
+    initialTotalCounters,
+    initialTicketsToday,
+    initialWaitingTickets,
+    initialServingTickets,
+  ]);
 
-  // Refresh page data every 10 seconds
+  // SSE real-time updates — react to ticket lifecycle events instantly
+  const handleSSE = useCallback((envelope: { type: string; payload: Record<string, unknown> }) => {
+    const t = envelope.type;
+    const payload = envelope.payload as Record<string, unknown>;
+    setStats((prev) => {
+      const next = { ...prev };
+      switch (t) {
+        case 'TICKET_ISSUED':
+          next.ticketsToday = prev.ticketsToday + 1;
+          next.waitingTickets = prev.waitingTickets + 1;
+          break;
+        case 'TICKET_CALLED':
+          // WAITING → CALLED: waiting count drops
+          next.waitingTickets = Math.max(0, prev.waitingTickets - 1);
+          break;
+        case 'TICKET_SERVED': {
+          // Same event is used for both "started serving" and "completed":
+          //   previousStatus CALLED/RECALLED → now SERVING (serving++)
+          //   previousStatus SERVING          → now COMPLETED (serving--)
+          const prevStatus = payload.previousStatus as string;
+          if (prevStatus === 'SERVING') {
+            next.servingTickets = Math.max(0, prev.servingTickets - 1);
+          } else {
+            next.servingTickets = prev.servingTickets + 1;
+          }
+          break;
+        }
+        case 'TICKET_NO_SHOW':
+          // If ticket was SERVING, serving count drops
+          if (payload.previousStatus === 'SERVING') {
+            next.servingTickets = Math.max(0, prev.servingTickets - 1);
+          }
+          break;
+        case 'DAILY_RESET':
+          next.ticketsToday = 0;
+          next.waitingTickets = 0;
+          next.servingTickets = 0;
+          break;
+        default:
+          return prev; // no change
+      }
+      return next;
+    });
+  }, []);
+
+  useSSE('global', {
+    filter: ['TICKET_ISSUED', 'TICKET_CALLED', 'TICKET_SERVED', 'TICKET_NO_SHOW', 'DAILY_RESET'],
+    onEvent: handleSSE,
+  });
+
+  // Polling fallback — reconcile with authoritative server data every 30 s
   useEffect(() => {
     const interval = setInterval(() => {
       router.refresh();
-    }, 10000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [router]);
 
@@ -74,13 +158,21 @@ export function LiveStats({
         return (
           <div
             key={card.key}
-            className="rounded-lg border border-border bg-card p-5 transition-colors hover:bg-accent/50"
+            className="relative overflow-hidden rounded-lg border border-border bg-card p-5 transition-colors hover:bg-accent/50"
           >
-            <div className="flex items-center justify-between">
+            {/* Subtle background icon */}
+            <Icon
+              className="pointer-events-none absolute -bottom-4 -right-2 size-28 text-foreground"
+              style={{ opacity: 0.08 }}
+              aria-hidden
+            />
+
+            <div className="relative">
               <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
-              <Icon className={`size-4 ${card.color}`} />
             </div>
-            <p className="mt-3 text-3xl font-semibold text-foreground">{stats[card.key]}</p>
+            <p className="relative mt-3 text-3xl font-semibold text-foreground">
+              {stats[card.key]}
+            </p>
           </div>
         );
       })}

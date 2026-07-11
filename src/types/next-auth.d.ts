@@ -23,6 +23,8 @@ declare module 'next-auth' {
       image?: string | null;
       roles: string[];
       permissions: string[];
+      mustChangePassword: boolean;
+      status: string;
     } & DefaultSession['user'];
   }
 }
@@ -34,5 +36,7 @@ declare module 'next-auth/jwt' {
     name: string;
     roles: string[];
     permissions: string[];
+    mustChangePassword: boolean;
+    status: string;
   }
 }

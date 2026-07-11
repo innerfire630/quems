@@ -71,7 +71,7 @@ export function generateReportCsv(reportData: ReportData): string {
 
     lines.push(
       [
-        escapeCsvField(reportData.startDate),
+        escapeCsvField(row.date ?? reportData.startDate),
         escapeCsvField(row.serviceCode),
         escapeCsvField(row.serviceName),
         escapeCsvField(row.totalIssued),

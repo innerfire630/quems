@@ -42,6 +42,19 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
     setIsSubmitting(true);
 
     try {
+      // Pre-check account status before NextAuth signIn (NextAuth swallows custom errors)
+      const statusCheck = await fetch('/api/auth/check-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+      const statusJson = await statusCheck.json();
+      if (!statusCheck.ok && statusJson.error?.code === 'ACCOUNT_DEACTIVATED') {
+        setError(statusJson.error.message);
+        setIsSubmitting(false);
+        return;
+      }
+
       const res = await signIn('credentials', {
         username,
         password,
@@ -50,10 +63,15 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
       });
 
       if (!res || res.error) {
+        const errorCode = res?.error ?? '';
         const errorMessage =
-          res?.error === 'CredentialsSignin'
-            ? 'Invalid username or password'
-            : (res?.error ?? 'Sign-in failed');
+          errorCode === 'AccountDeactivated'
+            ? 'Your account has been deactivated. Contact an administrator for assistance.'
+            : errorCode === 'AccountSuspended'
+              ? 'Your account has been suspended. Contact an administrator for assistance.'
+              : errorCode === 'CredentialsSignin'
+                ? 'Invalid username or password'
+                : (errorCode ?? 'Sign-in failed');
         setError(errorMessage);
         setIsSubmitting(false);
         return;
@@ -70,12 +88,20 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
     } catch (err) {
       // NextAuth v5 throws CredentialsSignin when authorize() returns null.
       // Check the error's type property (safer than instanceof for client bundles).
-      const isCredentialsError = (err as Record<string, unknown>)?.type === 'CredentialsSignin';
-      setError(
-        isCredentialsError
-          ? 'Invalid username or password'
-          : 'An unexpected error occurred. Please try again.',
-      );
+      const errObj = err as Record<string, unknown>;
+      const isCredentialsError = errObj?.type === 'CredentialsSignin';
+      const errMsg = String(errObj?.message ?? '');
+      if (errMsg.includes('AccountDeactivated')) {
+        setError('Your account has been deactivated. Contact an administrator for assistance.');
+      } else if (errMsg.includes('AccountSuspended')) {
+        setError('Your account has been suspended. Contact an administrator for assistance.');
+      } else {
+        setError(
+          isCredentialsError
+            ? 'Invalid username or password'
+            : 'An unexpected error occurred. Please try again.',
+        );
+      }
       setIsSubmitting(false);
     }
   }

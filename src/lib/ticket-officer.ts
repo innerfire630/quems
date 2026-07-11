@@ -57,7 +57,7 @@ export async function resolveCallingOfficer(
 ): Promise<ResolvedOfficer> {
   const officer = await db.counterOfficer.findUnique({
     where: { userId_counterId: { userId, counterId } },
-    include: { user: { select: { name: true } } },
+    include: { user: { select: { name: true, status: true } } },
   });
 
   if (!officer) {
@@ -66,6 +66,16 @@ export async function resolveCallingOfficer(
       userId,
       counterId,
       message: 'You are not assigned to this counter. Contact an administrator.',
+    };
+    throw err;
+  }
+
+  if (officer.user.status === 'INACTIVE' || officer.user.status === 'SUSPENDED') {
+    const err: OfficerNotOnDutyError = {
+      kind: 'OFFICER_NOT_ON_DUTY',
+      userId,
+      counterId,
+      message: 'Your account has been deactivated. Contact an administrator.',
     };
     throw err;
   }

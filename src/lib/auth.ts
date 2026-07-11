@@ -46,15 +46,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!username || !password) return null;
 
-        const user = await verifyCredentials(username, password);
-        if (!user) return null;
+        const result = await verifyCredentials(username, password);
+        if (!result.ok) {
+          if (result.reason === 'deactivated') {
+            throw new Error('AccountDeactivated');
+          }
+          if (result.reason === 'suspended') {
+            throw new Error('AccountSuspended');
+          }
+          return null;
+        }
 
         // Return user for NextAuth — the jwt callback will enrich with roles/permissions
         return {
-          id: user.id,
-          email: user.email ?? undefined,
-          name: user.name,
-          image: user.avatar,
+          id: result.user.id,
+          email: result.user.email ?? undefined,
+          name: result.user.name,
+          image: result.user.avatar,
         };
       },
     }),
@@ -84,14 +92,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { roles, permissions } = await fetchUserRolesAndPermissions(userId);
 
+        // Check if user must change password (admin reset)
+        const dbUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { mustChangePassword: true, status: true },
+        });
+
         token.userId = userId;
         token.email = user.email ?? token.email ?? '';
         token.name = user.name ?? token.name ?? '';
         token.roles = roles;
         token.permissions = permissions;
+        token.mustChangePassword = dbUser?.mustChangePassword ?? false;
+        token.status = dbUser?.status ?? 'ACTIVE';
       }
 
-      // On subsequent calls (token already enriched), return as-is
+      // Re-check mustChangePassword when it's true (to clear it after password change).
+      // Avoids a DB hit on every request once the flag is false.
+      if (token.userId && !user && token.mustChangePassword) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.userId as string },
+          select: { mustChangePassword: true },
+        });
+        token.mustChangePassword = dbUser?.mustChangePassword ?? false;
+      }
+
       return token;
     },
 
@@ -106,6 +131,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.name = token.name ?? session.user.name ?? '';
         session.user.roles = token.roles ?? [];
         session.user.permissions = token.permissions ?? [];
+        session.user.mustChangePassword = token.mustChangePassword ?? false;
+        session.user.status = token.status ?? 'ACTIVE';
       }
       return session;
     },

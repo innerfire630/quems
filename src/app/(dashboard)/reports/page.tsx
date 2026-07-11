@@ -6,7 +6,6 @@ import { prisma as db } from '@/lib/db';
 import { getServerSession } from '@/lib/auth';
 import { getReportData } from '@/lib/analytics-service';
 import { ReportsDashboardClient } from '@/components/reports/reports-dashboard-client';
-import { ExportCsvButton } from '@/components/reports/export-csv-button';
 import type { Metadata } from 'next';
 
 export const runtime = 'nodejs';
@@ -40,20 +39,18 @@ export default async function ReportsPage() {
     }),
   ]);
 
-  // Load initial report data for today
+  // Load initial report data for today (local timezone)
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${y}-${m}-${d}`;
   const initialData = await getReportData(
     new Date(todayStr + 'T00:00:00.000Z'),
     new Date(todayStr + 'T23:59:59.999Z'),
   );
 
   return (
-    <ReportsDashboardClient
-      initialData={initialData}
-      services={services}
-      counters={counters}
-      exportButtonSlot={<ExportCsvButton startDate={todayStr} endDate={todayStr} />}
-    />
+    <ReportsDashboardClient initialData={initialData} services={services} counters={counters} />
   );
 }

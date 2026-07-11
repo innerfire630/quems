@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Inbox } from 'lucide-react';
 import { DateRangePicker } from './date-range-picker';
 import { ReportFilters } from './report-filters';
+import { ExportCsvButton } from './export-csv-button';
 import { ReportKPICards } from './report-kpi-cards';
 import { TicketsByHourChart } from './tickets-by-hour-chart';
 import { ServicePerformanceTable } from './service-performance-table';
@@ -15,15 +16,12 @@ interface ReportsDashboardClientProps {
   initialData: ReportData;
   services: Array<{ id: string; code: string; name: string }>;
   counters: Array<{ id: string; name: string; number: number }>;
-  /** Slot for the Export CSV button (filled by 5.1.3) */
-  exportButtonSlot?: React.ReactNode;
 }
 
 export function ReportsDashboardClient({
   initialData,
   services,
   counters,
-  exportButtonSlot,
 }: ReportsDashboardClientProps) {
   const [startDate, setStartDate] = useState<string>(initialData.startDate);
   const [endDate, setEndDate] = useState<string>(initialData.endDate);
@@ -86,14 +84,13 @@ export function ReportsDashboardClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="rounded-xl bg-zinc-800 px-6 py-4">
         <div>
-          <h1 className="text-2xl font-bold">Reports</h1>
-          <p className="text-sm text-muted-foreground">
-            Showing data from {reportData.startDate} to {reportData.endDate}
+          <h1 className="text-2xl font-bold text-white">Reports</h1>
+          <p className="text-sm text-zinc-300">
+            Showing data from {startDate} to {endDate}
           </p>
         </div>
-        {exportButtonSlot}
       </div>
 
       {/* Filters */}
@@ -106,6 +103,14 @@ export function ReportsDashboardClient({
           counters={counters}
           onChange={handleFilterChange}
         />
+        <div className="ml-auto">
+          <ExportCsvButton
+            startDate={startDate}
+            endDate={endDate}
+            serviceId={serviceId}
+            counterId={counterId}
+          />
+        </div>
       </div>
 
       {/* Error */}

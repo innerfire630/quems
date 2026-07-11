@@ -11,11 +11,19 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ startDate, endDate, onChange }: DateRangePickerProps) {
-  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+  /** Get today's date in local timezone as YYYY-MM-DD */
+  function localDateStr(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  const today = useMemo(() => localDateStr(new Date()), []);
   const sevenDaysAgo = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
-    return d.toISOString().split('T')[0];
+    return localDateStr(d);
   }, []);
 
   const handleStartChange = (value: string) => {
@@ -57,7 +65,9 @@ export function DateRangePicker({ startDate, endDate, onChange }: DateRangePicke
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => onChange({ startDate: today, endDate: today })}
+        onClick={() =>
+          onChange({ startDate: localDateStr(new Date()), endDate: localDateStr(new Date()) })
+        }
       >
         Today
       </Button>

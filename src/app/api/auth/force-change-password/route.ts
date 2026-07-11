@@ -1,9 +1,9 @@
 // =============================================================================
-// src/app/api/auth/change-password/route.ts — Self-service password change
+// POST /api/auth/force-change-password — Forced password change
 // =============================================================================
-// POST /api/auth/change-password
-// Authenticated user changes their own password by providing their current
-// password and a new password.
+// Used when mustChangePassword is true (admin reset a password).
+// Does NOT require the current password — only the new password.
+// Clears the mustChangePassword flag on success.
 // =============================================================================
 
 import { NextResponse } from 'next/server';
@@ -13,9 +13,8 @@ import { prisma } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/audit-log';
 
-const changePasswordSchema = z
+const forceChangePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required.'),
     newPassword: z
       .string()
       .min(8, 'New password must be at least 8 characters.')
@@ -26,10 +25,6 @@ const changePasswordSchema = z
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: 'Passwords do not match.',
     path: ['confirmPassword'],
-  })
-  .refine((data) => data.currentPassword !== data.newPassword, {
-    message: 'New password must be different from the current password.',
-    path: ['newPassword'],
   });
 
 export async function POST(req: Request): Promise<Response> {
@@ -45,8 +40,31 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const userId = session.user.userId as string;
 
+    // Verify the user actually needs a password change
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, mustChangePassword: true },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: { code: 'NOT_FOUND', message: 'User not found.' } },
+        { status: 404 },
+      );
+    }
+
+    if (!user.mustChangePassword) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Password change is not required.' },
+        },
+        { status: 403 },
+      );
+    }
+
     const body = await req.json();
-    const parsed = changePasswordSchema.safeParse(body);
+    const parsed = forceChangePasswordSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -62,31 +80,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    const { currentPassword, newPassword } = parsed.data;
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, name: true, password: true },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'User not found.' } },
-        { status: 404 },
-      );
-    }
-
-    const isValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: { code: 'VALIDATION_ERROR', message: 'Current password is incorrect.' },
-        },
-        { status: 422 },
-      );
-    }
-
+    const { newPassword } = parsed.data;
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
@@ -99,17 +93,17 @@ export async function POST(req: Request): Promise<Response> {
       actorId: userId,
       actorName: user.name,
       entity: 'User',
-      description: `User ${user.email} changed their own password.`,
-      metadata: { email: user.email },
+      description: `User ${user.email} changed their password after admin reset.`,
+      metadata: { email: user.email, forced: true },
     });
 
     return NextResponse.json({ success: true, data: { message: 'Password updated.' } });
   } catch (error) {
-    console.error('[POST /api/auth/change-password]', error);
+    console.error('[POST /api/auth/force-change-password]', error);
     return NextResponse.json(
       {
         success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to change password.' },
+        error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' },
       },
       { status: 500 },
     );

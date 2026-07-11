@@ -48,6 +48,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        username: true,
         name: true,
         email: true,
         status: true,
@@ -71,6 +72,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 
   const mappedUsers = users.map((u) => ({
     id: u.id,
+    username: u.username,
     name: u.name,
     email: u.email,
     status: u.status,
@@ -86,7 +88,10 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader title="User Management" description={`${total} user${total !== 1 ? 's' : ''} total`}>
+      <PageHeader
+        title="User Management"
+        description={`${total} user${total !== 1 ? 's' : ''} total`}
+      >
         <Can permission={PERMISSION_USER_CREATE}>
           <Link
             href="/users/new"

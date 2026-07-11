@@ -39,16 +39,23 @@ export async function POST(request: Request) {
     const { username, password } = parsed.data;
 
     // 2. Verify credentials
-    const user = await verifyCredentials(username, password);
-    if (!user) {
+    const result = await verifyCredentials(username, password);
+    if (!result.ok) {
+      const messages: Record<string, string> = {
+        invalid: 'Invalid username or password',
+        deactivated: 'Your account has been deactivated. Contact an administrator for assistance.',
+        suspended: 'Your account has been suspended. Contact an administrator for assistance.',
+      };
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Invalid username or password' },
+          error: { code: 'UNAUTHORIZED', message: messages[result.reason] ?? messages.invalid },
         },
         { status: 401 },
       );
     }
+
+    const user = result.user;
 
     // 3. Load roles and permissions
     const { roles, permissions } = await fetchUserRolesAndPermissions(user.id);
@@ -118,6 +125,7 @@ export async function POST(request: Request) {
         accessToken,
         refreshToken,
         expiresIn,
+        mustChangePassword: user.mustChangePassword,
         officer,
       },
     });

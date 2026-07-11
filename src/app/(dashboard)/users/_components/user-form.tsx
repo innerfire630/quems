@@ -115,7 +115,13 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
       const url = mode === 'create' ? '/api/users' : `/api/users/${userId}`;
       const method = mode === 'create' ? 'POST' : 'PATCH';
 
-      const body: Record<string, unknown> = { username, name, email: email || null, status, roleId: selectedRoleId || null };
+      const body: Record<string, unknown> = {
+        username,
+        name,
+        email: email || null,
+        status,
+        roleId: selectedRoleId || null,
+      };
       if (mode === 'create') body.password = password;
 
       const res = await fetch(url, {
@@ -181,7 +187,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. john.doe"
+              placeholder="e.g. admin"
               disabled={mode === 'edit'}
             />
             {errors.username && <p className="text-sm text-destructive">{errors.username}</p>}
@@ -244,7 +250,7 @@ export function UserForm({ mode, initialValues, userId, roles }: UserFormProps) 
             <Select value={selectedRoleId} onValueChange={(val) => setSelectedRoleId(val ?? '')}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a role">
-                  {(val) => (val ? roleLabels[val as string] ?? val : 'Select a role')}
+                  {(val) => (val ? (roleLabels[val as string] ?? val) : 'Select a role')}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>

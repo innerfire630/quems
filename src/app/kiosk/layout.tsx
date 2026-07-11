@@ -6,6 +6,7 @@
 // =============================================================================
 
 import type { Metadata } from 'next';
+import { KioskScrollLock } from './_components/kiosk-scroll-lock';
 
 export const metadata: Metadata = {
   title: 'Kiosk — QUEMS',
@@ -14,8 +15,9 @@ export const metadata: Metadata = {
 
 export default function KioskLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-zinc-300">
-      {children}
-    </div>
+    <>
+      <KioskScrollLock />
+      <div className="fixed inset-0 flex flex-col overflow-hidden bg-zinc-300">{children}</div>
+    </>
   );
 }

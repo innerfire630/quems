@@ -49,7 +49,7 @@ export const POST = withPermission(
 
     await prisma.user.update({
       where: { id: userId },
-      data: { password: hashedPassword },
+      data: { password: hashedPassword, mustChangePassword: true },
     });
 
     await writeAuditLog({

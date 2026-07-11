@@ -118,7 +118,7 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
   }
 
   function handlePrefixChange(value: string) {
-    setTicketPrefix(value.toUpperCase().slice(0, 1));
+    setTicketPrefix(value.toUpperCase().slice(0, 2));
   }
 
   return (
@@ -167,14 +167,14 @@ export function ServiceForm({ mode, initialValues, serviceId }: ServiceFormProps
             <div className="space-y-2">
               <Label htmlFor="ticketPrefix" className="inline-flex items-center gap-1.5">
                 Ticket Prefix *
-                <FieldInfo text="Single letter (A-Z) printed at the start of every ticket number for this service (e.g. A-001, B-012)." />
+                <FieldInfo text="One or two uppercase letters (A-Z) printed at the start of every ticket number for this service (e.g. A-001, GA-012)." />
               </Label>
               <Input
                 id="ticketPrefix"
                 value={ticketPrefix}
                 onChange={(e) => handlePrefixChange(e.target.value)}
-                placeholder="A"
-                maxLength={1}
+                placeholder="GA"
+                maxLength={2}
                 required
                 className="font-mono"
               />

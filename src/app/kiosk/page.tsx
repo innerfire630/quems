@@ -31,7 +31,7 @@ export default async function KioskPage({ searchParams }: KioskPageProps) {
   return (
     <>
       <KioskHeader brandName={brand.name} brandLogo={brand.logoUrl} />
-      <div className="flex flex-1 flex-col items-center justify-center overflow-hidden px-8">
+      <div className="kiosk-scrollable flex flex-1 flex-col items-center justify-center overflow-y-auto px-8 py-6">
         <h1 className="mb-6 text-center text-3xl font-bold text-foreground">
           {kioskConfig.welcomeMessage ?? 'Welcome!'}
         </h1>

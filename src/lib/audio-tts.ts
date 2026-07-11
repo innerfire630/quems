@@ -59,8 +59,8 @@ export function substituteTemplate(template: string, placeholders: TemplatePlace
  * (Safari), waits for the `voiceschanged` event with a 3-second timeout.
  */
 export async function loadTtsVoices(): Promise<SpeechSynthesisVoice[]> {
-  // Return from cache if available
-  if (cachedVoices !== null) {
+  // Return from cache if available AND non-empty
+  if (cachedVoices !== null && cachedVoices.length > 0) {
     return cachedVoices;
   }
 
@@ -80,25 +80,71 @@ export async function loadTtsVoices(): Promise<SpeechSynthesisVoice[]> {
 
     const handler = () => {
       const voices = speechSynthesis.getVoices();
-      cachedVoices = voices;
-      speechSynthesis.removeEventListener('voiceschanged', handler);
-      clearTimeout(timeoutId);
-      console.debug('TTS voices loaded:', { count: voices.length });
-      resolve(voices);
+      if (voices.length > 0) {
+        cachedVoices = voices;
+        speechSynthesis.removeEventListener('voiceschanged', handler);
+        clearTimeout(timeoutId);
+        console.debug('TTS voices loaded (async):', { count: voices.length });
+        resolve(voices);
+      }
     };
 
     speechSynthesis.addEventListener('voiceschanged', handler);
 
-    // Fallback: if voices never load within 3 seconds, resolve with whatever we have
-    const timeoutId = setTimeout(() => {
-      if (cachedVoices === null) {
-        cachedVoices = speechSynthesis.getVoices();
+    // Fallback: poll every 500ms for up to 5 seconds
+    let elapsed = 0;
+    const poll = setInterval(() => {
+      elapsed += 500;
+      const voices = speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        cachedVoices = voices;
         speechSynthesis.removeEventListener('voiceschanged', handler);
-        console.warn('TTS voices failed to load within 3 seconds; falling back to default voice');
-        resolve(cachedVoices);
+        clearInterval(poll);
+        clearTimeout(timeoutId);
+        console.debug('TTS voices loaded (poll):', { count: voices.length });
+        resolve(voices);
+      } else if (elapsed >= 5000) {
+        clearInterval(poll);
       }
-    }, 3000);
+    }, 500);
+
+    // Hard timeout: resolve with whatever we have (may be empty — NOT cached)
+    const timeoutId = setTimeout(() => {
+      speechSynthesis.removeEventListener('voiceschanged', handler);
+      clearInterval(poll);
+      const voices = speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        cachedVoices = voices;
+        console.warn('TTS voices loaded late:', { count: voices.length });
+      } else {
+        console.warn('TTS voices failed to load; browser default will be used');
+      }
+      resolve(voices);
+    }, 5000);
   });
+}
+
+// Eagerly preload voices as soon as the module loads (client-side only).
+// This ensures voices are cached before the first TTS call.
+if (typeof window !== 'undefined' && isTtsAvailable()) {
+  // Try synchronous load first (Chrome sometimes has them ready)
+  const eager = speechSynthesis.getVoices();
+  if (eager.length > 0) {
+    cachedVoices = eager;
+  } else {
+    // Start async load in background — don't await
+    speechSynthesis.addEventListener(
+      'voiceschanged',
+      () => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          cachedVoices = voices;
+          console.debug('TTS voices eagerly loaded:', { count: voices.length });
+        }
+      },
+      { once: true },
+    );
+  }
 }
 
 /**
@@ -211,9 +257,18 @@ export function selectVoice(
 
   if (rememberedName) {
     const remembered = voices.find((v) => v.name === rememberedName);
-    if (remembered) {
-      console.debug(`TTS: using remembered voice "${remembered.name}" (${remembered.lang})`);
+    if (remembered && isFemaleVoice(remembered)) {
+      console.debug(`TTS: using remembered female voice "${remembered.name}" (${remembered.lang})`);
       return remembered;
+    }
+    // If remembered voice is male/unknown, clear stale entry and re-select
+    if (remembered && !isFemaleVoice(remembered)) {
+      console.debug(`TTS: remembered voice "${remembered.name}" is not female, re-selecting`);
+      try {
+        localStorage.removeItem(VOICE_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -230,14 +285,25 @@ export function selectVoice(
   let selected: SpeechSynthesisVoice | null = null;
 
   if (candidates.length > 0) {
-    // Prefer female voice among candidates
+    // Strict female-only selection among language-matched candidates
     const female = candidates.find(isFemaleVoice);
     if (female) {
       console.debug(`TTS: selected female voice "${female.name}" (${female.lang})`);
       selected = female;
     } else {
-      console.debug(`TTS: selected voice "${candidates[0].name}" (${candidates[0].lang})`);
-      selected = candidates[0];
+      // No female voice for this language — try any female voice globally
+      const anyFemale = voices.find(isFemaleVoice);
+      if (anyFemale) {
+        console.warn(
+          `TTS: no female voice for language "${language}", falling back to female voice "${anyFemale.name}" (${anyFemale.lang})`,
+        );
+        selected = anyFemale;
+      } else {
+        console.warn(
+          `TTS: no female voice available at all, using "${candidates[0].name}" (${candidates[0].lang})`,
+        );
+        selected = candidates[0];
+      }
     }
   } else {
     // No language match — try any female voice

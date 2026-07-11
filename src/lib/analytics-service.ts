@@ -360,6 +360,7 @@ export async function calculateServicePerformanceRows(
           serviceId: service.id,
           serviceCode: service.code,
           serviceName: service.name,
+          date: formatDate(cursor),
           totalIssued: metrics.totalIssued,
           totalServed: metrics.totalServed,
           totalNoShow: metrics.totalNoShow,

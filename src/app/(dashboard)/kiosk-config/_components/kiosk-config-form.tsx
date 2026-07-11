@@ -34,12 +34,12 @@ interface KioskConfigData {
 }
 
 export function KioskConfigForm({ config }: { config: KioskConfigData }) {
-  const [name, setName] = useState(config.name);
+  const [name, _setName] = useState(config.name);
   const [welcomeMessage, setWelcomeMessage] = useState(config.welcomeMessage ?? '');
   const [footerMessage, setFooterMessage] = useState(config.footerMessage ?? '');
   const [printerName, setPrinterName] = useState(config.printerName ?? '');
   const [printerSheetSize, setPrinterSheetSize] = useState(config.printerSheetSize ?? '80mm');
-  const [autoResetSeconds, setAutoResetSeconds] = useState(config.autoResetSeconds.toString());
+  const [autoResetSeconds, _setAutoResetSeconds] = useState(config.autoResetSeconds.toString());
   const [showEstimatedWait, setShowEstimatedWait] = useState(config.showEstimatedWait);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -77,19 +77,14 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 rounded-lg border border-border p-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">{config.name}</h2>
           {config.isDefault && <Badge>Default</Badge>}
         </div>
-        <Button
-          size="sm"
-          disabled={!isDirty || isPending}
-          onClick={handleSave}
-          className="gap-1.5"
-        >
+        <Button size="sm" disabled={!isDirty || isPending} onClick={handleSave} className="gap-1.5">
           {isPending ? (
             <Loader2 className="size-4 animate-spin" />
           ) : saved ? (
@@ -144,7 +139,9 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
       <section className="space-y-4">
         <div>
           <h3 className="text-sm font-medium">Printer</h3>
-          <p className="text-xs text-muted-foreground">Configure the receipt printer for this kiosk.</p>
+          <p className="text-xs text-muted-foreground">
+            Configure the receipt printer for this kiosk.
+          </p>
         </div>
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -168,9 +165,7 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
                 <SelectItem value="A4">A4 (Full Page)</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              Paper size for the receipt printer.
-            </p>
+            <p className="text-xs text-muted-foreground">Paper size for the receipt printer.</p>
           </div>
         </div>
       </section>

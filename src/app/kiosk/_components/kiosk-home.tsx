@@ -8,7 +8,7 @@
 // =============================================================================
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { KioskServiceGrid } from './kiosk-service-grid';
 import { ServiceConfirmation } from './service-confirmation';
 import { TicketConfirmation } from './ticket-confirmation';
@@ -29,6 +29,23 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
   const [currentTicket, setCurrentTicket] = useState<IssuedTicketResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isIssuing, setIsIssuing] = useState(false);
+
+  // Lock the kiosk scrollable container when any dialog is open
+  const isDialogOpen = currentView === 'confirm' || currentView === 'confirmation';
+  useEffect(() => {
+    const scrollable = document.querySelector('.kiosk-scrollable');
+    if (!scrollable) return;
+
+    if (isDialogOpen) {
+      (scrollable as HTMLElement).style.overflow = 'hidden';
+    } else {
+      (scrollable as HTMLElement).style.overflow = '';
+    }
+
+    return () => {
+      (scrollable as HTMLElement).style.overflow = '';
+    };
+  }, [isDialogOpen]);
 
   const handleReset = useCallback(() => {
     setCurrentView('grid');

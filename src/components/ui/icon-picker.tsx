@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect, createElement } from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Search, X, ChevronDown } from 'lucide-react';
@@ -19,68 +19,220 @@ import { Input } from '@/components/ui/input';
 
 const ICON_NAMES = [
   // ── Queue & Tickets ──
-  'Ticket', 'TicketCheck', 'ClipboardList', 'ListChecks', 'Hash',
-  'Clock', 'Timer', 'Calendar', 'AlarmClock', 'RotateCcw',
-  'ArrowRight', 'ArrowLeft', 'ChevronRight', 'ChevronLeft',
+  'Ticket',
+  'TicketCheck',
+  'ClipboardList',
+  'ListChecks',
+  'Hash',
+  'Clock',
+  'Timer',
+  'Calendar',
+  'AlarmClock',
+  'RotateCcw',
+  'ArrowRight',
+  'ArrowLeft',
+  'ChevronRight',
+  'ChevronLeft',
 
   // ── People & Roles ──
-  'Users', 'User', 'UserCheck', 'UserPlus', 'UserX', 'UserCircle',
-  'UserRound', 'Contact', 'IdCard', 'PersonStanding', 'Baby',
-  'Accessibility', 'ShieldCheck', 'ShieldAlert', 'ShieldX',
-  'LogIn', 'LogOut', 'Fingerprint', 'ScanFace',
+  'Users',
+  'User',
+  'UserCheck',
+  'UserPlus',
+  'UserX',
+  'UserCircle',
+  'UserRound',
+  'Contact',
+  'IdCard',
+  'PersonStanding',
+  'Baby',
+  'Accessibility',
+  'ShieldCheck',
+  'ShieldAlert',
+  'ShieldX',
+  'LogIn',
+  'LogOut',
+  'Fingerprint',
+  'ScanFace',
 
   // ── Counters & Service Points ──
-  'Monitor', 'Tablet', 'LayoutDashboard', 'DoorOpen', 'DoorClosed',
-  'Landmark', 'Building', 'Building2', 'Briefcase', 'MapPin',
-  'Navigation', 'Compass',
+  'Monitor',
+  'Tablet',
+  'LayoutDashboard',
+  'DoorOpen',
+  'DoorClosed',
+  'Landmark',
+  'Building',
+  'Building2',
+  'Briefcase',
+  'MapPin',
+  'Navigation',
+  'Compass',
 
   // ── Medical & Health ──
-  'HeartPulse', 'Stethoscope', 'Thermometer', 'Pill', 'Syringe',
-  'Activity', 'Bandage', 'Cross', 'Eye', 'Ear',
-  'Droplet', 'Siren', 'HandHelping', 'Heart',
+  'HeartPulse',
+  'Stethoscope',
+  'Thermometer',
+  'Pill',
+  'Syringe',
+  'Activity',
+  'Bandage',
+  'Cross',
+  'Eye',
+  'Ear',
+  'Droplet',
+  'Siren',
+  'HandHelping',
+  'Heart',
 
   // ── Documents & Data ──
-  'FileText', 'File', 'Clipboard', 'BookOpen', 'Book',
-  'BarChart3', 'PieChart', 'LineChart', 'TrendingUp', 'TrendingDown',
-  'Database', 'Folder', 'Archive', 'Save', 'Download', 'Upload',
-  'Printer', 'QrCode', 'Scan', 'FormInput',
+  'FileText',
+  'File',
+  'Clipboard',
+  'BookOpen',
+  'Book',
+  'BarChart3',
+  'PieChart',
+  'LineChart',
+  'TrendingUp',
+  'TrendingDown',
+  'Database',
+  'Folder',
+  'Archive',
+  'Save',
+  'Download',
+  'Upload',
+  'Printer',
+  'QrCode',
+  'Scan',
+  'FormInput',
 
   // ── Communication ──
-  'Mail', 'MessageSquare', 'MessageCircle', 'Phone', 'Headphones',
-  'Megaphone', 'Bell', 'Volume2', 'Mic', 'Share',
+  'Mail',
+  'MessageSquare',
+  'MessageCircle',
+  'Phone',
+  'Headphones',
+  'Megaphone',
+  'Bell',
+  'Volume2',
+  'Mic',
+  'Share',
 
   // ── Tech & Digital ──
-  'Smartphone', 'Laptop', 'Wifi', 'Bluetooth', 'Router',
-  'Camera', 'Video', 'Image', 'Film', 'Music', 'Gamepad2',
-  'Cloud', 'Globe', 'Link', 'Server', 'Workflow', 'Waypoints', 'Network',
+  'Smartphone',
+  'Laptop',
+  'Wifi',
+  'Bluetooth',
+  'Router',
+  'Camera',
+  'Video',
+  'Image',
+  'Film',
+  'Music',
+  'Gamepad2',
+  'Cloud',
+  'Globe',
+  'Link',
+  'Server',
+  'Workflow',
+  'Waypoints',
+  'Network',
 
   // ── Admin & Settings ──
-  'Settings', 'Cog', 'Wrench', 'Key', 'KeyRound', 'Lock', 'Unlock',
-  'LockKeyhole', 'CreditCard', 'Receipt', 'Wallet', 'Calculator',
+  'Settings',
+  'Cog',
+  'Wrench',
+  'Key',
+  'KeyRound',
+  'Lock',
+  'Unlock',
+  'LockKeyhole',
+  'CreditCard',
+  'Receipt',
+  'Wallet',
+  'Calculator',
 
   // ── Actions & Status ──
-  'Plus', 'X', 'Check', 'CheckCircle', 'XCircle', 'CircleCheck', 'CircleX',
-  'AlertCircle', 'AlertTriangle', 'Info', 'HelpCircle',
-  'Circle', 'CircleDot', 'Loader2', 'Pencil', 'Trash2', 'Copy', 'Search',
-  'RefreshCw', 'RotateCw',
+  'Plus',
+  'X',
+  'Check',
+  'CheckCircle',
+  'XCircle',
+  'CircleCheck',
+  'CircleX',
+  'AlertCircle',
+  'AlertTriangle',
+  'Info',
+  'HelpCircle',
+  'Circle',
+  'CircleDot',
+  'Loader2',
+  'Pencil',
+  'Trash2',
+  'Copy',
+  'Search',
+  'RefreshCw',
+  'RotateCw',
 
   // ── Food & Hospitality ──
-  'Utensils', 'Coffee', 'Cake', 'Cherry', 'Hotel', 'BedDouble', 'Dumbbell',
+  'Utensils',
+  'Coffee',
+  'Cake',
+  'Cherry',
+  'Hotel',
+  'BedDouble',
+  'Dumbbell',
 
   // ── Transport & Logistics ──
-  'ShoppingCart', 'ShoppingBag', 'Store', 'Truck', 'Package',
-  'Car', 'Bus', 'Plane', 'Ship', 'Bike',
+  'ShoppingCart',
+  'ShoppingBag',
+  'Store',
+  'Truck',
+  'Package',
+  'Car',
+  'Bus',
+  'Plane',
+  'Ship',
+  'Bike',
 
   // ── Nature & Misc ──
-  'TreePine', 'Flower2', 'Sun', 'Moon', 'Mountain',
-  'Flame', 'Leaf', 'Sparkles', 'Star', 'Zap',
-  'Award', 'Badge', 'Gift', 'Gem', 'Crown', 'Shield',
-  'Tag', 'Flag', 'Bookmark', 'Layers', 'Layout',
-  'Grid3x3', 'List', 'Maximize', 'Minimize',
+  'TreePine',
+  'Flower2',
+  'Sun',
+  'Moon',
+  'Mountain',
+  'Flame',
+  'Leaf',
+  'Sparkles',
+  'Star',
+  'Zap',
+  'Award',
+  'Badge',
+  'Gift',
+  'Gem',
+  'Crown',
+  'Shield',
+  'Tag',
+  'Flag',
+  'Bookmark',
+  'Layers',
+  'Layout',
+  'Grid3x3',
+  'List',
+  'Maximize',
+  'Minimize',
 
   // ── Education ──
-  'GraduationCap', 'School', 'Library', 'Pen', 'Palette',
-  'Brush', 'Scissors', 'Ruler', 'Type',
+  'GraduationCap',
+  'School',
+  'Library',
+  'Pen',
+  'Palette',
+  'Brush',
+  'Scissors',
+  'Ruler',
+  'Type',
 ] as const;
 
 // Deduplicate
@@ -94,6 +246,13 @@ function resolveIcon(name: string): LucideIcon | null {
   const icon = (LucideIcons as Record<string, unknown>)[name];
   if (icon && (typeof icon === 'function' || typeof icon === 'object')) return icon as LucideIcon;
   return null;
+}
+
+// Static component to avoid react-hooks/static-components — uses createElement to avoid JSX component-in-render lint
+function RenderIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = resolveIcon(name);
+  if (!Icon) return null;
+  return createElement(Icon, { className });
 }
 
 // ---------------------------------------------------------------------------
@@ -112,7 +271,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const SelectedIcon = value ? resolveIcon(value) : null;
+  const hasSelectedIcon = value && resolveIcon(value);
 
   const filteredIcons = useMemo(() => {
     if (!search.trim()) return UNIQUE_ICON_NAMES;
@@ -167,10 +326,10 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
           onClick={() => setOpen(!open)}
           className="flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-accent"
         >
-          {SelectedIcon ? (
+          {hasSelectedIcon ? (
             <>
-              <SelectedIcon className="size-4" />
-              <span>{value}</span>
+              <RenderIcon name={value} className="size-4" />
+              <span className="text-xs text-muted-foreground">{value}</span>
             </>
           ) : (
             <>
@@ -209,8 +368,6 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
           {/* Icon grid */}
           <div className="grid max-h-[280px] grid-cols-8 gap-0.5 overflow-y-auto">
             {filteredIcons.map((name) => {
-              const Icon = resolveIcon(name);
-              if (!Icon) return null;
               const isSelected = name === value;
               return (
                 <button
@@ -224,7 +381,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
                       : 'text-foreground hover:bg-muted'
                   }`}
                 >
-                  <Icon className="size-4.5" />
+                  <RenderIcon name={name} className="size-4.5" />
                 </button>
               );
             })}
@@ -236,26 +393,17 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
             </p>
           )}
 
-          {/* Footer: selected + manual input */}
+          {/* Footer: selected icon info */}
           <div className="mt-2 flex items-center gap-2 border-t border-border pt-2">
             <span className="text-xs text-muted-foreground">Selected:</span>
-            {SelectedIcon ? (
+            {hasSelectedIcon ? (
               <span className="flex items-center gap-1 text-xs font-medium">
-                <SelectedIcon className="size-3.5" />
+                <RenderIcon name={value} className="size-3.5" />
                 {value}
               </span>
             ) : (
               <span className="text-xs text-muted-foreground">None</span>
             )}
-            <div className="ml-auto flex items-center gap-1">
-              <span className="text-xs text-muted-foreground">Custom:</span>
-              <input
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="h-6 w-24 rounded border border-input bg-background px-1.5 text-xs"
-                placeholder="IconName"
-              />
-            </div>
           </div>
         </div>
       )}

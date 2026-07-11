@@ -11,6 +11,7 @@
 import { NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 import type { Permission, Role } from '@/lib/permissions';
 import {
   checkIpRateLimit,
@@ -65,6 +66,20 @@ function defaultForbidden(): Response {
     {
       success: false,
       error: { code: 'FORBIDDEN', message: 'You do not have permission to access this resource.' },
+    },
+    { status: 403 },
+  );
+}
+
+function deactivatedResponse(status: string): Response {
+  const message =
+    status === 'SUSPENDED'
+      ? 'Your account has been suspended. Contact an administrator for assistance.'
+      : 'Your account has been deactivated. Contact an administrator for assistance.';
+  return NextResponse.json(
+    {
+      success: false,
+      error: { code: 'ACCOUNT_DEACTIVATED', message },
     },
     { status: 403 },
   );
@@ -143,6 +158,23 @@ export function withPermission(
 
     if (!session) {
       return options?.onUnauthorized?.() ?? defaultUnauthorized();
+    }
+
+    // Reject inactive or suspended users
+    // Check JWT status first (fast); fall back to DB for tokens issued before status tracking
+    const userStatus = session.user.status;
+    if (userStatus === 'INACTIVE' || userStatus === 'SUSPENDED') {
+      return deactivatedResponse(userStatus);
+    }
+    if (!userStatus || userStatus === 'ACTIVE') {
+      // Verify from DB to catch users suspended after their JWT was issued
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.userId },
+        select: { status: true },
+      });
+      if (dbUser && (dbUser.status === 'INACTIVE' || dbUser.status === 'SUSPENDED')) {
+        return deactivatedResponse(dbUser.status);
+      }
     }
 
     if (!hasPermission(session, required)) {

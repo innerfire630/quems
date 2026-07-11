@@ -65,17 +65,15 @@ export default async function EditCounterPage({ params }: EditCounterPageProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
         <Link
           href="/counters"
-          className="inline-flex items-center gap-1 rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 -ml-2"
+          className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="mr-1 size-4" />
-          Back to Counters
+          <ArrowLeft className="size-4" />
         </Link>
+        <PageHeader title="Edit Counter" description={counter.name} className="flex-1" />
       </div>
-
-      <PageHeader title="Edit Counter" description={counter.name} />
 
       <CounterForm mode="edit" initialValues={initialValues} counterId={counterId} />
 

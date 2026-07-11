@@ -32,6 +32,7 @@ export default async function EditUserPage({ params }: PageProps) {
       where: { id: userId },
       select: {
         id: true,
+        username: true,
         name: true,
         email: true,
         status: true,
@@ -54,6 +55,7 @@ export default async function EditUserPage({ params }: PageProps) {
 
   const initialValues = {
     id: user.id,
+    username: user.username,
     name: user.name,
     email: user.email,
     status: user.status as string,
@@ -61,7 +63,7 @@ export default async function EditUserPage({ params }: PageProps) {
   };
 
   return (
-    <div className="space-y-6 max-w-xl">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Link
           href="/users"
@@ -69,7 +71,7 @@ export default async function EditUserPage({ params }: PageProps) {
         >
           <ArrowLeft className="size-4" />
         </Link>
-        <PageHeader title="Edit User" description={user.email} />
+        <PageHeader title="Edit User" description={user.name} className="flex-1" />
       </div>
       <UserForm mode="edit" initialValues={initialValues} userId={userId} roles={allRoles} />
     </div>

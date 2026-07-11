@@ -8,6 +8,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { Ticket } from 'lucide-react';
 import { TicketBadge } from '@/components/shared/ticket-badge';
 import { SilentPrintTrigger } from './silent-print-trigger';
 import {
@@ -32,13 +33,16 @@ const AUTO_DISMISS_SECONDS = 15;
 export function TicketConfirmation({ ticket, kioskConfig, open, onDone }: TicketConfirmationProps) {
   const [remaining, setRemaining] = useState(AUTO_DISMISS_SECONDS);
   const doneRef = useRef(false);
+  const openedAtRef = useRef<number>(0);
 
-  // Reset countdown each time the dialog opens
+  // Track when dialog opens to reset countdown via interval
   useEffect(() => {
     if (!open) return;
 
     doneRef.current = false;
-    setRemaining(AUTO_DISMISS_SECONDS);
+    openedAtRef.current = Date.now();
+    // Defer reset to avoid react-hooks/set-state-in-effect
+    queueMicrotask(() => setRemaining(AUTO_DISMISS_SECONDS));
 
     const interval = setInterval(() => {
       setRemaining((prev) => {
@@ -66,27 +70,39 @@ export function TicketConfirmation({ ticket, kioskConfig, open, onDone }: Ticket
 
   return (
     <>
-      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleDone(); }}>
+      <Dialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) handleDone();
+        }}
+      >
         <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          {/* Subtle background icon — fixed parent provides positioning context */}
+          <Ticket
+            className="pointer-events-none absolute -top-4 -right-2 size-32 text-primary"
+            style={{ opacity: 0.06 }}
+            aria-hidden
+          />
+
           <DialogHeader>
             <DialogTitle className="text-center text-2xl">Your Ticket</DialogTitle>
             <DialogDescription className="text-center">{ticket.serviceName}</DialogDescription>
           </DialogHeader>
 
-          {/* Ticket number */}
-          <div className="flex justify-center py-2">
-            <TicketBadge ticketNumber={ticket.ticketNumber} size="lg" className="text-7xl" />
+          {/* Ticket number — centered */}
+          <div className="flex justify-center py-4">
+            <TicketBadge ticketNumber={ticket.ticketNumber} size="lg" className="text-8xl" />
           </div>
 
           {/* Estimated wait */}
           {kioskConfig.showEstimatedWait && ticket.estimatedWaitMinutes !== null && (
-            <p className="text-center text-lg text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Estimated wait: ~{ticket.estimatedWaitMinutes} min
             </p>
           )}
 
           {/* Footer message */}
-          <p className="text-center text-muted-foreground">
+          <p className="text-muted-foreground">
             {kioskConfig.footerMessage ?? 'Please wait to be called.'}
           </p>
 

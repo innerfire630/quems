@@ -110,7 +110,14 @@ export function ServiceTable({ services, isLoading, error, onEdit }: ServiceTabl
                 <TableCell className="font-mono text-xs">{service.code}</TableCell>
                 <TableCell className="font-mono text-sm">{service.ticketPrefix}</TableCell>
                 <TableCell>
-                  <Badge variant={service.isActive ? 'default' : 'secondary'}>
+                  <Badge
+                    variant="secondary"
+                    className={
+                      service.isActive
+                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                    }
+                  >
                     {service.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>

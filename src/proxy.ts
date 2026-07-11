@@ -111,6 +111,19 @@ export default async function proxy(request: NextRequest) {
 
   const permissions: string[] = (token?.permissions as string[]) ?? [];
 
+  // ---- Step 3a: Force password change redirect ----
+  const mustChangePassword = (token?.mustChangePassword as boolean) ?? false;
+  const isForceChangeRoute =
+    pathname.startsWith('/force-change-password') ||
+    pathname.startsWith('/api/auth/force-change-password') ||
+    pathname.startsWith('/api/auth/signout');
+
+  if (token && mustChangePassword && !isForceChangeRoute) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL('/force-change-password', request.url)),
+    );
+  }
+
   // Check role-protected route prefixes
   for (const [prefix, requiredPermission] of Object.entries(ROUTE_PERMISSION_MAP)) {
     if (pathname.startsWith(prefix)) {
@@ -155,6 +168,7 @@ export const config = {
      * - /sse-test (SSE test page, dev only)
      * - /sounds/* (public static audio/assets directory)
      * - /uploads/* (uploaded files — logos, etc.)
+     * - /images/* (static images — login hero, etc.)
      * - /api/auth/* (auth endpoints)
      * - /api/sse/* (SSE streaming)
      * - /api/tickets/issue (kiosk ticket issuance)
@@ -164,6 +178,6 @@ export const config = {
      * - /api/debug/* (development-only debug routes)
      * - _next/static, _next/image, favicon.ico (static assets)
      */
-    '/((?!login|display|kiosk(?!-)|sse-test|sounds|uploads|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
+    '/((?!login|display|kiosk(?!-)|sse-test|sounds|uploads|images|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
   ],
 };
