@@ -41,6 +41,7 @@ export interface TicketListItem {
   waitPosition: number;
   estimatedWaitMinutes: number | null;
   issuedAt: string;
+  calledAt: string | null;
   businessDate: string;
   customerPhone: string | null;
 }
@@ -114,8 +115,7 @@ export interface TicketRecallResponse extends TicketCallResponse {
 // ---------------------------------------------------------------------------
 
 export type TicketActionResult =
-  | { kind: 'CALLED'; data: TicketCallResponse }
-  | { kind: 'RECALLED'; data: TicketRecallResponse };
+  { kind: 'CALLED'; data: TicketCallResponse } | { kind: 'RECALLED'; data: TicketRecallResponse };
 
 // ---------------------------------------------------------------------------
 // Error types

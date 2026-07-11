@@ -24,10 +24,12 @@ import type { User, RefreshToken } from '@prisma/client';
 
 export interface UserWithRoles {
   id: string;
+  username: string;
   email: string;
   name: string;
   avatar: string | null;
   status: string;
+  mustChangePassword: boolean;
   createdAt: Date;
   updatedAt: Date;
   roles: string[];
@@ -197,7 +199,7 @@ export async function validateRefreshToken(
 
   return {
     ...record,
-    user: { ...record.user, roles, permissions },
+    user: { ...record.user, email: record.user.email ?? '', roles, permissions } as UserWithRoles,
   };
 }
 

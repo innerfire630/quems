@@ -140,7 +140,8 @@ export function LiveStats({
 
   useSSE('global', {
     filter: ['TICKET_ISSUED', 'TICKET_CALLED', 'TICKET_SERVED', 'TICKET_NO_SHOW', 'DAILY_RESET'],
-    onEvent: handleSSE,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SSE handler uses generic payload
+    onEvent: handleSSE as any,
   });
 
   // Polling fallback — reconcile with authoritative server data every 30 s

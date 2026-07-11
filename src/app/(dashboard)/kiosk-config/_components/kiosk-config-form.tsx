@@ -155,7 +155,10 @@ export function KioskConfigForm({ config }: { config: KioskConfigData }) {
           </div>
           <div className="space-y-1.5">
             <Label>Sheet Size</Label>
-            <Select value={printerSheetSize} onValueChange={setPrinterSheetSize}>
+            <Select
+              value={printerSheetSize}
+              onValueChange={(v) => setPrinterSheetSize(v ?? '80mm')}
+            >
               <SelectTrigger>
                 <SelectValue>{(val) => val}</SelectValue>
               </SelectTrigger>

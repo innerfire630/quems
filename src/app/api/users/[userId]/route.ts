@@ -34,6 +34,7 @@ export const GET = withPermission(
       where: { id: userId },
       select: {
         id: true,
+        username: true,
         name: true,
         email: true,
         status: true,
@@ -79,6 +80,7 @@ export const GET = withPermission(
 
     const detail: UserDetail = {
       id: user.id,
+      username: user.username,
       name: user.name,
       email: user.email,
       status: user.status,
@@ -161,7 +163,7 @@ export const PATCH = withPermission(
 
     // Email conflict check
     if (email && email !== existingUser.email) {
-      const conflict = await prisma.user.findUnique({ where: { email } });
+      const conflict = await prisma.user.findFirst({ where: { email } });
       if (conflict) {
         return NextResponse.json(
           {
@@ -192,6 +194,7 @@ export const PATCH = withPermission(
         },
         select: {
           id: true,
+          username: true,
           name: true,
           email: true,
           status: true,
@@ -254,6 +257,7 @@ export const PATCH = withPermission(
 
     const result: UserListItem = {
       id: updated.id,
+      username: (updated as { username?: string }).username ?? '',
       name: updated.name,
       email: updated.email,
       status: updated.status,
@@ -297,7 +301,10 @@ export const DELETE = withPermission(
 
     if (existing.username === 'admin') {
       return NextResponse.json(
-        { success: false, error: { code: 'FORBIDDEN', message: 'The default admin account cannot be deactivated.' } },
+        {
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'The default admin account cannot be deactivated.' },
+        },
         { status: 403 },
       );
     }

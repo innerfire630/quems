@@ -130,6 +130,7 @@ export const POST = withPermission(async (req: Request) => {
           waitPosition: advanceResult.ticket.waitPosition,
           estimatedWaitMinutes: advanceResult.ticket.estimatedWaitMinutes,
           issuedAt: advanceResult.ticket.issuedAt,
+          calledAt: advanceResult.ticket.calledAt ?? null,
           businessDate: advanceResult.ticket.businessDate,
           customerPhone: advanceResult.ticket.customerPhone,
         };

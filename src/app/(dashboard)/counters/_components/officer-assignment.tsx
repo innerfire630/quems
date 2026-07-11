@@ -195,7 +195,7 @@ export function OfficerAssignment({ counterId }: OfficerAssignmentProps) {
               <Select
                 key={selectKey}
                 items={unassignedUsers.map((u) => ({ value: u.id, label: u.name }))}
-                onValueChange={(v) => setLastSelectedId(v)}
+                onValueChange={(v) => setLastSelectedId(v as string)}
                 disabled={unassignedUsers.length === 0}
               >
                 <SelectTrigger>

@@ -13,6 +13,7 @@ import {
   fetchUserRolesAndPermissions,
   issueAccessToken,
   createRefreshTokenForUser,
+  type UserWithRoles,
 } from '@/lib/auth-utils';
 import { loginSchema } from '@/schemas/auth.schema';
 
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     // 3. Load roles and permissions
     const { roles, permissions } = await fetchUserRolesAndPermissions(user.id);
 
-    const enrichedUser = { ...user, roles, permissions };
+    const enrichedUser: UserWithRoles = { ...user, email: user.email ?? '', roles, permissions };
 
     // 4. Issue tokens
     const { accessToken, expiresIn } = await issueAccessToken(enrichedUser);

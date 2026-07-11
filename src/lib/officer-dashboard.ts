@@ -97,7 +97,7 @@ export async function getOfficerDashboardData(
     user: {
       id: user.id,
       name: user.name ?? 'Unknown',
-      email: user.email,
+      email: user.email ?? '',
     },
   };
 }

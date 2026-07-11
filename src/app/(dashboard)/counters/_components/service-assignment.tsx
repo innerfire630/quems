@@ -134,7 +134,7 @@ export function ServiceAssignment({
             <Select
               key={selectKey}
               items={unassigned.map((s) => ({ value: s.id, label: s.name }))}
-              onValueChange={(v) => setLastSelectedId(v)}
+              onValueChange={(v) => setLastSelectedId(v as string)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a service…" />

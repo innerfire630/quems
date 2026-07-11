@@ -66,14 +66,18 @@ export function UserTableClient({ users, roles: _roles }: UserTableClientProps) 
   function handleResetPassword(userId: string) {
     const user = users.find((u) => u.id === userId);
     if (user) {
-      setResetDialog({ userId: user.id, email: user.email });
+      setResetDialog({ userId: user.id, email: user.email ?? '' });
     }
   }
 
   function handleConfirmDelete(userId: string) {
     const user = users.find((u) => u.id === userId);
     if (user) {
-      setDeleteDialog({ userId: user.id, email: user.email, name: user.name ?? user.email });
+      setDeleteDialog({
+        userId: user.id,
+        email: user.email ?? '',
+        name: user.name ?? user.email ?? '',
+      });
     }
   }
 

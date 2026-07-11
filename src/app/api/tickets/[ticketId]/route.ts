@@ -65,6 +65,7 @@ export const GET = withPermission(
       waitPosition: ticket.waitPosition,
       estimatedWaitMinutes: ticket.estimatedWaitMinutes,
       issuedAt: ticket.issuedAt.toISOString(),
+      calledAt: ticket.calledAt?.toISOString() ?? null,
       businessDate: ticket.businessDate.toISOString(),
       customerPhone: ticket.customerPhone,
       events,

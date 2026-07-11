@@ -201,6 +201,7 @@ export function mapTicketToDetail(ticket: Record<string, unknown>): TicketDetail
     waitPosition: t.waitPosition as number,
     estimatedWaitMinutes: (t.estimatedWaitMinutes as number) ?? null,
     issuedAt: (t.issuedAt as Date).toISOString(),
+    calledAt: t.calledAt ? (t.calledAt as Date).toISOString() : null,
     businessDate: (t.businessDate as Date).toISOString(),
     customerPhone: (t.customerPhone as string) ?? null,
     events,

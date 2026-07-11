@@ -60,7 +60,14 @@ function buildInitialState(snapshot: DisplaySnapshot): DisplayState {
   };
 }
 
-export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemName = 'QUEMS', brandLogo, displayTheme = 'dark', marqueeMessage: marqueeMessageProp }: DisplayPageClientProps) {
+export function DisplayPageClient({
+  initialSnapshot,
+  boardId: _boardId,
+  systemName = 'QUEMS',
+  brandLogo,
+  displayTheme = 'dark',
+  marqueeMessage: marqueeMessageProp,
+}: DisplayPageClientProps) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   const [unlocked, setUnlocked] = useState(false);
@@ -154,9 +161,7 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
     );
 
     // Prefer active tickets (CALLED/RECALLED) over served/no-show
-    const active = sorted.filter(
-      (t) => t.status === 'CALLED' || t.status === 'RECALLED',
-    );
+    const active = sorted.filter((t) => t.status === 'CALLED' || t.status === 'RECALLED');
     return active.length > 0 ? active[0]! : sorted[0]!;
   }, [state.nowServing]);
 
@@ -221,7 +226,7 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
 
   // Theme CSS custom properties — all display components reference these vars
   const isLight = displayTheme === 'light';
-  const themeVars: React.CSSProperties = isLight
+  const themeVars = isLight
     ? {
         '--db-bg': '#ffffff',
         '--db-surface': '#f9fafb',
@@ -264,9 +269,20 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
       };
 
   return (
-    <div className="fixed inset-0 font-sans flex flex-col overflow-hidden" style={{ ...themeVars, backgroundColor: 'var(--db-bg)', color: 'var(--db-text)' }}>
+    <div
+      className="fixed inset-0 font-sans flex flex-col overflow-hidden"
+      style={{ ...themeVars, backgroundColor: 'var(--db-bg)', color: 'var(--db-text)' }}
+    >
       {/* Header — 10vh */}
-      <header className="shrink-0 border-b-2 flex items-center justify-between" style={{ height: 'clamp(2rem, 6vmin, 4rem)', padding: '0 clamp(0.8rem, 1.5vmin, 2rem)', backgroundColor: 'var(--db-surface)', borderColor: 'var(--db-border)' }}>
+      <header
+        className="shrink-0 border-b-2 flex items-center justify-between"
+        style={{
+          height: 'clamp(2rem, 6vmin, 4rem)',
+          padding: '0 clamp(0.8rem, 1.5vmin, 2rem)',
+          backgroundColor: 'var(--db-surface)',
+          borderColor: 'var(--db-border)',
+        }}
+      >
         <div className="flex items-center" style={{ gap: 'clamp(0.4rem, 0.8vw, 1rem)' }}>
           {brandLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -277,7 +293,10 @@ export function DisplayPageClient({ initialSnapshot, boardId: _boardId, systemNa
               style={{ width: 'clamp(1rem, 2vmin, 2rem)', height: 'clamp(1rem, 2vmin, 2rem)' }}
             />
           ) : null}
-          <span className="font-black tracking-wider uppercase" style={{ fontSize: 'clamp(0.7rem, 1.5vmin, 1.5rem)', color: 'var(--db-text)' }}>
+          <span
+            className="font-black tracking-wider uppercase"
+            style={{ fontSize: 'clamp(0.7rem, 1.5vmin, 1.5rem)', color: 'var(--db-text)' }}
+          >
             {systemName}
           </span>
         </div>

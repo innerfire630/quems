@@ -66,6 +66,7 @@ export const GET = withPermission(async (req: Request, _ctx: GuardedContext): Pr
     waitPosition: t.waitPosition,
     estimatedWaitMinutes: t.estimatedWaitMinutes,
     issuedAt: t.issuedAt.toISOString(),
+    calledAt: t.calledAt?.toISOString() ?? null,
     businessDate: t.businessDate.toISOString(),
     customerPhone: t.customerPhone,
   }));
