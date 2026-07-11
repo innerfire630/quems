@@ -6,18 +6,14 @@
 //
 // Three-tier protection:
 //   1. CORS preflight & rate limiting — rejects abusive traffic early.
-//   2. Authentication check — redirects to /login if no JWT token.
-//   3. Authorization check — redirects to /?error=forbidden if the token
+//   2. Authentication check — redirects to /login if no session.
+//   3. Authorization check — redirects to /?error=forbidden if the session
 //      lacks a required permission for the requested route prefix.
-//
-// IMPORTANT: The proxy does NOT verify the JWT signature (no Node crypto in
-// Edge runtime). Signature verification happens server-side in layouts and
-// API route guards (withPermission).
 // =============================================================================
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { auth } from '@/lib/auth';
 import { ROUTE_PERMISSION_MAP } from '@/lib/route-permissions';
 import {
   checkIpRateLimit,
@@ -79,24 +75,20 @@ export default async function proxy(request: NextRequest) {
   if (routeGroup && process.env.RATE_LIMIT_ENABLED !== 'false') {
     const config = RATE_LIMITS[routeGroup];
 
+    // Use NextAuth v5 auth() to get session for user-based rate limiting
+    const session = await auth();
+    const userId = session?.user?.userId as string | undefined;
+
     let limitResult: { allowed: boolean } | null = null;
     if (config.keyStrategy === 'ip') {
       const ip = getRequestIp(request);
       limitResult = checkIpRateLimit(ip, routeGroup);
     } else if (config.keyStrategy === 'user') {
-      const token = await getToken({
-        req: request,
-        secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-      });
-      if (token?.sub) {
-        limitResult = checkUserRateLimit(token.sub, routeGroup);
+      if (userId) {
+        limitResult = checkUserRateLimit(userId, routeGroup);
       }
     } else {
-      const token = await getToken({
-        req: request,
-        secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-      });
-      limitResult = checkIpOrUserRateLimit(request, token?.sub ?? null, routeGroup);
+      limitResult = checkIpOrUserRateLimit(request, userId ?? null, routeGroup);
     }
 
     if (limitResult && !limitResult.allowed) {
@@ -107,24 +99,20 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
-  // ---- Step 3: Authentication & authorization (existing logic) ----
+  // ---- Step 3: Authentication & authorization ----
 
-  // Read the JWT cookie (decoded, not verified — Edge runtime limitation)
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  });
-
-  const permissions: string[] = (token?.permissions as string[]) ?? [];
+  // Use NextAuth v5 auth() — reads the correct cookie name automatically
+  const session = await auth();
+  const permissions: string[] = (session?.user?.permissions as string[]) ?? [];
 
   // ---- Step 3a: Force password change redirect ----
-  const mustChangePassword = (token?.mustChangePassword as boolean) ?? false;
+  const mustChangePassword = (session?.user?.mustChangePassword as boolean) ?? false;
   const isForceChangeRoute =
     pathname.startsWith('/force-change-password') ||
     pathname.startsWith('/api/auth/force-change-password') ||
     pathname.startsWith('/api/auth/signout');
 
-  if (token && mustChangePassword && !isForceChangeRoute) {
+  if (session && mustChangePassword && !isForceChangeRoute) {
     return applySecurityHeaders(
       NextResponse.redirect(new URL('/force-change-password', request.url)),
     );
@@ -134,7 +122,7 @@ export default async function proxy(request: NextRequest) {
   for (const [prefix, requiredPermission] of Object.entries(ROUTE_PERMISSION_MAP)) {
     if (pathname.startsWith(prefix)) {
       // No session → redirect to login
-      if (!token) {
+      if (!session) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('callbackUrl', pathname + search);
         return applySecurityHeaders(NextResponse.redirect(loginUrl));
@@ -153,7 +141,7 @@ export default async function proxy(request: NextRequest) {
   }
 
   // If no role-protected prefix matched, check authentication only
-  if (token) {
+  if (session) {
     return applySecurityHeaders(NextResponse.next());
   }
 
