@@ -127,7 +127,7 @@ export async function createReply(input: CreateReplyInput): Promise<CreateReplyR
         counterOfficerId: input.counterOfficerId,
         message: input.message.trim(),
         isDisplayBroadcast: true,
-        isSecurityBroadcast: true,
+        isSecurityBroadcast: false,
       },
       include: {
         counterOfficer: {
