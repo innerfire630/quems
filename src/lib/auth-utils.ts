@@ -264,7 +264,7 @@ export async function issueAccessToken(user: UserWithRoles): Promise<{
       roles: user.roles,
       permissions: user.permissions,
     },
-    secret: process.env['NEXTAUTH_SECRET'] ?? 'fallback-dev-secret',
+    secret: process.env['AUTH_SECRET'] ?? process.env['NEXTAUTH_SECRET'] ?? 'fallback-dev-secret',
     salt: user.email,
     maxAge: 15 * 60, // 15 minutes
   });

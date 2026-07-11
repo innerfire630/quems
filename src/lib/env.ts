@@ -81,15 +81,17 @@ const ENV_VARS: EnvVarDef[] = [
 
   // ---- Authentication ----
   {
-    key: 'NEXTAUTH_SECRET',
+    key: 'AUTH_SECRET',
     required: true,
     example: '<generated via `openssl rand -base64 32`>',
     validate: (v) => {
-      if (!v) return 'NEXTAUTH_SECRET is required.';
-      if (v.length < 32)
-        return `NEXTAUTH_SECRET must be at least 32 characters. Currently ${v.length} characters.`;
-      if (isProd && v === 'development-secret-do-not-use-in-production') {
-        return 'NEXTAUTH_SECRET is the development default. Generate a strong secret for production.';
+      if (!v && !process.env['NEXTAUTH_SECRET'])
+        return 'AUTH_SECRET (or NEXTAUTH_SECRET) is required.';
+      const secret = v ?? process.env['NEXTAUTH_SECRET'];
+      if (secret && secret.length < 32)
+        return `AUTH_SECRET must be at least 32 characters. Currently ${secret.length} characters.`;
+      if (isProd && secret === 'development-secret-do-not-use-in-production') {
+        return 'AUTH_SECRET is the development default. Generate a strong secret for production.';
       }
       return null;
     },

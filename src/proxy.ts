@@ -84,12 +84,18 @@ export default async function proxy(request: NextRequest) {
       const ip = getRequestIp(request);
       limitResult = checkIpRateLimit(ip, routeGroup);
     } else if (config.keyStrategy === 'user') {
-      const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+      const token = await getToken({
+        req: request,
+        secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+      });
       if (token?.sub) {
         limitResult = checkUserRateLimit(token.sub, routeGroup);
       }
     } else {
-      const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+      const token = await getToken({
+        req: request,
+        secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+      });
       limitResult = checkIpOrUserRateLimit(request, token?.sub ?? null, routeGroup);
     }
 
@@ -106,7 +112,7 @@ export default async function proxy(request: NextRequest) {
   // Read the JWT cookie (decoded, not verified — Edge runtime limitation)
   const token = await getToken({
     req: request,
-    secret: process.env['NEXTAUTH_SECRET'],
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   });
 
   const permissions: string[] = (token?.permissions as string[]) ?? [];
