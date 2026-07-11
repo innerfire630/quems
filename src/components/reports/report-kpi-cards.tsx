@@ -42,7 +42,7 @@ export function ReportKPICards({ summary }: ReportKPICardsProps) {
         >
           {/* Right-centered icon */}
           <kpi.icon
-            className="pointer-events-none absolute right-4 top-1/2 size-20 -translate-y-1/2 text-foreground"
+            className="pointer-events-none absolute right-3 top-1/2 size-12 sm:right-4 sm:size-20 -translate-y-1/2 text-foreground"
             style={{ opacity: 0.08 }}
             aria-hidden
           />

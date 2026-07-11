@@ -96,11 +96,14 @@ export default async function CountersPage({ searchParams }: CountersPageProps) 
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Counters" description="Manage serving counters and their operational status.">
+      <PageHeader
+        title="Counters"
+        description="Manage serving counters and their operational status."
+      >
         {hasCreate && (
           <Link
             href="/counters/new"
-            className="inline-flex items-center gap-1 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 h-9 px-4 py-2"
+            className="inline-flex items-center gap-1 rounded-md bg-white text-zinc-800 text-sm font-medium hover:bg-zinc-100 h-9 px-4 py-2"
           >
             <Plus className="mr-2 size-4" />
             Create Counter

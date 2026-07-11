@@ -153,7 +153,7 @@ export function LiveStats({
   }, [router]);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
       {CARDS_BASE.map((card) => {
         const Icon = card.icon;
         return (
@@ -163,7 +163,7 @@ export function LiveStats({
           >
             {/* Right-centered icon */}
             <Icon
-              className="pointer-events-none absolute right-4 top-1/2 size-20 -translate-y-1/2 text-foreground"
+              className="pointer-events-none absolute right-3 top-1/2 size-12 sm:right-4 sm:size-20 -translate-y-1/2 text-foreground"
               style={{ opacity: 0.08 }}
               aria-hidden
             />

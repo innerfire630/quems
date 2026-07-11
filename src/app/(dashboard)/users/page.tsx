@@ -95,7 +95,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
         <Can permission={PERMISSION_USER_CREATE}>
           <Link
             href="/users/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-100 transition-colors"
           >
             <UserPlus className="size-4" />
             Create User
