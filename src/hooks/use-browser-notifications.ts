@@ -51,8 +51,6 @@ export function useBrowserNotifications(
 
   const pendingRef = useRef(false);
   const srcRef = useRef(soundFile ? `/uploads/sounds/${soundFile}` : '/sounds/bell.mp3');
-
-  // Keep srcRef in sync with soundFile prop
   useEffect(() => {
     srcRef.current = soundFile ? `/uploads/sounds/${soundFile}` : '/sounds/bell.mp3';
   });
@@ -115,8 +113,8 @@ export function useBrowserNotifications(
         if (!isAudioReady()) pendingRef.current = true;
         playSound(srcRef.current);
       }
+      // Always send browser notification if permission is granted
       if (
-        isEnabled &&
         typeof window !== 'undefined' &&
         'Notification' in window &&
         Notification.permission === 'granted'
@@ -134,7 +132,7 @@ export function useBrowserNotifications(
         }
       }
     },
-    [isEnabled, isSoundEnabled],
+    [isSoundEnabled],
   );
 
   return {

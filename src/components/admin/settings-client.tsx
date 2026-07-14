@@ -266,7 +266,7 @@ function ColorConfigEditor({ value, onChange }: { value: string; onChange: (v: s
   }
 
   return (
-    <div className="w-80 space-y-3 rounded-md border border-border bg-muted/30 p-4">
+    <div className="w-full max-w-80 space-y-3 rounded-md border border-border bg-muted/30 p-4">
       {/* Green */}
       <div className="flex items-center gap-3">
         <label className="relative cursor-pointer">
@@ -396,7 +396,7 @@ function SoundFileSelector({
   }
 
   return (
-    <div className="w-80 space-y-3">
+    <div className="w-full max-w-80 space-y-3">
       {/* File name display + actions */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -485,7 +485,7 @@ export function CustomerInfoFieldsEditor({
   }
 
   return (
-    <div className="w-56 space-y-2 rounded-md border border-border bg-muted/30 p-3">
+    <div className="w-full max-w-56 space-y-2 rounded-md border border-border bg-muted/30 p-3">
       <div>
         <Label className="text-xs text-muted-foreground">Collect from customer</Label>
         <select
@@ -534,7 +534,7 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
 
   return (
     <Card>
-      <CardContent className="flex items-start justify-between gap-4 py-4">
+      <CardContent className="flex flex-col gap-3 py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
         {/* Left: label + description */}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{formatKeyLabel(setting.key)}</p>
@@ -544,7 +544,7 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
         </div>
 
         {/* Right: value editor + save */}
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {setting.key === 'system.logo_url' ? (
             <LogoUpload
               setting={setting}
@@ -603,7 +603,7 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
               onChange={(e) => setValue(e.target.value)}
               rows={2}
               placeholder="Leave empty for default message"
-              className="w-64 rounded-md border border-input bg-background px-3 py-1.5 text-xs resize-y"
+              className="w-full max-w-64 rounded-md border border-input bg-background px-3 py-1.5 text-xs resize-y"
             />
           ) : setting.key === 'waiting_time.color_config' ? (
             <ColorConfigEditor value={value} onChange={setValue} />
@@ -617,13 +617,13 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               rows={2}
-              className="w-56 rounded-md border border-input bg-background px-3 py-1.5 font-mono text-xs resize-y"
+              className="w-full max-w-56 rounded-md border border-input bg-background px-3 py-1.5 font-mono text-xs resize-y"
             />
           ) : (
             <Input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              className="h-8 w-40 text-xs"
+              className="h-8 w-full max-w-40 text-xs"
             />
           )}
           {setting.key !== 'system.logo_url' && (

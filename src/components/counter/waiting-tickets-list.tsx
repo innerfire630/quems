@@ -100,7 +100,7 @@ export default function WaitingTicketsList({
   onReminderTrigger,
 }: WaitingTicketsListProps) {
   const [tickets, setTickets] = useState<TicketListItem[]>(initialTickets);
-  const [now, setNow] = useState(() => Date.now()); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [, setNow] = useState(() => Date.now());
   const [callingTicketId, setCallingTicketId] = useState<string | null>(null);
   const reminderPlayedRef = useRef(false);
   const reminderUnlocked = useRef(false);
@@ -187,6 +187,24 @@ export default function WaitingTicketsList({
       reminderPlayedRef.current = true;
 
       onReminderTrigger(overdueNow.map((t) => t.ticketNumber));
+
+      // Browser notification for delayed reminder
+      if (
+        typeof window !== 'undefined' &&
+        'Notification' in window &&
+        Notification.permission === 'granted'
+      ) {
+        const ticketNames = overdueNow.map((t) => t.ticketNumber).join(', ');
+        try {
+          new Notification('Delayed Reminder Alert', {
+            body: `Ticket${overdueNow.length > 1 ? 's' : ''} ${ticketNames} ${overdueNow.length > 1 ? 'have' : 'has'} been waiting too long!`,
+            icon: '/images/icon-192.png',
+            tag: 'delayed-reminder',
+          });
+        } catch {
+          /* iframe */
+        }
+      }
 
       // Play sound N times if configured
       if (reminderSoundFile) {

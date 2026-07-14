@@ -13,7 +13,6 @@ const TICK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><r
 
 export function useTabAlert(alertCount: number, baseTitle: string) {
   const countRef = useRef(alertCount);
-
   useEffect(() => {
     countRef.current = alertCount;
   });

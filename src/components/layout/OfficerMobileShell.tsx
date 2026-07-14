@@ -35,9 +35,7 @@ export function OfficerMobileShell({
   useEffect(() => {
     if (!('Notification' in window)) return;
 
-    // Sync permission on mount (user may have changed in browser settings)
     const sync = () => setNotifPermission(Notification.permission);
-    sync();
 
     // Auto-request on mount if default
     if (Notification.permission === 'default') {
