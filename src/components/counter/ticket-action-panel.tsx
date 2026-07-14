@@ -36,31 +36,39 @@ async function apiCall(
   counterId: string,
   action: TicketAction,
 ): Promise<{ success: boolean; error?: { message: string } }> {
-  const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/${action}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ counterId }),
-  });
-  const json = await res.json();
-  if (!res.ok) {
-    return { success: false, error: { message: json.error?.message || 'Action failed.' } };
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ counterId }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      return { success: false, error: { message: json?.error?.message || 'Action failed.' } };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: { message: 'Network error. Please try again.' } };
   }
-  return { success: true };
 }
 
 async function apiCallNext(
   counterId: string,
 ): Promise<{ success: boolean; error?: { message: string } }> {
-  const res = await fetch('/api/tickets/call-next', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ counterId }),
-  });
-  const json = await res.json();
-  if (!res.ok) {
-    return { success: false, error: { message: json.error?.message || 'Action failed.' } };
+  try {
+    const res = await fetch('/api/tickets/call-next', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ counterId }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      return { success: false, error: { message: json?.error?.message || 'Action failed.' } };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: { message: 'Network error. Please try again.' } };
   }
-  return { success: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -107,36 +115,46 @@ export default function TicketActionPanel({
       setLoading(action);
       setError(null);
 
-      const result = await apiCall(ticket.id, counterId, action);
-      setLoading(null);
+      try {
+        const result = await apiCall(ticket.id, counterId, action);
 
-      if (!result.success) {
-        setError(result.error?.message ?? 'Action failed.');
-        return;
+        if (!result.success) {
+          setError(result.error?.message ?? 'Action failed.');
+          return;
+        }
+
+        if (action === 'recall') {
+          startRecallCooldown();
+        }
+
+        onActionComplete();
+      } catch {
+        setError('An unexpected error occurred.');
+      } finally {
+        setLoading(null);
       }
-
-      if (action === 'recall') {
-        startRecallCooldown();
-      }
-
-      onActionComplete();
     },
-    [ticket, counterId, onActionComplete],
+    [ticket, counterId, onActionComplete, startRecallCooldown],
   );
 
   const handleCallNext = useCallback(async () => {
     setLoading('call-next');
     setError(null);
 
-    const result = await apiCallNext(counterId);
-    setLoading(null);
+    try {
+      const result = await apiCallNext(counterId);
 
-    if (!result.success) {
-      setError(result.error?.message ?? 'Action failed.');
-      return;
+      if (!result.success) {
+        setError(result.error?.message ?? 'Action failed.');
+        return;
+      }
+
+      onActionComplete();
+    } catch {
+      setError('An unexpected error occurred.');
+    } finally {
+      setLoading(null);
     }
-
-    onActionComplete();
   }, [counterId, onActionComplete]);
 
   const disabled = !officerOnDuty || loading !== null;

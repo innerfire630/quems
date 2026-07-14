@@ -15,7 +15,12 @@ import {
   getNotificationsState,
   findCounterOfficerForUserAndCounter,
 } from '@/lib/officer-notifications';
-import type { OfficerDashboardData, RecentActivityEntry } from '@/types/officer-dashboard.types';
+import type {
+  OfficerDashboardData,
+  RecentActivityEntry,
+  DashboardSettings,
+  WaitingTimeColorConfig,
+} from '@/types/officer-dashboard.types';
 
 // ---------------------------------------------------------------------------
 // Custom error
@@ -47,22 +52,26 @@ export async function getOfficerDashboardData(
     counter,
     currentServingTicket,
     nextTicket,
+    waitingTickets,
     queueDepthCount,
     recentActivity,
     recentStatusEvents,
     notificationsState,
     currentStatus,
     user,
+    dashboardSettings,
   ] = await Promise.all([
     getCounterDetails(counterId),
     findCurrentServingTicketForCounter(counterId),
     findNextWaitingTicketForCounter(counterId),
+    getWaitingTicketsForCounter(counterId),
     getQueueDepth(counterId),
     getRecentActivity(counterId, 10),
     getRecentStatusEvents(counterId, 5),
     getNotificationsState(userId),
     getCurrentStatus(counterId),
     getUserBasicInfo(userId),
+    getDashboardSettings(),
   ]);
 
   if (!counter) {
@@ -84,6 +93,8 @@ export async function getOfficerDashboardData(
       lastUpdatedAt: new Date(),
     },
     nextTicket,
+    waitingTickets,
+    dashboardSettings,
     recentActivity,
     recentStatusEvents,
     notificationsState,
@@ -177,4 +188,103 @@ async function getUserBasicInfo(userId: string) {
   });
   if (!user) throw new Error('User not found.');
   return user;
+}
+
+// ---------------------------------------------------------------------------
+// Waiting tickets for the counter's assigned services
+// ---------------------------------------------------------------------------
+
+async function getWaitingTicketsForCounter(counterId: string) {
+  const serviceIds = await db.counterService
+    .findMany({ where: { counterId }, select: { serviceId: true } })
+    .then((rows) => rows.map((r) => r.serviceId));
+
+  if (serviceIds.length === 0) return [];
+
+  const tickets = await db.ticket.findMany({
+    where: {
+      counterId: null,
+      status: 'WAITING',
+      serviceId: { in: serviceIds },
+    },
+    orderBy: { issuedAt: 'asc' },
+    include: {
+      service: { select: { name: true } },
+      counter: { select: { name: true } },
+    },
+  });
+
+  return tickets.map((t) => ({
+    id: t.id,
+    ticketNumber: t.ticketNumber,
+    displayNumber: t.displayNumber,
+    serviceId: t.serviceId,
+    serviceName: t.service.name,
+    counterId: t.counterId,
+    counterName: t.counter?.name ?? null,
+    status: t.status,
+    priority: t.priority,
+    waitPosition: t.waitPosition,
+    estimatedWaitMinutes: t.estimatedWaitMinutes,
+    issuedAt: t.issuedAt.toISOString(),
+    calledAt: t.calledAt?.toISOString() ?? null,
+    businessDate: t.businessDate.toISOString(),
+    customerName: t.customerName,
+    customerIdNumber: t.customerIdNumber,
+    customerPhone: t.customerPhone,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard settings (loaded from SystemSetting)
+// ---------------------------------------------------------------------------
+
+async function getDashboardSettings(): Promise<DashboardSettings> {
+  const keys = [
+    'waiting_time.color_config',
+    'reminder.delayed_threshold_minutes',
+    'reminder.interval_minutes',
+    'reminder.blink_interval_seconds',
+    'reminder.sound_file',
+    'reminder.sound_repeat_count',
+    'notification.new_ticket_sound',
+  ];
+
+  const settings = await db.systemSetting.findMany({
+    where: { key: { in: keys } },
+    select: { key: true, value: true },
+  });
+
+  const map = new Map(settings.map((s) => [s.key, s.value]));
+
+  const defaultColorConfig: WaitingTimeColorConfig = {
+    green_max_minutes: 15,
+    yellow_max_minutes: 30,
+    green_color: '#22c55e',
+    yellow_color: '#eab308',
+    red_color: '#ef4444',
+  };
+
+  let colorConfig = defaultColorConfig;
+  const rawColor = map.get('waiting_time.color_config');
+  if (rawColor) {
+    try {
+      colorConfig = { ...defaultColorConfig, ...JSON.parse(rawColor) };
+    } catch {
+      // use defaults
+    }
+  }
+
+  return {
+    waitingTimeColorConfig: colorConfig,
+    reminderThresholdMinutes: Number(map.get('reminder.delayed_threshold_minutes')) || 30,
+    reminderIntervalMinutes: Number(map.get('reminder.interval_minutes')) || 5,
+    reminderBlinkIntervalSeconds: Number(map.get('reminder.blink_interval_seconds')) || 2,
+    reminderSoundFile: map.get('reminder.sound_file') || '',
+    reminderSoundRepeatCount: Math.min(
+      10,
+      Math.max(1, Number(map.get('reminder.sound_repeat_count')) || 2),
+    ),
+    newTicketSoundFile: map.get('notification.new_ticket_sound') || '',
+  };
 }

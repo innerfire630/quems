@@ -67,6 +67,8 @@ export const GET = withPermission(
       issuedAt: ticket.issuedAt.toISOString(),
       calledAt: ticket.calledAt?.toISOString() ?? null,
       businessDate: ticket.businessDate.toISOString(),
+      customerName: ticket.customerName,
+      customerIdNumber: ticket.customerIdNumber,
       customerPhone: ticket.customerPhone,
       events,
       calledByOfficer: ticket.calledByOfficer

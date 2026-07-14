@@ -68,6 +68,8 @@ export const GET = withPermission(async (req: Request, _ctx: GuardedContext): Pr
     issuedAt: t.issuedAt.toISOString(),
     calledAt: t.calledAt?.toISOString() ?? null,
     businessDate: t.businessDate.toISOString(),
+    customerName: t.customerName,
+    customerIdNumber: t.customerIdNumber,
     customerPhone: t.customerPhone,
   }));
 

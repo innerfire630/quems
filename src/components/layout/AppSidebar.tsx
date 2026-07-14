@@ -8,6 +8,7 @@ import {
   BarChart3,
   FileText,
   Settings,
+  SlidersHorizontal,
   Tablet,
   X,
 } from 'lucide-react';
@@ -34,6 +35,12 @@ const NAV_ITEMS = [
     href: '/kiosk-config',
     label: 'Kiosk Config',
     icon: Tablet,
+    permission: PERMISSION_SYSTEM_CONFIGURE,
+  },
+  {
+    href: '/counter-config',
+    label: 'Counter Config',
+    icon: SlidersHorizontal,
     permission: PERMISSION_SYSTEM_CONFIGURE,
   },
   { href: '/settings', label: 'Settings', icon: Settings, permission: PERMISSION_SYSTEM_CONFIGURE },

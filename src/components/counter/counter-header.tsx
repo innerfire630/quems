@@ -16,16 +16,15 @@ interface CounterHeaderProps {
 
 export default function CounterHeader({ counter, currentStatus, reason }: CounterHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-4 sm:px-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-xl font-bold text-white sm:text-2xl">
           {counter.name || `Counter ${counter.number}`}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Number {counter.number}
-          {counter.displayLabel && counter.displayLabel !== counter.name && (
-            <> &middot; {counter.displayLabel}</>
-          )}
+        <p className="mt-1 text-xs text-zinc-300 sm:text-sm">
+          {counter.displayLabel && counter.displayLabel !== counter.name
+            ? counter.displayLabel
+            : `Counter ${counter.number}`}
         </p>
       </div>
       <div className="flex flex-col items-end gap-1">
@@ -40,7 +39,7 @@ export default function CounterHeader({ counter, currentStatus, reason }: Counte
           {currentStatus === 'OPENED' ? 'Open' : 'Temporarily Closed'}
         </Badge>
         {currentStatus === 'CLOSED' && reason && (
-          <span className="text-xs text-muted-foreground">{reason}</span>
+          <span className="text-xs text-zinc-400">{reason}</span>
         )}
       </div>
     </div>

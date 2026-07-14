@@ -51,7 +51,8 @@ export async function POST(
   } catch (e: unknown) {
     const err = e as { code?: string; kind?: string; message?: string };
 
-    if (err.code === 'NOT_FOUND') {
+    const errorCode = err.code ?? err.kind;
+    if (errorCode === 'NOT_FOUND') {
       return NextResponse.json(
         {
           success: false,
@@ -61,9 +62,9 @@ export async function POST(
       );
     }
     if (
-      err.code === 'SERVICE_NOT_ASSIGNED_TO_COUNTER' ||
-      err.code === 'COUNTER_INACTIVE' ||
-      err.code === 'INVALID_TRANSITION'
+      errorCode === 'SERVICE_NOT_ASSIGNED_TO_COUNTER' ||
+      errorCode === 'COUNTER_INACTIVE' ||
+      errorCode === 'INVALID_TRANSITION'
     ) {
       return NextResponse.json(
         {
@@ -73,7 +74,7 @@ export async function POST(
         { status: 422 },
       );
     }
-    if (err.kind === 'OFFICER_NOT_ON_DUTY' || err.kind === 'OFFICER_NOT_ASSIGNED') {
+    if (errorCode === 'OFFICER_NOT_ON_DUTY' || errorCode === 'OFFICER_NOT_ASSIGNED') {
       return NextResponse.json(
         {
           success: false,

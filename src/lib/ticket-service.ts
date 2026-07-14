@@ -203,6 +203,8 @@ export function mapTicketToDetail(ticket: Record<string, unknown>): TicketDetail
     issuedAt: (t.issuedAt as Date).toISOString(),
     calledAt: t.calledAt ? (t.calledAt as Date).toISOString() : null,
     businessDate: (t.businessDate as Date).toISOString(),
+    customerName: (t.customerName as string) ?? null,
+    customerIdNumber: (t.customerIdNumber as string) ?? null,
     customerPhone: (t.customerPhone as string) ?? null,
     events,
     calledByOfficer: calledByUser
@@ -329,6 +331,8 @@ export async function issueTicket(input: IssueTicketInput): Promise<IssuedTicket
         waitPosition,
         estimatedWaitMinutes,
         businessDate,
+        customerName: input.customerName ?? null,
+        customerIdNumber: input.customerIdNumber ?? null,
         customerPhone: input.customerPhone ?? null,
         issuedAt: new Date(),
       },

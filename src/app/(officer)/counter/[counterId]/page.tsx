@@ -53,7 +53,7 @@ export default async function OfficerCounterPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div>
       <OfficerDashboardClient initialData={data} />
     </div>
   );

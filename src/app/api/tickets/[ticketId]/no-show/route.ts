@@ -132,6 +132,8 @@ export const POST = withPermission(async (req: Request) => {
           issuedAt: advanceResult.ticket.issuedAt,
           calledAt: advanceResult.ticket.calledAt ?? null,
           businessDate: advanceResult.ticket.businessDate,
+          customerName: advanceResult.ticket.customerName ?? null,
+          customerIdNumber: advanceResult.ticket.customerIdNumber ?? null,
           customerPhone: advanceResult.ticket.customerPhone,
         };
         result.autoAdvanced = true;

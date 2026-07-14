@@ -13,7 +13,7 @@ import { updateSetting } from '@/actions/update-setting';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Save, Loader2, Check, Upload, X } from 'lucide-react';
+import { Save, Loader2, Check, Upload, X, Volume2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ResetQueueButton } from '@/app/(dashboard)/settings/_components/reset-queue-button';
@@ -76,6 +76,15 @@ const KEY_LABELS: Record<string, string> = {
   'queue.default_average_service_time_minutes': 'Default Service Time',
   'display.theme': 'TV Display Theme',
   'display.marquee_message': 'Marquee Message',
+  'kiosk.require_customer_info': 'Collect Customer Info on Kiosk',
+  'kiosk.customer_info_fields': 'Customer Info Fields',
+  'waiting_time.color_config': 'Waiting Time Color Thresholds',
+  'reminder.delayed_threshold_minutes': 'Delayed Reminder Threshold (min)',
+  'reminder.interval_minutes': 'Reminder Repeat Interval (min)',
+  // 'reminder.blink_interval_seconds' — hidden, handled automatically
+  'reminder.sound_file': 'Delayed Reminder Sound',
+  'reminder.sound_repeat_count': 'Reminder Sound Repeat Count',
+  'notification.new_ticket_sound': 'New Ticket Issued Sound',
 };
 
 // Group labels for dotted key prefixes
@@ -87,6 +96,10 @@ const GROUP_LABELS: Record<string, string> = {
   display: 'Display Board',
   security: 'Security',
   general: 'General',
+  kiosk: 'Kiosk Settings',
+  waiting_time: 'Ticket Waiting Time Colour',
+  reminder: 'Ticket Reminder Alerts',
+  notification: 'Notification Sounds',
 };
 
 function formatKeyLabel(key: string): string {
@@ -98,11 +111,19 @@ function formatKeyLabel(key: string): string {
 }
 
 function formatGroup(key: string): string {
+  // Move "Delayed Reminder Sound" to Notification Sounds group
+  if (key === 'reminder.sound_file') return 'Notification Sounds';
   const prefix = key.split('.')[0];
   return GROUP_LABELS[prefix] ?? prefix.charAt(0).toUpperCase() + prefix.slice(1);
 }
 
-function LogoUpload({ setting, onUploaded }: { setting: SystemSetting; onUploaded?: (url: string) => void }) {
+function LogoUpload({
+  setting,
+  onUploaded,
+}: {
+  setting: SystemSetting;
+  onUploaded?: (url: string) => void;
+}) {
   const router = useRouter();
   const [previewUrl, setPreviewUrl] = useState<string | null>(setting.value || null);
   const [uploading, setUploading] = useState(false);
@@ -214,6 +235,282 @@ function LogoUpload({ setting, onUploaded }: { setting: SystemSetting; onUploade
   );
 }
 
+// ---------------------------------------------------------------------------
+// ColorConfigEditor — structured editor for waiting_time.color_config JSON
+// ---------------------------------------------------------------------------
+
+interface ColorConfig {
+  green_max_minutes: number;
+  yellow_max_minutes: number;
+  green_color: string;
+  yellow_color: string;
+  red_color: string;
+}
+
+function ColorConfigEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  let config: ColorConfig;
+  try {
+    config = JSON.parse(value);
+  } catch {
+    config = {
+      green_max_minutes: 15,
+      yellow_max_minutes: 30,
+      green_color: '#22c55e',
+      yellow_color: '#eab308',
+      red_color: '#ef4444',
+    };
+  }
+
+  function update(partial: Partial<ColorConfig>) {
+    onChange(JSON.stringify({ ...config, ...partial }, null, 2));
+  }
+
+  return (
+    <div className="w-80 space-y-3 rounded-md border border-border bg-muted/30 p-4">
+      {/* Green */}
+      <div className="flex items-center gap-3">
+        <label className="relative cursor-pointer">
+          <div
+            className="size-8 rounded-full border-2 border-border shadow-sm"
+            style={{ backgroundColor: config.green_color }}
+          />
+          <input
+            type="color"
+            value={config.green_color}
+            onChange={(e) => update({ green_color: e.target.value })}
+            className="absolute inset-0 size-0 opacity-0"
+          />
+        </label>
+        <div className="flex flex-1 items-center gap-1.5">
+          <span className="text-xs font-medium text-foreground">Green</span>
+          <span className="text-xs text-muted-foreground">(0 –</span>
+          <Input
+            type="number"
+            value={config.green_max_minutes}
+            onChange={(e) => update({ green_max_minutes: Number(e.target.value) })}
+            className="h-7 w-16 text-xs"
+            min={1}
+          />
+          <span className="text-xs text-muted-foreground">min)</span>
+        </div>
+      </div>
+      {/* Yellow */}
+      <div className="flex items-center gap-3">
+        <label className="relative cursor-pointer">
+          <div
+            className="size-8 rounded-full border-2 border-border shadow-sm"
+            style={{ backgroundColor: config.yellow_color }}
+          />
+          <input
+            type="color"
+            value={config.yellow_color}
+            onChange={(e) => update({ yellow_color: e.target.value })}
+            className="absolute inset-0 size-0 opacity-0"
+          />
+        </label>
+        <div className="flex flex-1 items-center gap-1.5">
+          <span className="text-xs font-medium text-foreground">Yellow</span>
+          <span className="text-xs text-muted-foreground">(… –</span>
+          <Input
+            type="number"
+            value={config.yellow_max_minutes}
+            onChange={(e) => update({ yellow_max_minutes: Number(e.target.value) })}
+            className="h-7 w-16 text-xs"
+            min={1}
+          />
+          <span className="text-xs text-muted-foreground">min)</span>
+        </div>
+      </div>
+      {/* Red */}
+      <div className="flex items-center gap-3">
+        <label className="relative cursor-pointer">
+          <div
+            className="size-8 rounded-full border-2 border-border shadow-sm"
+            style={{ backgroundColor: config.red_color }}
+          />
+          <input
+            type="color"
+            value={config.red_color}
+            onChange={(e) => update({ red_color: e.target.value })}
+            className="absolute inset-0 size-0 opacity-0"
+          />
+        </label>
+        <div className="flex flex-1 items-center gap-1.5">
+          <span className="text-xs font-medium text-foreground">Red</span>
+          <span className="text-xs text-muted-foreground">(above)</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SoundFileSelector — select or upload a sound file
+// ---------------------------------------------------------------------------
+
+function SoundFileSelector({
+  setting,
+  value,
+  onChange,
+}: {
+  setting: SystemSetting;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const router = useRouter();
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/upload-sound', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setError(json.error?.message ?? 'Upload failed');
+        return;
+      }
+
+      onChange(json.data.filename);
+      router.refresh();
+    } catch {
+      setError('Network error.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  return (
+    <div className="w-80 space-y-3">
+      {/* File name display + actions */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Volume2 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="No sound file configured"
+            className="h-9 pl-8 pr-8 text-xs"
+          />
+          {value && (
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/mpeg,audio/wav,audio/ogg,audio/mp3"
+          onChange={handleUpload}
+          className="hidden"
+          id={`sound-upload-${setting.id}`}
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="h-9 gap-1.5 text-xs"
+        >
+          {uploading ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Upload className="size-3.5" />
+          )}
+          Upload
+        </Button>
+      </div>
+
+      {/* Audio preview */}
+      {value && (
+        <div className="rounded-md border border-border bg-muted/30 p-2">
+          <audio controls src={`/uploads/sounds/${value}`} className="h-8 w-full" />
+        </div>
+      )}
+
+      {/* Error */}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+
+      {/* Help text */}
+      <p className="text-xs text-muted-foreground">Supported: MP3, WAV, OGG · Max 5 MB</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CustomerInfoFieldsEditor — structured editor for kiosk.customer_info_fields
+// ---------------------------------------------------------------------------
+
+interface CustomerInfoFieldsConfig {
+  nameOrId: 'name' | 'idNumber' | 'both';
+  requireContact: boolean;
+}
+
+export function CustomerInfoFieldsEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  let config: CustomerInfoFieldsConfig;
+  try {
+    config = JSON.parse(value);
+  } catch {
+    config = { nameOrId: 'name', requireContact: true };
+  }
+
+  function update(partial: Partial<CustomerInfoFieldsConfig>) {
+    onChange(JSON.stringify({ ...config, ...partial }));
+  }
+
+  return (
+    <div className="w-56 space-y-2 rounded-md border border-border bg-muted/30 p-3">
+      <div>
+        <Label className="text-xs text-muted-foreground">Collect from customer</Label>
+        <select
+          value={config.nameOrId}
+          onChange={(e) =>
+            update({ nameOrId: e.target.value as CustomerInfoFieldsConfig['nameOrId'] })
+          }
+          className="mt-1 h-8 w-full rounded-md border border-input bg-background px-2 text-xs"
+        >
+          <option value="name">Name only</option>
+          <option value="idNumber">ID Number only</option>
+          <option value="both">Name or ID Number</option>
+        </select>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={config.requireContact}
+          onCheckedChange={(checked) => update({ requireContact: checked })}
+        />
+        <Label className="text-xs">Require contact number</Label>
+      </div>
+    </div>
+  );
+}
+
 function SettingCard({ setting }: { setting: SystemSetting }) {
   const router = useRouter();
   const [value, setValue] = useState(setting.value);
@@ -249,7 +546,13 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
         {/* Right: value editor + save */}
         <div className="flex shrink-0 items-center gap-3">
           {setting.key === 'system.logo_url' ? (
-            <LogoUpload setting={setting} onUploaded={(url) => { setValue(url); router.refresh(); }} />
+            <LogoUpload
+              setting={setting}
+              onUploaded={(url) => {
+                setValue(url);
+                router.refresh();
+              }}
+            />
           ) : setting.key === 'display.theme' ? (
             <div className="flex items-center gap-2">
               <button
@@ -302,6 +605,13 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
               placeholder="Leave empty for default message"
               className="w-64 rounded-md border border-input bg-background px-3 py-1.5 text-xs resize-y"
             />
+          ) : setting.key === 'waiting_time.color_config' ? (
+            <ColorConfigEditor value={value} onChange={setValue} />
+          ) : setting.key === 'kiosk.customer_info_fields' ? (
+            <CustomerInfoFieldsEditor value={value} onChange={setValue} />
+          ) : setting.key === 'reminder.sound_file' ||
+            setting.key === 'notification.new_ticket_sound' ? (
+            <SoundFileSelector setting={setting} value={value} onChange={setValue} />
           ) : setting.type === 'JSON' ? (
             <textarea
               value={value}
@@ -342,9 +652,13 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
 }
 
 export function SettingsClient({ settings }: { settings: SystemSetting[] }) {
+  // Keys hidden from the UI (managed internally)
+  const HIDDEN_KEYS = new Set(['reminder.blink_interval_seconds']);
+
   // Group settings by prefix
   const groups = new Map<string, SystemSetting[]>();
   for (const s of settings) {
+    if (HIDDEN_KEYS.has(s.key)) continue;
     const group = formatGroup(s.key);
     if (!groups.has(group)) groups.set(group, []);
     groups.get(group)!.push(s);

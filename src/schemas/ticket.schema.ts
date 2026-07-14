@@ -22,6 +22,8 @@ const TICKET_STATUS_VALUES = [
 export const issueTicketSchema = z.object({
   serviceId: z.string().min(1, 'Service ID is required.'),
   priority: z.number().int().min(0).max(100).default(0),
+  customerName: z.string().max(100).optional(),
+  customerIdNumber: z.string().max(50).optional(),
   customerPhone: z
     .string()
     .max(20)

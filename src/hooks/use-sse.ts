@@ -15,7 +15,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { SseEventType, SseEnvelope, SseInternalEnvelope } from '@/types/sse.types';
-import { subscribeToChannel } from '@/lib/sse-connection-manager';
+import { subscribeToChannel, reconnectChannel } from '@/lib/sse-connection-manager';
 import type { SseConnectionStatus } from '@/lib/sse-connection-manager';
 
 // Re-export for consumers that import the type from this module
@@ -91,7 +91,18 @@ export function useSSE<T extends SseEventType = SseEventType>(
       },
     );
 
-    return unsubscribe;
+    // Force reconnect when tab becomes visible after being idle
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        reconnectChannel(channel);
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel, filterKey]);
 

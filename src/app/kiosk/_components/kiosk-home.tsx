@@ -1,29 +1,39 @@
 // =============================================================================
 // src/app/kiosk/_components/kiosk-home.tsx — Main kiosk interaction (2.2.2)
 // =============================================================================
-// Manages the kiosk state machine: grid → [confirm popup] → loading → confirmation → error.
+// Manages the kiosk state machine: grid → [confirm popup] → [customer info] → loading → confirmation → error.
 // Step 1: user taps a service card → confirmation dialog pops up over the grid.
 // Step 2: 15 s auto-cancel countdown in the dialog.
-// Step 3: on confirm, issues the ticket via the API.
+// Step 3: if customer info is required, show the customer info form.
+// Step 4: on submit, issues the ticket via the API with customer data.
 // =============================================================================
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
 import { KioskServiceGrid } from './kiosk-service-grid';
 import { ServiceConfirmation } from './service-confirmation';
+import { CustomerInfoForm } from './customer-info-form';
+import type { CustomerInfo, CustomerInfoFieldsConfig } from './customer-info-form';
 import { TicketConfirmation } from './ticket-confirmation';
 import { useKioskReset } from '@/hooks/use-kiosk-reset';
 import type { ServiceForKiosk, LoadedKioskConfig } from '@/lib/kiosk-config';
 import type { IssuedTicketResponse } from '@/types/ticket.types';
 
-type KioskView = 'grid' | 'confirm' | 'loading' | 'confirmation' | 'error';
+type KioskView = 'grid' | 'confirm' | 'customer-info' | 'loading' | 'confirmation' | 'error';
 
 interface KioskHomeProps {
   services: ServiceForKiosk[];
   kioskConfig: LoadedKioskConfig;
+  requireCustomerInfo?: boolean;
+  customerInfoFields?: CustomerInfoFieldsConfig;
 }
 
-export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
+export function KioskHome({
+  services,
+  kioskConfig,
+  requireCustomerInfo = true,
+  customerInfoFields = { nameOrId: 'name', requireContact: true },
+}: KioskHomeProps) {
   const [currentView, setCurrentView] = useState<KioskView>('grid');
   const [selectedService, setSelectedService] = useState<ServiceForKiosk | null>(null);
   const [currentTicket, setCurrentTicket] = useState<IssuedTicketResponse | null>(null);
@@ -31,7 +41,8 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
   const [isIssuing, setIsIssuing] = useState(false);
 
   // Lock the kiosk scrollable container when any dialog is open
-  const isDialogOpen = currentView === 'confirm' || currentView === 'confirmation';
+  const isDialogOpen =
+    currentView === 'confirm' || currentView === 'customer-info' || currentView === 'confirmation';
   useEffect(() => {
     const scrollable = document.querySelector('.kiosk-scrollable');
     if (!scrollable) return;
@@ -77,39 +88,74 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
     handleReset();
   }, [handleReset]);
 
-  // Step 2b: user confirms → issue the ticket
-  const handleConfirmProceed = useCallback(async () => {
-    if (!selectedService) return;
+  // Issue ticket API call (defined before callbacks that use it)
+  const issueTicketForService = useCallback(
+    async (customerInfo: CustomerInfo | null) => {
+      if (!selectedService) return;
 
-    setIsIssuing(true);
-    setCurrentView('loading');
-    setErrorMessage(null);
+      setIsIssuing(true);
+      setErrorMessage(null);
 
-    try {
-      const res = await fetch('/api/tickets/issue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serviceId: selectedService.id }),
-      });
+      try {
+        const body: Record<string, unknown> = {
+          serviceId: selectedService.id,
+        };
+        if (customerInfo) {
+          if (customerInfo.customerName) body.customerName = customerInfo.customerName;
+          if (customerInfo.customerIdNumber) body.customerIdNumber = customerInfo.customerIdNumber;
+          if (customerInfo.customerPhone) body.customerPhone = customerInfo.customerPhone;
+        }
 
-      const json = await res.json();
+        const res = await fetch('/api/tickets/issue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
 
-      if (!res.ok || !json.success) {
-        const msg = json.error?.message ?? 'Failed to issue ticket. Please try again.';
-        setErrorMessage(msg);
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          const msg = json.error?.message ?? 'Failed to issue ticket. Please try again.';
+          setErrorMessage(msg);
+          setCurrentView('error');
+          return;
+        }
+
+        setCurrentTicket(json.data as IssuedTicketResponse);
+        setCurrentView('confirmation');
+      } catch {
+        setErrorMessage('Network error. Please try again.');
         setCurrentView('error');
-        return;
+      } finally {
+        setIsIssuing(false);
       }
+    },
+    [selectedService],
+  );
 
-      setCurrentTicket(json.data as IssuedTicketResponse);
-      setCurrentView('confirmation');
-    } catch {
-      setErrorMessage('Network error. Please try again.');
-      setCurrentView('error');
-    } finally {
-      setIsIssuing(false);
+  // Step 2b: user confirms → proceed to customer info or issue directly
+  const handleConfirmProceed = useCallback(() => {
+    if (requireCustomerInfo) {
+      setCurrentView('customer-info');
+    } else {
+      setCurrentView('loading');
+      void issueTicketForService(null);
     }
-  }, [selectedService]);
+  }, [requireCustomerInfo, issueTicketForService]);
+
+  // Step 3: customer info submitted → issue the ticket
+  const handleCustomerInfoSubmit = useCallback(
+    (info: CustomerInfo) => {
+      setCurrentView('loading');
+      void issueTicketForService(info);
+    },
+    [issueTicketForService],
+  );
+
+  // Step 3a: customer info cancelled → back to grid
+  const handleCustomerInfoCancel = useCallback(() => {
+    handleReset();
+  }, [handleReset]);
 
   if (currentView === 'loading') {
     return (
@@ -148,6 +194,15 @@ export function KioskHome({ services, kioskConfig }: KioskHomeProps) {
           open={currentView === 'confirm'}
           onConfirm={handleConfirmProceed}
           onCancel={handleConfirmCancel}
+        />
+      )}
+      {selectedService && (
+        <CustomerInfoForm
+          open={currentView === 'customer-info'}
+          fieldsConfig={customerInfoFields}
+          timeoutSeconds={60}
+          onSubmit={handleCustomerInfoSubmit}
+          onCancel={handleCustomerInfoCancel}
         />
       )}
       {currentTicket && (

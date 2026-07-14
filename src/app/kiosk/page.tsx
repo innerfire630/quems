@@ -9,7 +9,7 @@ import { loadKioskConfig, getActiveServicesForKiosk } from '@/lib/kiosk-config';
 import { KioskHeader } from './_components/kiosk-header';
 import { KioskHome } from './_components/kiosk-home';
 import { KioskNoConfig } from './_components/kiosk-no-config';
-import { getSystemBrand } from '@/lib/cached-data';
+import { getSystemBrand, getSystemSettings } from '@/lib/cached-data';
 
 interface KioskPageProps {
   searchParams: Promise<{ kioskId?: string }>;
@@ -23,10 +23,26 @@ export default async function KioskPage({ searchParams }: KioskPageProps) {
     return <KioskNoConfig />;
   }
 
-  const [services, brand] = await Promise.all([
+  const [services, brand, settings] = await Promise.all([
     getActiveServicesForKiosk(kioskConfig),
     getSystemBrand(),
+    getSystemSettings(['kiosk.require_customer_info', 'kiosk.customer_info_fields']),
   ]);
+
+  const requireCustomerInfo = settings['kiosk.require_customer_info'] !== 'false';
+  const rawFields = settings['kiosk.customer_info_fields'];
+  let customerInfoFields = { nameOrId: 'name' as const, requireContact: true };
+  if (rawFields) {
+    try {
+      const parsed = JSON.parse(rawFields);
+      customerInfoFields = {
+        nameOrId: parsed.nameOrId ?? 'name',
+        requireContact: parsed.requireContact !== false,
+      };
+    } catch {
+      // use defaults
+    }
+  }
 
   return (
     <>
@@ -36,7 +52,12 @@ export default async function KioskPage({ searchParams }: KioskPageProps) {
           {kioskConfig.welcomeMessage ?? 'Welcome!'}
         </h1>
         <div className="w-full max-w-6xl">
-          <KioskHome services={services} kioskConfig={kioskConfig} />
+          <KioskHome
+            services={services}
+            kioskConfig={kioskConfig}
+            requireCustomerInfo={requireCustomerInfo}
+            customerInfoFields={customerInfoFields}
+          />
         </div>
       </div>
     </>

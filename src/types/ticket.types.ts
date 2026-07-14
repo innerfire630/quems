@@ -43,6 +43,8 @@ export interface TicketListItem {
   issuedAt: string;
   calledAt: string | null;
   businessDate: string;
+  customerName: string | null;
+  customerIdNumber: string | null;
   customerPhone: string | null;
 }
 

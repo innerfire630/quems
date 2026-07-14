@@ -13,6 +13,8 @@ export interface OfficerDashboardData {
   currentServingTicket: TicketDetail | null;
   queueDepth: QueueDepthSnapshot;
   nextTicket: TicketListItem | null;
+  waitingTickets: TicketListItem[];
+  dashboardSettings: DashboardSettings;
   recentActivity: RecentActivityEntry[];
   recentStatusEvents: import('@/lib/counter-status').CounterStatusEventWithOfficer[];
   notificationsState: import('@/lib/officer-notifications').NotificationsStateEntry[];
@@ -37,11 +39,7 @@ export interface QueueDepthSnapshot {
 export interface RecentActivityEntry {
   id: string;
   type:
-    | 'TICKET_CALLED'
-    | 'TICKET_RECALLED'
-    | 'TICKET_NO_SHOW'
-    | 'COUNTER_OPENED'
-    | 'COUNTER_CLOSED';
+    'TICKET_CALLED' | 'TICKET_RECALLED' | 'TICKET_NO_SHOW' | 'COUNTER_OPENED' | 'COUNTER_CLOSED';
   ticketId: string | null;
   ticketNumber: string | null;
   counterId: string;
@@ -61,6 +59,28 @@ export interface DashboardUserInfo {
   id: string;
   name: string;
   email: string;
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard admin-configurable settings
+// ---------------------------------------------------------------------------
+
+export interface DashboardSettings {
+  waitingTimeColorConfig: WaitingTimeColorConfig;
+  reminderThresholdMinutes: number;
+  reminderIntervalMinutes: number;
+  reminderBlinkIntervalSeconds: number;
+  reminderSoundFile: string;
+  reminderSoundRepeatCount: number;
+  newTicketSoundFile: string;
+}
+
+export interface WaitingTimeColorConfig {
+  green_max_minutes: number;
+  yellow_max_minutes: number;
+  green_color: string;
+  yellow_color: string;
+  red_color: string;
 }
 
 // ---------------------------------------------------------------------------

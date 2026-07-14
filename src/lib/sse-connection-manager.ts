@@ -135,6 +135,22 @@ class SharedConnection {
 
   // ---- Connection lifecycle ----
 
+  /** Force an immediate reconnect (e.g. on tab focus). */
+  forceReconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+    this.reconnectAttempts = 0;
+    if (this.subscribers.size > 0) {
+      this.doConnect();
+    }
+  }
+
   private connect(): void {
     if (this.eventSource) return; // already open or opening
 
@@ -292,6 +308,15 @@ export function subscribeToChannel<T extends SseEventType>(
     unsub();
     maybeCleanup(channel);
   };
+}
+
+/**
+ * Force an immediate reconnect on a channel (e.g. when tab becomes visible).
+ * No-op if the channel has no active subscribers.
+ */
+export function reconnectChannel(channel: string): void {
+  const conn = pool.get(channel);
+  if (conn) conn.forceReconnect();
 }
 
 /**

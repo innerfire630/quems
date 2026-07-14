@@ -1,8 +1,9 @@
 // =============================================================================
-// /settings — System Settings page
+// /counter-config — Counter Dashboard Configuration
 // =============================================================================
-// Displays all system settings with inline editing. Protected by the
-// auth guard in the dashboard layout; ADMIN-only via `system:configure`.
+// Manages settings related to the counter officer dashboard:
+// waiting time display, reminder alerts, and notification sounds.
+// ADMIN only (system:configure).
 // =============================================================================
 
 import { redirect } from 'next/navigation';
@@ -14,7 +15,9 @@ import { PageHeader } from '@/components/layout/page-header';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SystemSettingsPage() {
+const COUNTER_CONFIG_PREFIXES = ['waiting_time.', 'reminder.', 'notification.'];
+
+export default async function CounterConfigPage() {
   const session = await getServerSession();
   if (!session) redirect('/login');
 
@@ -27,20 +30,17 @@ export default async function SystemSettingsPage() {
     orderBy: { key: 'asc' },
   });
 
-  // Kiosk behaviour settings are managed on the /kiosk-config page
-  // Counter dashboard settings (waiting_time, reminder, notification) are on /counter-config
-  const EXCLUDED_PREFIXES = ['kiosk.', 'waiting_time.', 'reminder.', 'notification.'];
-  const filteredSettings = settings.filter(
-    (s) => !EXCLUDED_PREFIXES.some((p) => s.key.startsWith(p)),
+  const counterSettings = settings.filter((s) =>
+    COUNTER_CONFIG_PREFIXES.some((p) => s.key.startsWith(p)),
   );
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="System Settings"
-        description="Global system configuration values. Changes take effect immediately."
+        title="Counter Configuration"
+        description="Configure waiting time display, reminder alerts, and notification sounds for counter officer dashboards."
       />
-      <SettingsClient settings={filteredSettings} />
+      <SettingsClient settings={counterSettings} />
     </div>
   );
 }

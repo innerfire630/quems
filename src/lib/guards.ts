@@ -168,12 +168,16 @@ export function withPermission(
     }
     if (!userStatus || userStatus === 'ACTIVE') {
       // Verify from DB to catch users suspended after their JWT was issued
-      const dbUser = await prisma.user.findUnique({
-        where: { id: session.user.userId },
-        select: { status: true },
-      });
-      if (dbUser && (dbUser.status === 'INACTIVE' || dbUser.status === 'SUSPENDED')) {
-        return deactivatedResponse(dbUser.status);
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: session.user.userId },
+          select: { status: true },
+        });
+        if (dbUser && (dbUser.status === 'INACTIVE' || dbUser.status === 'SUSPENDED')) {
+          return deactivatedResponse(dbUser.status);
+        }
+      } catch {
+        // DB check failed — fall through with JWT status (don't block the request)
       }
     }
 

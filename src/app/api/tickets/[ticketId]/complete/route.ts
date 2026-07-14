@@ -122,17 +122,24 @@ export const POST = withPermission(async (req: Request) => {
       { status: 200 },
     );
   } catch (e: unknown) {
-    const err = e as { code?: string; message?: string };
-    if (err.code === 'NOT_FOUND') {
+    const err = e as { code?: string; kind?: string; message?: string };
+    const errorCode = err.code ?? err.kind;
+    if (errorCode === 'NOT_FOUND') {
       return NextResponse.json(
         { success: false, error: { code: 'NOT_FOUND', message: err.message } },
         { status: 404 },
       );
     }
-    if (err.code === 'INVALID_TRANSITION') {
+    if (errorCode === 'INVALID_TRANSITION') {
       return NextResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: err.message } },
         { status: 422 },
+      );
+    }
+    if (errorCode === 'OFFICER_NOT_ASSIGNED' || errorCode === 'OFFICER_NOT_ON_DUTY') {
+      return NextResponse.json(
+        { success: false, error: { code: 'FORBIDDEN', message: err.message } },
+        { status: 403 },
       );
     }
     console.error('[complete] Error:', e);
