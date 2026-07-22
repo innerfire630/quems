@@ -107,11 +107,13 @@ export default function WaitingTicketsList({
 
   // Unlock reminder sound on first user interaction
   useEffect(() => {
-    if (!reminderSoundFile || reminderUnlocked.current) return;
+    const soundSrc = reminderSoundFile
+      ? `/uploads/sounds/${reminderSoundFile}`
+      : '/sounds/default-reminder-alert.mp3';
     function unlock() {
       if (reminderUnlocked.current) return;
       reminderUnlocked.current = true;
-      unlockAudio([`/uploads/sounds/${reminderSoundFile}`]);
+      unlockAudio([soundSrc]);
     }
     document.addEventListener('click', unlock);
     document.addEventListener('keydown', unlock);
@@ -186,7 +188,7 @@ export default function WaitingTicketsList({
       if (reminderPlayedRef.current) return;
       reminderPlayedRef.current = true;
 
-      onReminderTrigger(overdueNow.map((t) => t.ticketNumber));
+      onReminderTrigger!(overdueNow.map((t) => t.ticketNumber));
 
       // Browser notification for delayed reminder
       if (
@@ -207,14 +209,16 @@ export default function WaitingTicketsList({
       }
 
       // Play sound N times if configured
-      if (reminderSoundFile) {
+      const reminderSrc = reminderSoundFile
+        ? `/uploads/sounds/${reminderSoundFile}`
+        : '/sounds/default-reminder-alert.mp3';
+      {
         const repeatCount = Math.min(10, Math.max(1, reminderSoundRepeatCount));
-        const src = `/uploads/sounds/${reminderSoundFile}`;
         let played = 0;
         function playNext() {
           if (played >= repeatCount) return;
           played++;
-          playSound(src);
+          playSound(reminderSrc);
         }
         playNext();
         if (repeatCount > 1) {

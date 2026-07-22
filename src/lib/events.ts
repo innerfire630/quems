@@ -86,6 +86,10 @@ export const EVENT_ROUTING: Record<SseEventType, readonly RouteTemplate[]> = {
 
   // Phase 4.3 — officer reply to broadcast (forward seam)
   OFFICER_REPLY: ['global'],
+
+  // Chat events — live customer-staff chat
+  CUSTOMER_CHAT_MESSAGE: ['global'],
+  STAFF_CHAT_MESSAGE: ['global'],
 };
 
 // ---------------------------------------------------------------------------

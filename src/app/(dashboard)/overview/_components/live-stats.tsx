@@ -120,12 +120,20 @@ export function LiveStats({
           }
           break;
         }
-        case 'TICKET_NO_SHOW':
-          // If ticket was SERVING, serving count drops
-          if (payload.previousStatus === 'SERVING') {
+        case 'TICKET_RECALLED':
+          // SERVING → CALLED: serving count drops (ticket back in called state)
+          next.servingTickets = Math.max(0, prev.servingTickets - 1);
+          break;
+        case 'TICKET_NO_SHOW': {
+          // Ticket became no-show — if it was SERVING, serving count drops.
+          // Most no-shows are from CALLED state (customer didn't show up),
+          // so waiting count is unaffected (already decremented by TICKET_CALLED).
+          const prevStatus = payload.previousStatus as string | undefined;
+          if (prevStatus === 'SERVING') {
             next.servingTickets = Math.max(0, prev.servingTickets - 1);
           }
           break;
+        }
         case 'DAILY_RESET':
           next.ticketsToday = 0;
           next.waitingTickets = 0;
@@ -139,7 +147,14 @@ export function LiveStats({
   }, []);
 
   useSSE('global', {
-    filter: ['TICKET_ISSUED', 'TICKET_CALLED', 'TICKET_SERVED', 'TICKET_NO_SHOW', 'DAILY_RESET'],
+    filter: [
+      'TICKET_ISSUED',
+      'TICKET_CALLED',
+      'TICKET_SERVED',
+      'TICKET_RECALLED',
+      'TICKET_NO_SHOW',
+      'DAILY_RESET',
+    ],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SSE handler uses generic payload
     onEvent: handleSSE as any,
   });

@@ -14,7 +14,14 @@ import { prisma } from '@/lib/db';
 import { getSystemBrand } from '@/lib/cached-data';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const session = await getServerSession();
+  // Wrap in try-catch: a corrupted/expired JWT causes NextAuth to throw
+  // JWTSessionError instead of returning null — treat as unauthenticated.
+  let session = null;
+  try {
+    session = await getServerSession();
+  } catch {
+    // Invalid JWT cookie — redirect to login
+  }
 
   if (!session) {
     redirect('/login');

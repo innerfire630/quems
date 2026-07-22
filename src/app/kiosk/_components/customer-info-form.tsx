@@ -109,8 +109,8 @@ export function CustomerInfoForm({
     }
     if (phone.trim().length > 0) {
       const phoneClean = phone.replace(/[\s\-()]/g, '');
-      if (!/^\+?[1-9]\d{1,14}$/.test(phoneClean)) {
-        setError('Please enter a valid contact number.');
+      if (!/^0\d{9}$/.test(phoneClean)) {
+        setError('Phone number must be 10 digits starting with 0 (e.g. 07########).');
         return;
       }
     }
@@ -208,9 +208,9 @@ export function CustomerInfoForm({
                 id="customer-phone"
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Enter your contact number"
-                maxLength={20}
+                onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
+                placeholder="e.g. 07########"
+                maxLength={10}
                 className="w-full rounded-lg border border-border bg-card py-3 pl-10 pr-4 text-lg text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>

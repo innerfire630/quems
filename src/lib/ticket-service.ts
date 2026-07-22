@@ -295,6 +295,31 @@ export async function issueTicket(input: IssueTicketInput): Promise<IssuedTicket
     });
   }
 
+  // Duplicate phone check — prevent issuing multiple active tickets for the same phone
+  if (input.customerPhone) {
+    const existingTicket = await db.ticket.findFirst({
+      where: {
+        customerPhone: input.customerPhone,
+        status: { in: ['WAITING', 'CALLED'] },
+      },
+      select: {
+        id: true,
+        ticketNumber: true,
+        status: true,
+        service: { select: { name: true } },
+      },
+    });
+
+    if (existingTicket) {
+      throw Object.assign(
+        new Error(
+          `You already have an active ticket (${existingTicket.ticketNumber} — ${existingTicket.service.name}). Please scan the QR code or enter your phone number to view your current ticket status.`,
+        ),
+        { code: 'DUPLICATE_TICKET', existingTicketId: existingTicket.id },
+      );
+    }
+  }
+
   const businessDate = getCurrentBusinessDate();
   const fallbackMinutes = await getFallbackAverageServiceTime();
 

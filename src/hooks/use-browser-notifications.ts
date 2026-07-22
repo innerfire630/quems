@@ -50,9 +50,13 @@ export function useBrowserNotifications(
   });
 
   const pendingRef = useRef(false);
-  const srcRef = useRef(soundFile ? `/uploads/sounds/${soundFile}` : '/sounds/bell.mp3');
+  const srcRef = useRef(
+    soundFile ? `/uploads/sounds/${soundFile}` : '/sounds/default-ticket-alert.mp3',
+  );
   useEffect(() => {
-    srcRef.current = soundFile ? `/uploads/sounds/${soundFile}` : '/sounds/bell.mp3';
+    srcRef.current = soundFile
+      ? `/uploads/sounds/${soundFile}`
+      : '/sounds/default-ticket-alert.mp3';
   });
 
   // Unlock persistent audio on first user gesture

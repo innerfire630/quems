@@ -9,6 +9,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Ticket } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { TicketBadge } from '@/components/shared/ticket-badge';
 import { SilentPrintTrigger } from './silent-print-trigger';
 import {
@@ -100,6 +101,16 @@ export function TicketConfirmation({ ticket, kioskConfig, open, onDone }: Ticket
               Estimated wait: ~{ticket.estimatedWaitMinutes} min
             </p>
           )}
+
+          {/* QR code — scan to view ticket & chat */}
+          <div className="flex flex-col items-center gap-1">
+            <QRCodeSVG
+              value={`${window.location.origin}/ticket/${ticket.id}`}
+              size={120}
+              level="M"
+            />
+            <p className="text-xs text-muted-foreground">Scan to track & chat</p>
+          </div>
 
           {/* Footer message */}
           <p className="text-muted-foreground">

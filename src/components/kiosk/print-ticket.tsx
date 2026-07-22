@@ -6,6 +6,7 @@
 // Tailwind — uses plain CSS classes defined in print.css.
 // =============================================================================
 
+import { QRCodeSVG } from 'qrcode.react';
 import type { IssuedTicketResponse } from '@/types/ticket.types';
 import type { LoadedKioskConfig } from '@/lib/kiosk-config';
 
@@ -58,8 +59,18 @@ export function PrintTicket({ ticket, kioskConfig, businessLogoUrl }: PrintTicke
       <div className="metadata">Issued: {formatIssuedAt(ticket.issuedAt)}</div>
       <div className="metadata">Position: {ticket.waitPosition}</div>
 
-      {/* QR placeholder (future) */}
-      <div className="qr-placeholder" />
+      {/* QR code — scan to view ticket & chat */}
+      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+        <QRCodeSVG
+          value={`/ticket/${ticket.id}`}
+          size={kioskConfig.paperWidth === '58MM' ? 100 : 120}
+          level="M"
+          style={{ display: 'block', margin: '0 auto' }}
+        />
+        <div style={{ fontSize: '10px', marginTop: '4px', color: '#666' }}>
+          Scan to track & chat
+        </div>
+      </div>
     </div>
   );
 }

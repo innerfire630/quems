@@ -13,7 +13,14 @@ import { getSystemBrand } from '@/lib/cached-data';
 
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   // If already authenticated, redirect to dashboard
-  const session = await getServerSession();
+  // Wrap in try-catch: a corrupted/expired JWT causes NextAuth to throw
+  // JWTSessionError instead of returning null — treat it as "no session".
+  let session = null;
+  try {
+    session = await getServerSession();
+  } catch {
+    // Invalid JWT cookie — proceed as unauthenticated
+  }
   if (session) {
     redirect('/');
   }

@@ -53,6 +53,11 @@ export const PERMISSION_REPORT_EXPORT = 'report:export' as const;
 export const PERMISSION_SYSTEM_CONFIGURE = 'system:configure' as const;
 export const PERMISSION_SYSTEM_AUDIT = 'system:audit' as const;
 
+// Module: CHAT
+export const PERMISSION_CHAT_READ = 'chat:read' as const;
+export const PERMISSION_CHAT_SEND = 'chat:send' as const;
+export const PERMISSION_CHAT_MANAGE = 'chat:manage' as const;
+
 // ---------------------------------------------------------------------------
 // Role name constants
 // ---------------------------------------------------------------------------
@@ -97,7 +102,10 @@ export type Permission =
   | typeof PERMISSION_REPORT_VIEW
   | typeof PERMISSION_REPORT_EXPORT
   | typeof PERMISSION_SYSTEM_CONFIGURE
-  | typeof PERMISSION_SYSTEM_AUDIT;
+  | typeof PERMISSION_SYSTEM_AUDIT
+  | typeof PERMISSION_CHAT_READ
+  | typeof PERMISSION_CHAT_SEND
+  | typeof PERMISSION_CHAT_MANAGE;
 
 export type Role = typeof ROLE_ADMIN | typeof ROLE_COUNTER_OFFICER;
 
@@ -134,6 +142,9 @@ export const ALL_PERMISSIONS: Permission[] = [
   PERMISSION_REPORT_EXPORT,
   PERMISSION_SYSTEM_CONFIGURE,
   PERMISSION_SYSTEM_AUDIT,
+  PERMISSION_CHAT_READ,
+  PERMISSION_CHAT_SEND,
+  PERMISSION_CHAT_MANAGE,
 ];
 
 /** Every role name in the system. */
@@ -157,6 +168,8 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSION_TICKET_VIEW,
     PERMISSION_NOTIFICATION_TOGGLE,
     PERMISSION_NOTIFICATION_REPLY,
+    PERMISSION_CHAT_READ,
+    PERMISSION_CHAT_SEND,
   ],
 };
 
@@ -192,6 +205,9 @@ export const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
   [PERMISSION_REPORT_EXPORT]: 'Export reports',
   [PERMISSION_SYSTEM_CONFIGURE]: 'Configure system-level settings',
   [PERMISSION_SYSTEM_AUDIT]: 'View audit logs',
+  [PERMISSION_CHAT_READ]: 'View chat messages for tickets',
+  [PERMISSION_CHAT_SEND]: 'Send chat messages to customers',
+  [PERMISSION_CHAT_MANAGE]: 'Manage chat retention and cleanup settings',
 };
 
 // ---------------------------------------------------------------------------
@@ -230,6 +246,7 @@ export const PERMISSION_MODULES: Record<string, Permission[]> = {
   ],
   REPORT: [PERMISSION_REPORT_VIEW, PERMISSION_REPORT_EXPORT],
   SYSTEM: [PERMISSION_SYSTEM_CONFIGURE, PERMISSION_SYSTEM_AUDIT],
+  CHAT: [PERMISSION_CHAT_READ, PERMISSION_CHAT_SEND, PERMISSION_CHAT_MANAGE],
 };
 
 // ---------------------------------------------------------------------------

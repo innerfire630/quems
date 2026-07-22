@@ -561,33 +561,30 @@ export async function calculateReportKpiSummary(
   startDate: Date,
   endDate: Date,
   serviceId?: string,
-  _counterId?: string,
+  counterId?: string,
 ): Promise<ReportKpiSummary> {
   const serviceFilter = serviceId ? { serviceId } : {};
+  const counterFilter = counterId ? { counterId } : {};
+  const ticketWhere = {
+    businessDate: { gte: startDate, lte: endDate },
+    ...serviceFilter,
+    ...counterFilter,
+  };
 
   const [totalTickets, noShowCount, calledTickets, calledEvents] = await Promise.all([
+    db.ticket.count({ where: ticketWhere }),
     db.ticket.count({
-      where: { businessDate: { gte: startDate, lte: endDate }, ...serviceFilter },
-    }),
-    db.ticket.count({
-      where: {
-        businessDate: { gte: startDate, lte: endDate },
-        status: 'NO_SHOW',
-        ...serviceFilter,
-      },
+      where: { ...ticketWhere, status: 'NO_SHOW' },
     }),
     db.ticket.findMany({
-      where: {
-        businessDate: { gte: startDate, lte: endDate },
-        calledAt: { not: null },
-        ...serviceFilter,
-      },
+      where: { ...ticketWhere, calledAt: { not: null } },
       select: { issuedAt: true, calledAt: true },
     }),
     db.ticketEvent.findMany({
       where: {
         eventType: 'CALLED',
         ...(serviceId ? { ticket: { serviceId } } : {}),
+        ...(counterId ? { counterId } : {}),
         createdAt: { gte: startDate, lte: endDate },
       },
       select: { createdAt: true },

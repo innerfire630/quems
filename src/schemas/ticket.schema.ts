@@ -27,7 +27,7 @@ export const issueTicketSchema = z.object({
   customerPhone: z
     .string()
     .max(20)
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format (E.164).')
+    .regex(/^0\d{9}$/, 'Phone number must be 10 digits starting with 0 (e.g. 07########).')
     .optional(),
 });
 

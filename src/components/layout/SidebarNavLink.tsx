@@ -9,9 +9,10 @@ interface SidebarNavLinkProps {
   href: string;
   label: string;
   icon?: ReactNode;
+  badge?: number;
 }
 
-export function SidebarNavLink({ href, label, icon }: SidebarNavLinkProps) {
+export function SidebarNavLink({ href, label, icon, badge }: SidebarNavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
 
@@ -27,7 +28,12 @@ export function SidebarNavLink({ href, label, icon }: SidebarNavLinkProps) {
       aria-current={isActive ? 'page' : undefined}
     >
       {icon ? <span className="flex size-4 items-center justify-center">{icon}</span> : null}
-      <span>{label}</span>
+      <span className="flex-1">{label}</span>
+      {badge != null && badge > 0 && (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   );
 }

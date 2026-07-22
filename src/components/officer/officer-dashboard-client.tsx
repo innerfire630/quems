@@ -26,6 +26,7 @@ import NoShowTicketsList from '@/components/counter/no-show-tickets-list';
 import WaitingTicketsList from '@/components/counter/waiting-tickets-list';
 import NotificationSoundToggle from '@/components/counter/notification-sound-toggle';
 import { CounterAudioUnlockOverlay } from '@/components/counter/audio-unlock-overlay';
+import { useAudioUnlock } from '@/hooks/use-audio-unlock';
 
 interface OfficerDashboardClientProps {
   initialData: OfficerDashboardData;
@@ -34,15 +35,16 @@ interface OfficerDashboardClientProps {
 export default function OfficerDashboardClient({ initialData }: OfficerDashboardClientProps) {
   const [data, setData] = useState<OfficerDashboardData>(initialData);
 
-  // Browser notification + sound for new tickets
-  const { notifyNewTicket, isSoundEnabled, toggleSound, permission, requestPermission } =
-    useBrowserNotifications({
-      enabled: true,
-      soundFile: data.dashboardSettings.newTicketSoundFile || undefined,
-    });
+  // Browser notification + sound — now handled by OfficerMobileShell
+  // Keep isSoundEnabled/toggleSound for the UI toggle
+  const { isSoundEnabled, toggleSound, permission, requestPermission } = useBrowserNotifications({
+    enabled: true,
+    soundFile: data.dashboardSettings.newTicketSoundFile || undefined,
+  });
 
   // Audio unlock overlay — shown until user clicks to enable audio
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
+  // Module-scoped hook: persists across SPA navigation, resets only on hard refresh
+  const { isAudioUnlocked: audioUnlocked } = useAudioUnlock();
 
   // Auto-request notification permission on mount
   useEffect(() => {
@@ -129,14 +131,7 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
           }));
           // Always count for tab flash (hook handles visibility)
           setTabAlertCount((c) => c + 1);
-          // Fire browser notification + sound
-          if (p['ticketNumber']) {
-            notifyNewTicket(
-              p['ticketNumber'] as string,
-              (p['customerName'] as string) ?? null,
-              (p['serviceName'] as string) ?? 'Unknown',
-            );
-          }
+          // Browser notification + sound handled by OfficerMobileShell
           break;
 
         case 'QUEUE_UPDATED':
@@ -168,50 +163,59 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
 
         case 'TICKET_SERVED': {
           setOverdueTickets([]); // Clear reminder when ticket is served
-          // Update ticket to COMPLETED status for display, then clear after delay.
-          // If refreshDashboard() already cleared currentServingTicket (race condition),
-          // reconstruct a minimal ticket from the SSE payload so the "✓ Served" card
-          // is still shown for the 3-second hold period.
-          setData((prev) => {
-            if (prev.currentServingTicket && p['ticketId'] === prev.currentServingTicket.id) {
-              return {
-                ...prev,
-                currentServingTicket: { ...prev.currentServingTicket, status: 'COMPLETED' },
-              };
-            }
-            if (!prev.currentServingTicket && p['ticketId']) {
-              return {
-                ...prev,
-                currentServingTicket: {
-                  id: p['ticketId'] as string,
-                  ticketNumber: (p['ticketNumber'] as string) ?? '',
-                  displayNumber: 0,
-                  serviceId: (p['serviceId'] as string) ?? '',
-                  serviceName: (p['serviceName'] as string) ?? '',
-                  counterId: (p['counterId'] as string) ?? null,
-                  counterName: (p['counterName'] as string) ?? null,
-                  status: 'COMPLETED',
-                  priority: 0,
-                  waitPosition: 0,
-                  estimatedWaitMinutes: null,
-                  issuedAt: (p['servedAt'] as string) ?? new Date().toISOString(),
-                  calledAt: null,
-                  businessDate: '',
-                  customerName: null,
-                  customerIdNumber: null,
-                  customerPhone: null,
-                  events: [],
-                  calledByOfficer: null,
-                } as TicketDetail,
-              };
-            }
-            return prev;
-          });
-          // Clear after 3s and refresh
-          setTimeout(() => {
-            setData((prev) => ({ ...prev, currentServingTicket: null }));
+
+          const prevStatus = p['previousStatus'] as string;
+
+          // Two different transitions use the same TICKET_SERVED event:
+          //   1. CALLED/RECALLED → SERVING  (officer clicked "Serve")
+          //   2. SERVING → COMPLETED        (officer clicked "Complete")
+          if (prevStatus === 'SERVING') {
+            // Ticket completed — show "✓ Served" card for 3s then clear
+            setData((prev) => {
+              if (prev.currentServingTicket && p['ticketId'] === prev.currentServingTicket.id) {
+                return {
+                  ...prev,
+                  currentServingTicket: { ...prev.currentServingTicket, status: 'COMPLETED' },
+                };
+              }
+              if (!prev.currentServingTicket && p['ticketId']) {
+                return {
+                  ...prev,
+                  currentServingTicket: {
+                    id: p['ticketId'] as string,
+                    ticketNumber: (p['ticketNumber'] as string) ?? '',
+                    displayNumber: 0,
+                    serviceId: (p['serviceId'] as string) ?? '',
+                    serviceName: (p['serviceName'] as string) ?? '',
+                    counterId: (p['counterId'] as string) ?? null,
+                    counterName: (p['counterName'] as string) ?? null,
+                    status: 'COMPLETED',
+                    priority: 0,
+                    waitPosition: 0,
+                    estimatedWaitMinutes: null,
+                    issuedAt: (p['servedAt'] as string) ?? new Date().toISOString(),
+                    calledAt: null,
+                    businessDate: '',
+                    customerName: null,
+                    customerIdNumber: null,
+                    customerPhone: null,
+                    events: [],
+                    calledByOfficer: null,
+                  } as TicketDetail,
+                };
+              }
+              return prev;
+            });
+            // Clear after 3s and refresh
+            setTimeout(() => {
+              setData((prev) => ({ ...prev, currentServingTicket: null }));
+              refreshDashboard();
+            }, 3000);
+          } else {
+            // CALLED/RECALLED → SERVING — officer started serving.
+            // Refresh to get the updated ticket with SERVING status.
             refreshDashboard();
-          }, 3000);
+          }
           break;
         }
 
@@ -240,7 +244,7 @@ export default function OfficerDashboardClient({ initialData }: OfficerDashboard
 
   // Show audio unlock overlay until user clicks
   if (!audioUnlocked) {
-    return <CounterAudioUnlockOverlay onUnlock={() => setAudioUnlocked(true)} />;
+    return <CounterAudioUnlockOverlay onUnlock={() => {}} />;
   }
 
   return (

@@ -334,6 +334,7 @@ model Ticket {
   calledByOfficer CounterOfficer? @relation(fields: [calledByOfficerId], references: [id])
   events          TicketEvent[]
   notifications   Notification[]
+  chatMessages    ChatMessage[]
 
   @@index([serviceId])
   @@index([counterId])
@@ -357,6 +358,20 @@ model TicketEvent {
 
   @@index([eventType, createdAt])
   @@index([ticketId, createdAt])
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  senderType String   // 'CUSTOMER' or 'STAFF'
+  message    String   // text only, max 500 chars enforced at application level
+  createdAt  DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([ticketId, createdAt])
+  @@index([createdAt])
 }
 
 model DisplayBoard {

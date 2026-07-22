@@ -66,6 +66,20 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
+    if (error.code === 'DUPLICATE_TICKET') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'DUPLICATE_TICKET',
+            message: error.message,
+            existingTicketId: (error as Error & { existingTicketId?: string }).existingTicketId,
+          },
+        },
+        { status: 409 },
+      );
+    }
+
     console.error('[api/tickets/issue]', error);
     return NextResponse.json(
       {

@@ -19,7 +19,8 @@ import { useKioskReset } from '@/hooks/use-kiosk-reset';
 import type { ServiceForKiosk, LoadedKioskConfig } from '@/lib/kiosk-config';
 import type { IssuedTicketResponse } from '@/types/ticket.types';
 
-type KioskView = 'grid' | 'confirm' | 'customer-info' | 'loading' | 'confirmation' | 'error';
+type KioskView =
+  'grid' | 'confirm' | 'customer-info' | 'loading' | 'confirmation' | 'error' | 'duplicate';
 
 interface KioskHomeProps {
   services: ServiceForKiosk[];
@@ -39,6 +40,7 @@ export function KioskHome({
   const [currentTicket, setCurrentTicket] = useState<IssuedTicketResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isIssuing, setIsIssuing] = useState(false);
+  const [duplicateTicketId, setDuplicateTicketId] = useState<string | null>(null);
 
   // Lock the kiosk scrollable container when any dialog is open
   const isDialogOpen =
@@ -63,6 +65,7 @@ export function KioskHome({
     setSelectedService(null);
     setCurrentTicket(null);
     setErrorMessage(null);
+    setDuplicateTicketId(null);
   }, []);
 
   useKioskReset({
@@ -116,8 +119,13 @@ export function KioskHome({
 
         if (!res.ok || !json.success) {
           const msg = json.error?.message ?? 'Failed to issue ticket. Please try again.';
-          setErrorMessage(msg);
-          setCurrentView('error');
+          if (json.error?.code === 'DUPLICATE_TICKET') {
+            setDuplicateTicketId(json.error.existingTicketId ?? null);
+            setCurrentView('duplicate');
+          } else {
+            setErrorMessage(msg);
+            setCurrentView('error');
+          }
           return;
         }
 
@@ -179,6 +187,36 @@ export function KioskHome({
           className="rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (currentView === 'duplicate') {
+    return (
+      <div className="flex flex-col items-center py-16 text-center max-w-lg mx-auto">
+        <div className="mb-4 rounded-full bg-yellow-100 p-4">
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <p className="mb-2 text-xl font-semibold text-foreground">You Already Have a Ticket</p>
+        <p className="mb-6 text-base text-muted-foreground">
+          You already have an active ticket. Please scan the QR code on your ticket or enter your
+          phone number to view your current ticket status.
+        </p>
+        {duplicateTicketId && (
+          <a
+            href={`/ticket/${duplicateTicketId}`}
+            className="mb-3 rounded-md bg-primary px-6 py-3 text-base font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            View Your Ticket
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={handleReset}
+          className="rounded-md bg-zinc-200 px-6 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300"
+        >
+          Back to Services
         </button>
       </div>
     );

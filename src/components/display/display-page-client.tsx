@@ -70,11 +70,11 @@ export function DisplayPageClient({
 }: DisplayPageClientProps) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
-  const [unlocked, setUnlocked] = useState(false);
   const [state, setState] = useState<DisplayState>(() => buildInitialState(initialSnapshot));
   const broadcastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Audio unlock listener (bridges the overlay's event to a boolean)
+  // Audio unlock listener — module-scoped hook: persists across SPA navigation,
+  // resets only on hard refresh.  Controls the overlay visibility.
   const { isAudioUnlocked } = useAudioUnlock();
 
   // Sync the AudioContext from the ref into state once created (avoids refs-during-render)
@@ -82,16 +82,14 @@ export function DisplayPageClient({
     if (audioCtxRef.current && !audioContext) {
       setAudioContext(audioCtxRef.current);
     }
-  }, [unlocked, audioContext]);
+  }, [isAudioUnlocked, audioContext]);
 
   // Bell buffer preload — start decoding as soon as we have an unlocked AudioContext
   const [bellBuffer, setBellBuffer] = useState<AudioBuffer | null>(getCachedBellBuffer);
 
-  const handleUnlock = useCallback(() => setUnlocked(true), []);
-
   // Preload the bell buffer once the overlay creates the AudioContext (and we're unlocked)
   useEffect(() => {
-    if (!unlocked || !audioCtxRef.current || bellBuffer) return;
+    if (!isAudioUnlocked || !audioCtxRef.current || bellBuffer) return;
 
     let cancelled = false;
     loadBellBuffer(audioCtxRef.current)
@@ -105,7 +103,7 @@ export function DisplayPageClient({
     return () => {
       cancelled = true;
     };
-  }, [unlocked, bellBuffer]);
+  }, [isAudioUnlocked, bellBuffer]);
 
   // Wire the announcement queue (bell + TTS orchestration)
   useAnnouncement({
@@ -148,7 +146,7 @@ export function DisplayPageClient({
   }, [state.broadcastMessage]);
 
   // Compute the single most recently called ticket for the hero display
-  // Prefer active (CALLED/RECALLED) tickets — when the hero is served,
+  // Prefer active (CALLED/RECALLED/SERVING) tickets — when the hero is completed,
   // automatically promote the next active ticket from history
   const latestTicket = useMemo(() => {
     const allServing = Object.values(state.nowServing).filter(
@@ -160,8 +158,10 @@ export function DisplayPageClient({
       (a, b) => new Date(b.calledAt).getTime() - new Date(a.calledAt).getTime(),
     );
 
-    // Prefer active tickets (CALLED/RECALLED) over served/no-show
-    const active = sorted.filter((t) => t.status === 'CALLED' || t.status === 'RECALLED');
+    // Prefer active tickets (CALLED/RECALLED/SERVING) over served/no-show
+    const active = sorted.filter(
+      (t) => t.status === 'CALLED' || t.status === 'RECALLED' || t.status === 'SERVING',
+    );
     return active.length > 0 ? active[0]! : sorted[0]!;
   }, [state.nowServing]);
 
@@ -188,8 +188,10 @@ export function DisplayPageClient({
       }
     }
     return deduped.sort((a, b) => {
-      const aActive = a.status === 'CALLED' || a.status === 'RECALLED' ? 0 : 1;
-      const bActive = b.status === 'CALLED' || b.status === 'RECALLED' ? 0 : 1;
+      const aActive =
+        a.status === 'CALLED' || a.status === 'RECALLED' || a.status === 'SERVING' ? 0 : 1;
+      const bActive =
+        b.status === 'CALLED' || b.status === 'RECALLED' || b.status === 'SERVING' ? 0 : 1;
       if (aActive !== bActive) return aActive - bActive;
       return new Date(b.calledAt).getTime() - new Date(a.calledAt).getTime();
     });
@@ -214,10 +216,10 @@ export function DisplayPageClient({
   }, [state.counterStatus, state.counterCloseReasons, state.counters]);
 
   // Show unlock overlay until dismissed
-  if (!unlocked) {
+  if (!isAudioUnlocked) {
     return (
       <AudioUnlockOverlay
-        onUnlock={handleUnlock}
+        onUnlock={() => {}}
         logoUrl={state.board?.logoUrl}
         audioCtxRef={audioCtxRef}
       />

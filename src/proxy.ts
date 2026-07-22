@@ -172,6 +172,6 @@ export const config = {
      * - /api/debug/* (development-only debug routes)
      * - _next/static, _next/image, favicon.ico (static assets)
      */
-    '/((?!login|display|kiosk(?!-)|sse-test|sounds|uploads|images|api/auth|api/sse|api/tickets/issue|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
+    '/((?!login|display|kiosk(?!-)|mobile-kiosk|ticket|sse-test|sounds|uploads|images|api/auth|api/sse|api/tickets/issue|api/chat/messages|api/mobile-kiosk|api/display-boards/snapshot|api/health|api/_dev|api/debug|_next/static|_next/image|favicon.ico).*)',
   ],
 };

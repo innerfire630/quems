@@ -36,7 +36,9 @@ export type SseEventType =
   | 'COUNTER_CLOSED'
   | 'QUEUE_UPDATED'
   | 'NOTIFICATION_RECEIVED'
-  | 'OFFICER_REPLY';
+  | 'OFFICER_REPLY'
+  | 'CUSTOMER_CHAT_MESSAGE'
+  | 'STAFF_CHAT_MESSAGE';
 
 // ---------------------------------------------------------------------------
 // Per-event payload types (filled in by the document that introduces each event)
@@ -178,6 +180,25 @@ export interface OfficerReplyPayload {
   repliedAt: string;
 }
 
+/** CUSTOMER_CHAT_MESSAGE — emitted when a customer sends a chat message. */
+export interface CustomerChatMessagePayload {
+  id: string;
+  ticketId: string;
+  senderType: 'CUSTOMER';
+  message: string;
+  createdAt: string;
+}
+
+/** STAFF_CHAT_MESSAGE — emitted when a staff member sends a chat message. */
+export interface StaffChatMessagePayload {
+  id: string;
+  ticketId: string;
+  senderType: 'STAFF';
+  message: string;
+  staffName: string;
+  createdAt: string;
+}
+
 // ---------------------------------------------------------------------------
 // Discriminated union — one variant per event type
 // ---------------------------------------------------------------------------
@@ -200,7 +221,14 @@ export type SseEventPayload =
       timestamp: string;
       payload: NotificationReceivedPayload;
     }
-  | { type: 'OFFICER_REPLY'; id: string; timestamp: string; payload: OfficerReplyPayload };
+  | { type: 'OFFICER_REPLY'; id: string; timestamp: string; payload: OfficerReplyPayload }
+  | {
+      type: 'CUSTOMER_CHAT_MESSAGE';
+      id: string;
+      timestamp: string;
+      payload: CustomerChatMessagePayload;
+    }
+  | { type: 'STAFF_CHAT_MESSAGE'; id: string; timestamp: string; payload: StaffChatMessagePayload };
 
 // ---------------------------------------------------------------------------
 // Full SSE event (channel + envelope) — the shape passed to broadcastEvent()
@@ -247,6 +275,8 @@ export const SSE_EVENT_TYPE_MAP = {
   QUEUE_UPDATED: null as unknown as QueueUpdatedPayload,
   NOTIFICATION_RECEIVED: null as unknown as NotificationReceivedPayload,
   OFFICER_REPLY: null as unknown as OfficerReplyPayload,
+  CUSTOMER_CHAT_MESSAGE: null as unknown as CustomerChatMessagePayload,
+  STAFF_CHAT_MESSAGE: null as unknown as StaffChatMessagePayload,
 } as const satisfies Record<SseEventType, unknown>;
 
 /** Payload type extracted from the map for a given event type. */

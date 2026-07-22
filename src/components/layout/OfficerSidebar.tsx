@@ -1,8 +1,9 @@
 'use client';
 
-import { Monitor, X } from 'lucide-react';
+import { Monitor, MessageCircle, X } from 'lucide-react';
 import { SidebarBrand } from './SidebarBrand';
 import { SidebarNavLink } from './SidebarNavLink';
+import { useChatUnread } from '@/hooks/use-chat-unread';
 
 interface OfficerSidebarProps {
   primaryCounterId?: string | null;
@@ -20,6 +21,7 @@ export function OfficerSidebar({
   onClose,
 }: OfficerSidebarProps) {
   const dashboardHref = primaryCounterId ? `/counter/${primaryCounterId}` : '/counter';
+  const { totalUnread } = useChatUnread();
 
   return (
     <aside
@@ -46,6 +48,12 @@ export function OfficerSidebar({
           href={dashboardHref}
           label="Counter Dashboard"
           icon={<Monitor className="size-4" aria-hidden />}
+        />
+        <SidebarNavLink
+          href="/counter/chats"
+          label="Chats"
+          icon={<MessageCircle className="size-4" aria-hidden />}
+          badge={totalUnread}
         />
       </nav>
       <div className="flex-1" />

@@ -41,4 +41,13 @@ export async function register(): Promise<void> {
       console.error('[instrumentation] Scheduler start failed:', error);
     }
   }
+
+  try {
+    const { startChatCleanupScheduler } = await import('@/lib/chat-cleanup');
+    startChatCleanupScheduler();
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[instrumentation] Chat cleanup scheduler start failed:', error);
+    }
+  }
 }

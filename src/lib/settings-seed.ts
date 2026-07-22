@@ -136,6 +136,20 @@ const QUEUE_DEFAULT_SETTINGS: {
     description:
       'Sound played on the counter dashboard when a new ticket arrives. Path relative to /uploads/sounds/. Empty = built-in bell.',
   },
+  // --- Chat retention ---
+  {
+    key: 'chat.retention_days',
+    value: '7',
+    type: 'INTEGER',
+    description:
+      'Number of days chat history is retained before being permanently deleted by the cleanup job.',
+  },
+  {
+    key: 'chat.cleanup_time',
+    value: '03:00',
+    type: 'STRING',
+    description: 'Time of day (HH:MM in APP_TIMEZONE) when the automated chat cleanup job runs.',
+  },
 ];
 
 // ---------------------------------------------------------------------------

@@ -21,7 +21,14 @@ export const RecentCallsList = React.memo(function RecentCallsList({
   const visible = tickets.slice(0, maxItems);
 
   return (
-    <section className="flex flex-col overflow-hidden min-h-0" style={{ background: 'linear-gradient(135deg, var(--db-gradient-from), var(--db-gradient-via), var(--db-gradient-to))', borderColor: 'var(--db-border)' }}>
+    <section
+      className="flex flex-col overflow-hidden min-h-0"
+      style={{
+        background:
+          'linear-gradient(135deg, var(--db-gradient-from), var(--db-gradient-via), var(--db-gradient-to))',
+        borderColor: 'var(--db-border)',
+      }}
+    >
       {/* Blink animation for actively serving tickets */}
       <style>{`
         @keyframes history-blink {
@@ -34,9 +41,18 @@ export const RecentCallsList = React.memo(function RecentCallsList({
       `}</style>
 
       {/* History items — fill full height evenly */}
-      <div className="flex-1 overflow-hidden flex flex-col" style={{ padding: 'clamp(0.2rem, 0.5vmin, 0.5rem)', gap: 'clamp(0.15rem, 0.35vmin, 0.4rem)' }}>
+      <div
+        className="flex-1 overflow-hidden flex flex-col"
+        style={{
+          padding: 'clamp(0.2rem, 0.5vmin, 0.5rem)',
+          gap: 'clamp(0.15rem, 0.35vmin, 0.4rem)',
+        }}
+      >
         {visible.length === 0 ? (
-          <div className="flex items-center justify-center h-full" style={{ fontSize: 'clamp(0.65rem, 1.2vmin, 1.2rem)', color: 'var(--db-text-muted)' }}>
+          <div
+            className="flex items-center justify-center h-full"
+            style={{ fontSize: 'clamp(0.65rem, 1.2vmin, 1.2rem)', color: 'var(--db-text-muted)' }}
+          >
             No recent calls
           </div>
         ) : (
@@ -57,12 +73,23 @@ export const RecentCallsList = React.memo(function RecentCallsList({
                 }}
               >
                 {/* Ticket box */}
-                <div className="flex flex-col items-center justify-center flex-1 min-w-0" style={{ gap: 'clamp(0.05rem, 0.15vmin, 0.15rem)' }}>
-                  <span className="uppercase tracking-wider font-bold" style={{ fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)', color: 'var(--db-text-muted)' }}>Ticket No.</span>
+                <div
+                  className="flex flex-col items-center justify-center flex-1 min-w-0"
+                  style={{ gap: 'clamp(0.05rem, 0.15vmin, 0.15rem)' }}
+                >
+                  <span
+                    className="uppercase tracking-wider font-bold"
+                    style={{
+                      fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)',
+                      color: 'var(--db-text-muted)',
+                    }}
+                  >
+                    Ticket No.
+                  </span>
                   <span
                     className="font-black text-center truncate"
                     style={{
-                      fontSize: 'clamp(0.8rem, 3.8vmin, 3rem)',
+                      fontSize: 'clamp(0.8rem, 3.2vmin, 2.5rem)',
                       color:
                         t.status === 'NO_SHOW'
                           ? 'var(--db-ticket-noshow)'
@@ -78,41 +105,100 @@ export const RecentCallsList = React.memo(function RecentCallsList({
                 </div>
 
                 {/* Divider */}
-                <div className="shrink-0 self-stretch border-l" style={{ borderColor: 'var(--db-border)', margin: 'clamp(0.2rem, 0.5vmin, 0.4rem) 0' }} />
+                <div
+                  className="shrink-0 self-stretch border-l"
+                  style={{
+                    borderColor: 'var(--db-border)',
+                    margin: 'clamp(0.2rem, 0.5vmin, 0.4rem) 0',
+                  }}
+                />
 
                 {/* Counter / Status box */}
-                <div className="flex flex-col items-center justify-center flex-1 min-w-0" style={{ gap: 'clamp(0.05rem, 0.15vmin, 0.15rem)' }}>
+                <div
+                  className="flex flex-col items-center justify-center flex-1 min-w-0 text-center"
+                  style={{ gap: 'clamp(0.05rem, 0.15vmin, 0.15rem)' }}
+                >
                   {t.status === 'NO_SHOW' ? (
                     <>
-                      <span className="uppercase tracking-wider font-bold" style={{ fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)', color: 'var(--db-text-muted)' }}>
+                      <span
+                        className="uppercase tracking-wider font-bold text-center"
+                        style={{
+                          fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)',
+                          color: 'var(--db-text-muted)',
+                        }}
+                      >
                         {t.counterName || `Counter ${t.counterNumber}`}
                       </span>
-                      <span className="font-black text-center uppercase truncate" style={{ fontSize: 'clamp(0.65rem, 2.8vmin, 2.2rem)', color: 'var(--db-ticket-noshow)' }}>
+                      <span
+                        className="font-black text-center uppercase truncate"
+                        style={{
+                          fontSize: 'clamp(0.65rem, 2.5vmin, 2rem)',
+                          color: 'var(--db-ticket-noshow)',
+                        }}
+                      >
                         ✗ No-Show
                       </span>
                     </>
                   ) : isServed ? (
                     <>
-                      <span className="uppercase tracking-wider font-bold" style={{ fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)', color: 'var(--db-text-muted)' }}>
+                      <span
+                        className="uppercase tracking-wider font-bold"
+                        style={{
+                          fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)',
+                          color: 'var(--db-text-muted)',
+                        }}
+                      >
                         {t.counterName || `Counter ${t.counterNumber}`}
                       </span>
-                      <span className="font-black text-center uppercase truncate" style={{ fontSize: 'clamp(0.8rem, 3.8vmin, 3rem)', color: 'var(--db-ticket-served)' }}>
+                      <span
+                        className="font-black text-center uppercase truncate"
+                        style={{
+                          fontSize: 'clamp(0.8rem, 3vmin, 2.5rem)',
+                          color: 'var(--db-ticket-served)',
+                        }}
+                      >
                         ✓ Served
                       </span>
                     </>
                   ) : isServing ? (
                     <>
-                      <span className="uppercase tracking-wider font-bold" style={{ fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)', color: 'var(--db-text-muted)' }}>
+                      <span
+                        className="uppercase tracking-wider font-bold"
+                        style={{
+                          fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)',
+                          color: 'var(--db-text-muted)',
+                        }}
+                      >
                         {t.counterName || `Counter ${t.counterNumber}`}
                       </span>
-                      <span className="font-black text-center uppercase truncate" style={{ fontSize: 'clamp(0.8rem, 3.8vmin, 3rem)', color: 'var(--db-ticket)' }}>
+                      <span
+                        className="font-black text-center uppercase truncate"
+                        style={{
+                          fontSize: 'clamp(0.8rem, 3vmin, 2.5rem)',
+                          color: 'var(--db-ticket)',
+                        }}
+                      >
                         ● Serving
                       </span>
                     </>
                   ) : (
                     <>
-                      <span className="uppercase tracking-wider font-bold" style={{ fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)', color: 'var(--db-text-muted)' }}>Proceed to</span>
-                      <span className="font-black text-center uppercase truncate" style={{ fontSize: 'clamp(0.8rem, 3.8vmin, 3rem)', color: 'var(--db-accent)' }}>
+                      <span
+                        className="uppercase tracking-wider font-bold"
+                        style={{
+                          fontSize: 'clamp(0.45rem, 1.3vmin, 1.2rem)',
+                          color: 'var(--db-text-muted)',
+                        }}
+                      >
+                        Proceed to
+                      </span>
+                      <span
+                        className="font-black text-center uppercase truncate"
+                        style={{
+                          fontSize: 'clamp(0.8rem, 3vmin, 2.5rem)',
+                          color: 'var(--db-accent)',
+                        }}
+                      >
                         {t.counterName || `Counter ${t.counterNumber}`}
                       </span>
                     </>

@@ -11,6 +11,7 @@ import { getServerSession } from '@/lib/auth';
 import { PERMISSION_SYSTEM_CONFIGURE } from '@/lib/permissions';
 import { SettingsClient } from '@/components/admin/settings-client';
 import { PageHeader } from '@/components/layout/page-header';
+import { StaticQrGenerator } from './_components/static-qr-generator';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +42,7 @@ export default async function SystemSettingsPage() {
         description="Global system configuration values. Changes take effect immediately."
       />
       <SettingsClient settings={filteredSettings} />
+      <StaticQrGenerator />
     </div>
   );
 }

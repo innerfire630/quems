@@ -6,7 +6,14 @@ import { getSystemBrand } from '@/lib/cached-data';
 import { prisma } from '@/lib/db';
 
 export default async function OfficerLayout({ children }: { children: ReactNode }) {
-  const session = await auth();
+  // Wrap in try-catch: a corrupted/expired JWT causes NextAuth to throw
+  // JWTSessionError instead of returning null — treat as unauthenticated.
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    // Invalid JWT cookie — redirect to login
+  }
   if (!session?.user) {
     redirect('/login');
   }

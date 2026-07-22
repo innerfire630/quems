@@ -85,6 +85,8 @@ const KEY_LABELS: Record<string, string> = {
   'reminder.sound_file': 'Delayed Reminder Sound',
   'reminder.sound_repeat_count': 'Reminder Sound Repeat Count',
   'notification.new_ticket_sound': 'New Ticket Issued Sound',
+  'chat.retention_days': 'Chat Retention Period (days)',
+  'chat.cleanup_time': 'Chat Cleanup Time',
 };
 
 // Group labels for dotted key prefixes
@@ -100,6 +102,7 @@ const GROUP_LABELS: Record<string, string> = {
   waiting_time: 'Ticket Waiting Time Colour',
   reminder: 'Ticket Reminder Alerts',
   notification: 'Notification Sounds',
+  chat: 'Live Chat',
 };
 
 function formatKeyLabel(key: string): string {
@@ -588,7 +591,7 @@ function SettingCard({ setting }: { setting: SystemSetting }) {
                 {value === 'true' ? 'Enabled' : 'Disabled'}
               </Label>
             </div>
-          ) : setting.key === 'queue.daily_reset_time' ? (
+          ) : setting.key === 'queue.daily_reset_time' || setting.key === 'chat.cleanup_time' ? (
             <TimePicker value={value} onChange={setValue} />
           ) : setting.type === 'INTEGER' ? (
             <Input

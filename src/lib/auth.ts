@@ -33,6 +33,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/login',
   },
 
+  /**
+   * Custom logger — suppresses the noisy JWTSessionError console.error that
+   * NextAuth emits when it encounters a corrupted or expired JWT cookie.
+   * Callers already handle this gracefully (try-catch → redirect to login),
+   * so the default red-stack-trace log is pure noise in development.
+   */
+  logger: {
+    error(...args: unknown[]) {
+      // NextAuth v5 calls logger.error(new JWTSessionError(cause)) — the first
+      // argument is an Error object, not a string code.  The .type property or
+      // constructor name identifies the error kind.
+      const first = args[0] as Record<string, unknown> | undefined;
+      const errorType =
+        (first?.['type'] as string) ?? (first instanceof Error ? first.constructor.name : '');
+
+      if (errorType === 'JWTSessionError') {
+        // Corrupted / expired JWT cookie — expected in dev after secret rotation
+        // or stale cookies. Callers already handle this via try-catch → redirect.
+        console.warn('[auth][warn] JWTSessionError — treating as unauthenticated');
+        return;
+      }
+      console.error('[auth][error]', ...args);
+    },
+    warn(code: string, ...args: unknown[]) {
+      console.warn(`[auth][warn] ${code}`, ...args);
+    },
+    debug(code: string, ...args: unknown[]) {
+      if (process.env['NODE_ENV'] === 'development') {
+        console.debug(`[auth][debug] ${code}`, ...args);
+      }
+    },
+  },
+
   providers: [
     Credentials({
       name: 'credentials',
